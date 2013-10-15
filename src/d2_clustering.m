@@ -1,9 +1,9 @@
 clear;
 %%
-global stdoutput optim_options; 
+global stdoutput optim_options qpoptim_options; 
 stdoutput = 1;
 optim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off');
-
+qpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Algorithm','active-set');
 %% Load data
 
 fprintf(stdoutput, 'Loading data ... ');

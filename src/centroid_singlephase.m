@@ -3,7 +3,7 @@ function [c] = centroid_singlephase(stride, supp, w)
 
 % Re-prepare
   global A B;
-  global stdoutput optim_options;
+  global stdoutput qpoptim_options;
   
   dim = size(supp,1);
   n = length(stride);
@@ -22,7 +22,7 @@ function [c] = centroid_singlephase(stride, supp, w)
   D = zeros(n,1);
 
   iter=0;
-  function  d2energy(warm)
+  function  obj = d2energy(warm)
   pos=1;
   for it=1:n  
     if warm
@@ -35,8 +35,8 @@ function [c] = centroid_singlephase(stride, supp, w)
     end
     pos = pos + stride(it);
   end
-
-  fprintf(stdoutput, '\n\t\t %d\t %e', iter, sum(D) );      
+  obj = sum(D);
+  fprintf(stdoutput, '\n\t\t %d\t %e', iter, obj );      
   end
 
   d2energy(false);
@@ -44,10 +44,11 @@ function [c] = centroid_singlephase(stride, supp, w)
 
 % optimization
 
-  nIter = 50; 
+  nIter = 10; 
   suppIter = 1;
   admmIter = 10;
   cterm = Inf;
+  statusIter = zeros(nIter,1);
   for iter=1:nIter
       
     for xsupp=1:suppIter
@@ -86,7 +87,7 @@ function [c] = centroid_singlephase(stride, supp, w)
 	  Aeq = A{avg_stride,stride(i)}(avg_stride+1:end, :);
 	  beq = w(strips)';
 	  [xtmp] = ... 
-	  quadprog(H, q, [], [], Aeq, beq, zeros(vecsize), [], x0, optim_options);
+	  quadprog(H, q, [], [], Aeq, beq, zeros(vecsize), [], x0, qpoptim_options);
 	  X(:,strips) = reshape(xtmp,[avg_stride, stride(i)]);
       
       
@@ -104,7 +105,7 @@ function [c] = centroid_singlephase(stride, supp, w)
       
       H = n * eye(avg_stride) + rho * ones(avg_stride);
       q = - (sum(X, 2) + sum(lambda, 2) + rho*(1 - mu));
-      [c.w] = quadprog(H, q, [], [], [], [], zeros(avg_stride,1), [], c.w', optim_options)';
+      [c.w] = quadprog(H, q, [], [], [], [], zeros(avg_stride,1), [], c.w', qpoptim_options)';
 
       % step 3, update lambda and mu
       lambda2 = lambda; mu2 = mu;
@@ -119,7 +120,7 @@ function [c] = centroid_singlephase(stride, supp, w)
       dualres = norm(w2 - c.w);
       primres1 = norm(lambda2 - lambda, 'fro')/sqrt(n*avg_stride);
       primres2 = norm(mu2 - mu);
-      %fprintf(stdoutput, '\n%e\t%e\t%e', primres1, primres2, dualres);
+      %fprintf(stdoutput, '%e\t%e\t%e', primres1, primres2, dualres);
       
 %       if primres1 > 10*dualres
 %           pho = 2 * pho;
@@ -139,9 +140,13 @@ function [c] = centroid_singlephase(stride, supp, w)
     % sum2one(c.w)
     c.w = c.w/sum(c.w);
     % output status
-    d2energy(false);
+    tic;statusInter(iter) = d2energy(false);toc;
     % pause;
   end
+  figure;
+  plot(statusInter);
   
+  fprintf(stdoutput, ' %f', c.w);
+  fprintf(stdoutput, '\n');
 end
 
