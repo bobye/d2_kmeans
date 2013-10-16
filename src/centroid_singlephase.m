@@ -16,8 +16,12 @@ function [c] = centroid_singlephase(stride, supp, w)
   c_covs = zm * diag(w) * zm' / n;
 
   c.supp = mvnrnd(c_means', c_covs, avg_stride)';
-  c.w = rand(1,avg_stride); c.w = c.w/sum(c.w);
+  %c.w = rand(1,avg_stride); c.w = c.w/sum(c.w);
+  c.w = 1/avg_stride * ones(1,avg_stride);
 
+  %load cstart.mat
+  save cstart.mat c avg_stride;
+  
   X = zeros(avg_stride, m);
   D = zeros(n,1);
 
@@ -44,7 +48,7 @@ function [c] = centroid_singlephase(stride, supp, w)
 
 % optimization
 
-  nIter = 10; 
+  nIter = 20; 
   suppIter = 1;
   admmIter = 10;
   cterm = Inf;
@@ -143,8 +147,9 @@ function [c] = centroid_singlephase(stride, supp, w)
     tic;statusInter(iter) = d2energy(false);toc;
     % pause;
   end
-  figure;
+  h = figure;
   plot(statusInter);
+  print(h, '-dpdf', 'centroid_singlephase.pdf');
   
   fprintf(stdoutput, ' %f', c.w);
   fprintf(stdoutput, '\n');

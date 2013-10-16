@@ -53,7 +53,8 @@ function [c] = centroid( lb, labels, db)
     supp{i} = db{i}.supp(:,lb==warmlabels{i});    
     stride{i} = db{i}.stride(lb == labels);
     c{i} = centroid_singlephase(stride{i}, supp{i}, w{i});
-    pause;
+    c{i} = centroid_sphLP(stride{i}, supp{i}, w{i});
+    pause;return;
   end
   
 end
