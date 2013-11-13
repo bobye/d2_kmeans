@@ -11,7 +11,7 @@ function [c] = centroid_sphLP(stride, supp, w)
 
 % load start guess
   avg_stride = ceil(mean(stride));
-  load cstart.mat
+  load(['cstart' num2str(n) '.mat']);
 
   X = zeros(avg_stride, m);
   D = zeros(n,1);
@@ -44,12 +44,14 @@ function [c] = centroid_sphLP(stride, supp, w)
   cterm = Inf;
   statusIter = zeros(nIter,1);
   for iter=1:nIter
+      toc;tic;
     % update c.supp
     for xsupp=1:suppIter
     c.supp = supp * X' ./ repmat(n*c.w, [dim,1]);
     d2energy(true);
     end
-	  
+    %    x = [ reshape(X, avg_stride*m, 1); c.w'];
+    
     % update c.w as well as X, using full LP
     C = pdist2(c.supp', supp', 'sqeuclidean');
     f = reshape(C, avg_stride*m, 1);
@@ -81,10 +83,13 @@ function [c] = centroid_sphLP(stride, supp, w)
     if exitflag < 0
         error('linprog no search direction [%d %f]',exitflag, fval);
     end
-    c.w = x(posm:end)';
+    c.w = x(posm:end)'; c.w = c.w/sum(c.w);
     statusIter(iter) = d2energy(false);
   end
 
+  global statusIterRec;
+  statusIterRec(:,2) = statusIter;
+  
   h=figure;
   plot(statusIter);
   print(h, '-dpdf', 'centroid_sphLP.pdf');

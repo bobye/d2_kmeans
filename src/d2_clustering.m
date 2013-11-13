@@ -1,4 +1,7 @@
-clear;
+%clear;
+if ~exist('numOfSamples')
+    numOfSamples = 50;
+end
 %%
 global stdoutput optim_options qpoptim_options; 
 stdoutput = 1;
@@ -33,7 +36,7 @@ while ~feof(fp)
     db{i}.w(1,(end+1):(end+d)) = we/sum(we);
     db{i}.supp(:, (end+1):(end+d)) = fscanf(fp, '%f', [d_modalities(i), d]);      
   end
-  if (count == 200) break; end
+  if (count == numOfSamples) break; end
 end
 
 fclose(fp);
@@ -41,6 +44,16 @@ toc;
 
 %%
 global max_stride;
+global statusIterRec;
+
 max_stride = max(cellfun(@(x) max(x.stride), db));
 kantorovich_prepare;
 clusters = d2clusters(db, 1);
+
+n = size(statusIterRec,1);
+h = figure;
+plot((1:n)', statusIterRec(:,1),'-or', ...
+     (1:n)', statusIterRec(:,2),'-.g', ...
+     (1:n)', statusIterRec(:,3),'-+b');
+
+print(h, '-dpdf', ['centroid_sphALL' num2str(numOfSamples) '.pdf']);

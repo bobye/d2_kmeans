@@ -20,7 +20,7 @@ function [c] = centroid_singlephase(stride, supp, w)
   c.w = 1/avg_stride * ones(1,avg_stride);
 
   %load cstart.mat
-  save cstart.mat c avg_stride;
+  save(['cstart' num2str(n) '.mat'], 'c', 'avg_stride');
   
   X = zeros(avg_stride, m);
   D = zeros(n,1);
@@ -144,11 +144,15 @@ function [c] = centroid_singlephase(stride, supp, w)
     % sum2one(c.w)
     c.w = c.w/sum(c.w);
     % output status
-    tic;statusInter(iter) = d2energy(false);toc;
+    tic;statusIter(iter) = d2energy(false);toc;
     % pause;
   end
+
+  global statusIterRec;
+  statusIterRec = statusIter;
+  
   h = figure;
-  plot(statusInter);
+  plot(statusIter);
   print(h, '-dpdf', 'centroid_singlephase.pdf');
   
   fprintf(stdoutput, ' %f', c.w);
