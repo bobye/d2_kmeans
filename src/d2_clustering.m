@@ -3,9 +3,10 @@ if ~exist('numOfSamples')
     numOfSamples = 50;
 end
 %%
-global stdoutput optim_options qpoptim_options; 
+global stdoutput optim_options lpoptim_options qpoptim_options; 
 stdoutput = 1;
-optim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off');
+optim_options   = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off');
+lpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Simplex', 'on');
 qpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Algorithm','active-set');
 %% Load data
 
@@ -53,7 +54,7 @@ clusters = d2clusters(db, 1);
 n = size(statusIterRec,1);
 h = figure;
 plot((1:n)', statusIterRec(:,1),'-or', ...
-     (1:n)', statusIterRec(:,2),'-.g', ...
+     (1:n)', statusIterRec(:,2),'-dg', ...
      (1:n)', statusIterRec(:,3),'-+b');
 
 print(h, '-dpdf', ['centroid_sphALL' num2str(numOfSamples) '.pdf']);

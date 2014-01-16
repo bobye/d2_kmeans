@@ -1,8 +1,9 @@
+
 function [fval, x] = kantorovich(X, wX, Y, wY, x0)
 
   global A;
   global optim_options;
-  
+  global lpoptim_options;  
 
   
   n = size(X,2);
@@ -24,13 +25,22 @@ function [fval, x] = kantorovich(X, wX, Y, wY, x0)
 
   if nargin == 4
       x0 = [];
+%      lpoptim = lpoptim_options;
   else
       x0 = reshape(x0,[n*m,1]);
+%      lpoptim = optim_options;
   end
   
   [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, optim_options );
+
   if exitflag < 0
+  [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, lpoptim_options );
+  end
+
+  if exitflag < 0
+      save(['err-lingprog-' datestr(clock, 0) '.mat'], 'f', 'Aeq', 'beq', 'n', 'm', 'x0');
       error('linprog no search direction [%d, %f]', exitflag, fval);
   end
+
   x = reshape(x, n, m);
 end
