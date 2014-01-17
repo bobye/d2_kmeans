@@ -43,7 +43,9 @@ function [c] = centroid( lb, labels, db)
 
 % OUTPUT
 % c: multiphase centroid of selected points
-  global stdoutput;   
+
+
+  global stdoutput ctime bufferc;   
   nphase = length(db);
 
   for i=1:nphase
@@ -52,9 +54,12 @@ function [c] = centroid( lb, labels, db)
     w{i} = db{i}.w(lb == warmlabels{i});
     supp{i} = db{i}.supp(:,lb==warmlabels{i});    
     stride{i} = db{i}.stride(lb == labels);
-    c{i} = centroid_singlephase(stride{i}, supp{i}, w{i});
-    c{i} = centroid_sphLP(stride{i}, supp{i}, w{i});
-    c{i} = centroid_sphADMM(stride{i}, supp{i}, w{i});
+    
+    ctimer = tic;c{i} = centroid_singlephase(stride{i}, supp{i}, w{i});ctime(1)=toc(ctimer); 
+    bufferc{1} = c{i};
+    ctimer = tic;c{i} = centroid_sphLP(stride{i}, supp{i}, w{i});ctime(2)=toc(ctimer);
+    bufferc{2} = c{i};
+    %c{i} = centroid_sphADMM(stride{i}, supp{i}, w{i});
     return;
   end
   

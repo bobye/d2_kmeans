@@ -21,7 +21,7 @@ function [c] = centroid_singlephase(stride, supp, w)
 
   %load cstart.mat
   save(['cstart' num2str(n) '.mat'], 'c', 'avg_stride');
-  
+  %return;
   X = zeros(avg_stride, m);
   D = zeros(n,1);
 

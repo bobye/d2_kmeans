@@ -1,7 +1,7 @@
 % generate synthetic data
 
-dim = 2;
-centroids.m = 10;
+dim = 3;
+centroids.m = 5;
 centroids.num = 10;
 samples.num = 3000;
 
