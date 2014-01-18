@@ -90,9 +90,9 @@ function [c] = centroid_sphLP(stride, supp, w)
   global statusIterRec;
   statusIterRec(:,2) = statusIter;
   
-  h=figure;
-  plot(statusIter);
-  print(h, '-dpdf', 'centroid_sphLP.pdf');
+  %h=figure;
+  %plot(statusIter);
+  %print(h, '-dpdf', 'centroid_sphLP.pdf');
 
   fprintf(stdoutput, ' %f', c.w);
   fprintf(stdoutput, '\n');
