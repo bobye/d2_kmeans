@@ -1,12 +1,13 @@
 %clear;
+numOfSamples = 100;
 if ~exist('numOfSamples')
     numOfSamples = 50;
 end
 %%
-global stdoutput ctime optim_options lpoptim_options qpoptim_options bufferc num_of_cores; 
+global stdoutput IDX ctime optim_options lpoptim_options qpoptim_options bufferc num_of_cores; 
 stdoutput = 1;
 ctime=zeros(2,1);
-num_of_cores = 4;
+num_of_cores = 2;
 optim_options   = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off');
 lpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Simplex', 'on');
 qpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Algorithm','active-set');
@@ -14,8 +15,8 @@ qpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','o
 
 fprintf(stdoutput, 'Loading data ... ');
 tic;
-s_modalities = 1;%2;
-d_modalities = 3;%[3, 3];
+s_modalities = 2;
+d_modalities = [3, 3];
 
 %fp = fopen('../mountaindat.txt');
 fp=fopen('../3000_3_5_10.txt');
@@ -51,7 +52,12 @@ global statusIterRec;
 
 max_stride = max(cellfun(@(x) max(x.stride), db));
 kantorovich_prepare;
-clusters = d2clusters(db, 1);
+
+matlabpool('open', num_of_cores);
+clusters = d2clusters(db, 2);
+matlabpool('close');
+
+save clusters.dat clusters
 
 n = size(statusIterRec,1);
 
@@ -63,13 +69,13 @@ n = size(statusIterRec,1);
 %plot((1:n)', statusIterRec(:,1),'-or', ...
 %     (1:n)', statusIterRec(:,2),'-dg');
  
-err = sqrt(kantorovich(bufferc{1}.supp, bufferc{1}.w, bufferc{2}.supp, bufferc{2}.w)) ... 
-    /norm(bufferc{2}.supp,'fro');
+%err = sqrt(kantorovich(bufferc{1}.supp, bufferc{1}.w, bufferc{2}.supp, bufferc{2}.w)) ... 
+%    /norm(bufferc{2}.supp,'fro');
 
 %print(h, '-dpdf', ['centroid_sphALL' num2str(numOfSamples) '.pdf']);
 
 numOfSamples
 num_of_cores
 ctime
-err
+%err
 

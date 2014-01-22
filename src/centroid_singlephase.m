@@ -1,10 +1,10 @@
-function [c] = centroid_singlephase(stride, supp, w) 
+function [c] = centroid_singlephase(stride, supp, w, c0) 
 % Single phase centroid
   
 
   
 % Re-prepare
-  global A B num_of_cores;
+  global A B;
   global stdoutput qpoptim_options;
   
   dim = size(supp,1);
@@ -12,10 +12,12 @@ function [c] = centroid_singlephase(stride, supp, w)
   m = length(w);
   
   posvec=1; for i=2:n posvec(i) = posvec(i-1)+stride(i);end
-  matlabpool('open', num_of_cores);
-
-% Compute initial guess
+  
+  
   avg_stride = ceil(mean(stride));
+  if isempty(c0) || length(c0.w)~=avg_stride
+% Compute random initial guess
+ 
   c_means = supp * w' / n;
   zm = supp - repmat(c_means, [1, m]);
   c_covs = zm * diag(w) * zm' / n;
@@ -23,6 +25,9 @@ function [c] = centroid_singlephase(stride, supp, w)
   c.supp = mvnrnd(c_means', c_covs, avg_stride)';
   %c.w = rand(1,avg_stride); c.w = c.w/sum(c.w);
   c.w = 1/avg_stride * ones(1,avg_stride);
+  else
+      c=c0;
+  end
 
   %load cstart.mat
   save(['cstart' num2str(n) '.mat'], 'c', 'avg_stride');
@@ -65,7 +70,7 @@ function [c] = centroid_singlephase(stride, supp, w)
 
   statusIter = zeros(nIter,1);
   for iter=1:nIter
-      
+    tic;  
     for xsupp=1:suppIter
     % update c.supp
     for j=1:n
@@ -100,7 +105,7 @@ function [c] = centroid_singlephase(stride, supp, w)
     
     
     for admm=1:admmIter
-      toc;tic;
+      %toc;tic;
       % step 1, update X
       
       
@@ -166,10 +171,10 @@ function [c] = centroid_singlephase(stride, supp, w)
     % sum2one(c.w)
     c.w = c.w/sum(c.w);
     % output status
-    tic;statusIter(iter) = d2energy(false);toc;
+    statusIter(iter) = d2energy(false);toc;
     % pause;
   end
-  matlabpool('close');
+  
   global statusIterRec;
   statusIterRec = statusIter;
   
