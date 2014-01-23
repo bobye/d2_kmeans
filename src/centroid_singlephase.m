@@ -11,7 +11,11 @@ function [c] = centroid_singlephase(stride, supp, w, c0)
   n = length(stride);
   m = length(w);
   
-  posvec=1; for i=2:n posvec(i) = posvec(i-1)+stride(i);end
+  posvec=ones(n,1); 
+  for i=1:n-1 
+      posvec(i+1) = posvec(i)+stride(i);
+  end
+  
   
   
   avg_stride = ceil(mean(stride));
@@ -29,7 +33,7 @@ function [c] = centroid_singlephase(stride, supp, w, c0)
       c=c0;
   end
 
-  %load cstart.mat
+  %save cstart.mat
   save(['cstart' num2str(n) '.mat'], 'c', 'avg_stride');
   %return;
   X = zeros(avg_stride, m);

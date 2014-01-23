@@ -21,7 +21,7 @@ function [clusters] = d2clusters( db, k)
   labels = randi(k,1,n);
   
 
-  nROUND = 3;
+  nROUND = 10;
   centroid_init = randi(n,[k,1]);
   nphase = length(db);
   clusters = cell(k);

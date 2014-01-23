@@ -1,5 +1,5 @@
 %clear;
-numOfSamples = 100;
+numOfSamples = 5000;
 if ~exist('numOfSamples')
     numOfSamples = 50;
 end
@@ -7,7 +7,7 @@ end
 global stdoutput IDX ctime optim_options lpoptim_options qpoptim_options bufferc num_of_cores; 
 stdoutput = 1;
 ctime=zeros(2,1);
-num_of_cores = 2;
+num_of_cores = 12;
 optim_options   = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off');
 lpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Simplex', 'on');
 qpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Algorithm','active-set');
@@ -19,7 +19,7 @@ s_modalities = 2;
 d_modalities = [3, 3];
 
 %fp = fopen('../mountaindat.txt');
-fp=fopen('../3000_3_5_10.txt');
+fp=fopen('../total.txt');
 
 for i=1:s_modalities
     db{i}.stride = [];
@@ -54,10 +54,10 @@ max_stride = max(cellfun(@(x) max(x.stride), db));
 kantorovich_prepare;
 
 matlabpool('open', num_of_cores);
-clusters = d2clusters(db, 2);
+clusters = d2clusters(db, 6);
 matlabpool('close');
 
-save clusters.dat clusters
+save clusters.dat clusters IDX
 
 n = size(statusIterRec,1);
 

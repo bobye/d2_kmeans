@@ -37,6 +37,10 @@ function [fval, x] = kantorovich(X, wX, Y, wY, x0)
   if exitflag < 0
   [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, lpoptim_options );
   end
+  
+  if exitflag < 0
+  [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), []);
+  end
 
   if exitflag < 0
       save(['err-lingprog-' datestr(clock, 0) '.mat'], 'f', 'Aeq', 'beq', 'n', 'm', 'x0');
@@ -44,4 +48,5 @@ function [fval, x] = kantorovich(X, wX, Y, wY, x0)
   end
 
   x = reshape(x, n, m);
+  x(x<0) = 0;
 end
