@@ -1,5 +1,5 @@
 function [c] = centroid_singlephase(stride, supp, w, c0) 
-% Single phase centroid
+% Single phase centroid using ADMM
   
 
   
@@ -10,42 +10,39 @@ function [c] = centroid_singlephase(stride, supp, w, c0)
   dim = size(supp,1);
   n = length(stride);
   m = length(w);
-  
-  posvec=ones(n,1); 
-  for i=1:n-1 
-      posvec(i+1) = posvec(i)+stride(i);
-  end
+  posvec=[1,cumsum(stride)+1];
+  avg_stride = ceil(mean(stride));  
   
   
-  
-  avg_stride = ceil(mean(stride));
-  if isempty(c0) || length(c0.w)~=avg_stride
-% Compute random initial guess
- 
-  c_means = supp * w' / n;
-  zm = supp - repmat(c_means, [1, m]);
-  c_covs = zm * diag(w) * zm' / n;
 
-  c.supp = mvnrnd(c_means', c_covs, avg_stride)';
-  %c.w = rand(1,avg_stride); c.w = c.w/sum(c.w);
-  c.w = 1/avg_stride * ones(1,avg_stride);
+  if isempty(c0) || length(c0.w)~=avg_stride
+    % Compute random initial guess
+    c_means = supp * w' / n;
+    zm = supp - repmat(c_means, [1, m]);
+    c_covs = zm * diag(w) * zm' / n;
+    c.supp = mvnrnd(c_means', c_covs, avg_stride)';
+    %c.w = rand(1,avg_stride); c.w = c.w/sum(c.w);
+    c.w = 1/avg_stride * ones(1,avg_stride);
   else
-      c=c0;
+    c=c0;
   end
 
   %save cstart.mat
   save(['cstart' num2str(n) '.mat'], 'c', 'avg_stride');
   %return;
+  
   X = zeros(avg_stride, m);
   D = zeros(n,1);
   
+  % create buffering data
   XX = cell(n,1);
   suppx = cell(n,1);
   wx = cell(n,1);
+  strips=cell(n,1);
   for iter=1:n
-      strips = posvec(iter):(posvec(iter)+stride(iter)-1);
-      suppx{iter} = supp(:,strips);
-      wx{iter} = w(strips);
+      strips{iter} = posvec(iter):(posvec(iter)+stride(iter)-1);
+      suppx{iter} = supp(:,strips{iter});
+      wx{iter} = w(strips{iter});
   end
   
   
@@ -53,13 +50,13 @@ function [c] = centroid_singlephase(stride, supp, w, c0)
   function  obj = d2energy(warm)
   for it=1:n                              
     if warm
-    [D(it), XX{it}] = kantorovich(c.supp, c.w, suppx{it}, wx{it}, XX{it});
+      [D(it), XX{it}] = kantorovich(c.supp, c.w, suppx{it}, wx{it}, XX{it});
     else
-    [D(it), XX{it}] = kantorovich(c.supp, c.w, suppx{it}, wx{it});        
+      [D(it), XX{it}] = kantorovich(c.supp, c.w, suppx{it}, wx{it});        
     end
   end
-  obj = sum(D);
-  fprintf(stdoutput, '\n\t\t %d\t %e', iter, obj );  
+    obj = mean(D);
+    fprintf(stdoutput, '\n\t\t %d\t %e', iter, obj );  
   end
 
   d2energy(false);
@@ -76,14 +73,14 @@ function [c] = centroid_singlephase(stride, supp, w, c0)
   for iter=1:nIter
     tic;  
     for xsupp=1:suppIter
-    % update c.supp
-    for j=1:n
-        X(:,posvec(j):posvec(j)+stride(j)-1) = XX{j};
-    end
-    c.supp = supp * X' ./ repmat(n*c.w, [dim, 1]);
+      % update c.supp
+      for j=1:n
+        X(:,strips{j}) = XX{j};
+      end
+      c.supp = supp * X' ./ repmat(n*c.w, [dim, 1]);
 
-    % setup initial guess for X in ADMM
-    d2energy(true);
+      % setup initial guess for X in ADMM
+      d2energy(true);
     end
     
     % update c.w as well as X, using ADMM
@@ -92,11 +89,11 @@ function [c] = centroid_singlephase(stride, supp, w, c0)
     pho = 50*mean(D);
     rho = 1.;
 
-    % precompute linear paramters
+    % precompute linear parameters
     C = pdist2(c.supp', supp', 'sqeuclidean');
     Cx = cell(n,1);
     for i=1:n
-        Cx{i} = C(:,posvec(i):posvec(i)+stride(i)-1);
+        Cx{i} = C(:,strips{i});
     end
     %C=zeros(avg_stride,m);
 
@@ -128,7 +125,7 @@ function [c] = centroid_singlephase(stride, supp, w, c0)
       end
       
       for j=1:n
-        X(:,posvec(j):posvec(j)+stride(j)-1) = XX{j};
+        X(:,strips{j}) = XX{j};
       end
       
 

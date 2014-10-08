@@ -1,10 +1,10 @@
-
 function [fval, x] = kantorovich(X, wX, Y, wY, x0)
 
   global A;
-  global optim_options;
-  global lpoptim_options;  
 
+  default_options = optimset('Display','off', 'Diagnostics','off');
+  optim_options   = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off');
+  lpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Simplex', 'on');
   
   n = size(X,2);
   m = size(Y,2);
@@ -26,14 +26,17 @@ function [fval, x] = kantorovich(X, wX, Y, wY, x0)
 
   if nargin == 4
       x0 = [];
-%      lpoptim = lpoptim_options;
   else
       x0 = reshape(x0,[n*m,1]);
-%      lpoptim = optim_options;
   end
   
-  [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, optim_options );
+  [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, default_options );
 
+  
+  if exitflag < 0
+  [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, optim_options );
+  end
+  
   if exitflag < 0
   [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, lpoptim_options );
   end

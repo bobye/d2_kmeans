@@ -1,7 +1,7 @@
 %% Precomputation
+function kantorovich_prepare(max_stride)
 
 global A B;
-global max_stride;
 
 for n=1:max_stride
   for m=1:max_stride

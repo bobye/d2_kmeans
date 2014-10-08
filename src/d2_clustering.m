@@ -3,57 +3,23 @@ numOfSamples = 5000;
 if ~exist('numOfSamples')
     numOfSamples = 50;
 end
-%%
-global stdoutput IDX ctime optim_options lpoptim_options qpoptim_options bufferc num_of_cores; 
-stdoutput = 1;
-ctime=zeros(2,1);
-num_of_cores = 12;
-optim_options   = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off');
-lpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Simplex', 'on');
-qpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Algorithm','active-set');
+setparam;
 %% Load data
 
 fprintf(stdoutput, 'Loading data ... ');
-tic;
+
 s_modalities = 2;
 d_modalities = [3, 3];
-
-%fp = fopen('../mountaindat.txt');
-fp=fopen('../total.txt');
-
-for i=1:s_modalities
-    db{i}.stride = [];
-    db{i}.w = [];
-    db{i}.supp = [];
-end
-
-count = 0;
-while ~feof(fp)
-  count = count +1;
-  for i=1:s_modalities      
-    fscanf(fp, '%d', 1);
-    [d check] = fscanf(fp, '%d', 1); 
-    if check == 0 break; end
-
-    db{i}.stride(end+1) = d;
-    we = fscanf(fp, '%f', [1, d]);
-    db{i}.w(1,(end+1):(end+d)) = we/sum(we);
-    db{i}.supp(:, (end+1):(end+d)) = fscanf(fp, '%f', [d_modalities(i), d]);      
-  end
-  if (count == numOfSamples) break; end
-end
-
-fclose(fp);
-toc;
+filename='../total.txt';
+db = loaddata(numOfSamples, s_modalities, d_modalities, filename);
 
 %%
-global max_stride;
 global statusIterRec;
 
 max_stride = max(cellfun(@(x) max(x.stride), db));
-kantorovich_prepare;
+kantorovich_prepare(max_stride);
 
-matlabpool('open', num_of_cores);
+matlabpool('open', num_of_cores); % start parallel workers
 clusters = d2clusters(db, 6);
 matlabpool('close');
 
@@ -74,8 +40,6 @@ n = size(statusIterRec,1);
 
 %print(h, '-dpdf', ['centroid_sphALL' num2str(numOfSamples) '.pdf']);
 
-numOfSamples
-num_of_cores
-ctime
+fprintf('%d %d %f %f', numOfSamples, num_of_cores, ctime(1), ctime(2));
 %err
 
