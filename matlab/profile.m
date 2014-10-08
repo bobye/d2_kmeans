@@ -2,7 +2,7 @@
 %% Load data
 clear;
 setparam;
-size=1000;
+size=100;
 
 s_modalities = 2;
 d_modalities = [3, 3];
