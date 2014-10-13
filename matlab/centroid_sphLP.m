@@ -30,7 +30,7 @@ function [c] = centroid_sphLP(stride, supp, w)
     end
     pos = pos + stride(it);
   end
-  obj = sum(D);
+  obj = mean(D);
   fprintf(stdoutput, '\n\t\t %d\t %e', iter, obj );      
   end
 

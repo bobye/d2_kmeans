@@ -1,15 +1,10 @@
+function [fval, x, lambda] = kantorovich(X, wX, Y, wY, x0)
 
-function [fval, x] = kantorovich(X, wX, Y, wY, x0)
-
-    
   global A;
-  global optim_options;
-  global lpoptim_options;  
-
+  global default_options optim_options lpoptim_options;
   
   n = size(X,2);
   m = size(Y,2);
-
   
   wX = wX/sum(wX);
   wY = wY/sum(wY);
@@ -17,7 +12,7 @@ function [fval, x] = kantorovich(X, wX, Y, wY, x0)
   if (length(wX) ~= n || length(wY) ~= m ) 
      error('format not correct');
   end
-  
+
   % might fail when input is NaN
   if any(isnan(X(:))) || any(isnan(Y(:))) || any(isnan(wX)) || any(isnan(wY))
         fprintf('%f ',X);fprintf('\n');
@@ -29,23 +24,19 @@ function [fval, x] = kantorovich(X, wX, Y, wY, x0)
   D = pdist2(X', Y', 'sqeuclidean');
   f = reshape(D, n*m, 1);
   
-  Aeq = A{n,m}(1:end-1,:);
-  beq = [wX'; wY(1:end-1)'];
-  %Aeq = A{n,m};
-  %beq = [wX'; wY'];
+%  Aeq = A{n,m}(1:end-1,:);beq = [wX'; wY(1:end-1)'];
+  Aeq = A{n,m};beq = [wX'; wY'];
 
   if nargin == 4
       x0 = [];
-%      lpoptim = lpoptim_options;
   else
       x0 = reshape(x0,[n*m,1]);
       if any(isnan(x0))
           fprintf('%f ',x0);fprintf('\n');
           x0=[];
       end
-%      lpoptim = optim_options;
   end
-  
+
   if any(isnan(f)) || any(isnan(Aeq(:))) || any(isnan(beq))
       disp X;
       disp Y;
@@ -55,14 +46,19 @@ function [fval, x] = kantorovich(X, wX, Y, wY, x0)
       %fprintf('%f ',beq);fprintf('\n');
   end
   
-  [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, optim_options );
+  [x, fval, exitflag, ~, lambda] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, default_options );
 
+  
   if exitflag < 0
-  [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, lpoptim_options );
+  [x, fval, exitflag, ~, lambda] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, optim_options );
   end
   
   if exitflag < 0
-  [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), []);
+  [x, fval, exitflag, ~, lambda] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, lpoptim_options );
+  end
+  
+  if exitflag < 0
+  [x, fval, exitflag, ~, lambda] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), []);
   end
 
   if exitflag < 0
