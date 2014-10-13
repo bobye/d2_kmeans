@@ -34,11 +34,18 @@ int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   return 0;
 }
 
-int d2_initialize_sphBregman(var_sphBregman * var_phwork) {
+int d2_allocate_work_sphBregman(sph *ph, var_sphBregman * var_phwork) {
+      var_phwork->X = 
+	(SCALAR *) malloc (ph->str * ph->col * sizeof(SCALAR));
+      var_phwork->Z = 
+	(SCALAR *) malloc (ph->str * ph->col * sizeof(SCALAR));
+      var_phwork->Y = 
+	(SCALAR *) malloc (ph->str * ph->col * sizeof(SCALAR));
   return 0;
 }
 
 int d2_centroid_sphBregman(mph *p_data, // data
+			   var_mph * var_work,
 			   int idx_ph, // index of phases
 			   sph *c0,
 			   /** OUT **/ sph *c) {

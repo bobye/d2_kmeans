@@ -148,12 +148,7 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
       (SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR));
 
     if (d2_alg_type == 0) {
-      var_work->l_var_sphBregman[i].X = 
-	(SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR));
-      var_work->l_var_sphBregman[i].Z = 
-	(SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR));
-      var_work->l_var_sphBregman[i].Y = 
-	(SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR));
+      d2_allocate_work_sphBregman(p_data->ph +i, var_work->l_var_sphBregman+i);
     }
   }
   return 0;
@@ -177,6 +172,8 @@ int d2_free_work(var_mph *var_work) {
 int d2_labeling(mph *p_data,
 		mph *centroids,
 		int num_clusters) {
+
+  return 0;
 }
 
 int d2_clustering(int num_clusters, 
@@ -212,7 +209,7 @@ int d2_clustering(int num_clusters,
       VPRINTF(("\t phase %d: \n", i));            
 
       if (d2_alg_type == 0) 
-	d2_centroid_sphBregman(p_data, i, centroids->ph + i, centroids->ph + i);
+	d2_centroid_sphBregman(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);
 
     }
   }
