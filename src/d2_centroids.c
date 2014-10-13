@@ -31,6 +31,11 @@ int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   for (i=0; i<num_of_labels; ++i) {      
     d2_mvnrnd(means+i*dim, covs+i*dim*dim, dim, str, c->p_supp + i*str*dim);
   }
+  return 0;
+}
+
+int d2_initialize_sphBregman(var_sphBregman * var_phwork) {
+  return 0;
 }
 
 int d2_centroid_sphBregman(mph *p_data, // data
@@ -50,9 +55,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
     d2_centroid_randn(p_data, idx_ph, c);
   } else {
     *c = *c0; // warm start
-  }
-
-  
+  }  
 
 
 

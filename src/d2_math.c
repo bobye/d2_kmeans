@@ -1,4 +1,4 @@
-#define _VERBOSE_OUTPUT
+//#define _VERBOSE_OUTPUT
 
 #include "d2_math.h"
 #include "stdio.h"

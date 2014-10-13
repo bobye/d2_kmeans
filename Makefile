@@ -53,7 +53,7 @@ test: $(ALL_OBJECTS)
 
 .PHONY: clean
 clean:
-	@rm test
+	@rm -f test
 	@for pattern in '*.o' '*.d'; do \
 		find . -name "$$pattern" | xargs rm; \
 	done

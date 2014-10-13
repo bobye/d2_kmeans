@@ -4,6 +4,9 @@
 #include "d2_clustering.h"
 #include "d2_math.h"
 
+
+extern int d2_alg_type;
+
 int d2_free(mph *p_data) {
   int i;
   for (i=0; i<p_data->s_ph; ++i) {
@@ -12,6 +15,7 @@ int d2_free(mph *p_data) {
     free(p_data->ph[i].p_w);
   }
   free(p_data->ph);
+  free(p_data->label);
   return 0;
 }
 
@@ -90,7 +94,7 @@ int d2_load(void *fp_void, mph *p_data) {
   p_str  = (int **) malloc(s_ph * sizeof(int *));
   p_supp = (double **) malloc(s_ph * sizeof(double *));
   p_w    = (double **) malloc(s_ph * sizeof(double *));
-
+  
   for (n=0; n<s_ph; ++n) {
     p_str[n]  = p_data->ph[n].p_str;
     p_supp[n] = p_data->ph[n].p_supp;
@@ -110,6 +114,7 @@ int d2_load(void *fp_void, mph *p_data) {
       assert(dim == p_data->ph[n].dim);
       fscanf(fp, "%d", p_str[n]); 
       str = *(p_str[n]); assert(str > 0);
+      p_data->ph[n].col += str;
 
       // read weights      
       p_w_sph = p_w[n];
@@ -126,6 +131,93 @@ int d2_load(void *fp_void, mph *p_data) {
       p_str[n] ++;
     }
   }
+
+  return 0;
+}
+
+int d2_allocate_work(mph *p_data, var_mph *var_work) {
+  int i;
+  var_work->s_ph = p_data->s_ph;
+
+  var_work->g_var = (var_sph *) malloc(p_data->s_ph * sizeof(var_sph));
+  if (d2_alg_type == 0) 
+    var_work->l_var_sphBregman = (var_sphBregman *) malloc(p_data->s_ph * sizeof(var_sphBregman));
+
+  for (i=0; i<p_data->s_ph; ++i) {
+    var_work->g_var[i].C = 
+      (SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR));
+
+    if (d2_alg_type == 0) {
+      var_work->l_var_sphBregman[i].X = 
+	(SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR));
+      var_work->l_var_sphBregman[i].Z = 
+	(SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR));
+      var_work->l_var_sphBregman[i].Y = 
+	(SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR));
+    }
+  }
+  return 0;
+}
+
+int d2_free_work(var_mph *var_work) {
+  int i;
+  for (i=0; i<var_work->s_ph; ++i) {
+    free(var_work->g_var[i].C);
+    if (d2_alg_type) {
+      free(var_work->l_var_sphBregman[i].X);
+      free(var_work->l_var_sphBregman[i].Z);
+      free(var_work->l_var_sphBregman[i].Y);
+    }
+  }
+  free(var_work->g_var);
+  free(var_work->l_var_sphBregman);
+  return 0;
+}
+
+int d2_labeling(mph *p_data,
+		mph *centroids,
+		int num_clusters) {
+}
+
+int d2_clustering(int num_clusters, 
+		  int max_iter, 
+		  mph *p_data, 
+		  /** OUT **/ mph *centroids){
+  int i,j,k,iter;
+  int s_ph = p_data->s_ph;
+  int size = p_data->size;
+  int *label = p_data->label;
+  assert(k>0 && max_iter > 0);
+
+  for (i=0; i<size; ++i) 
+    label[i] = rand() % num_clusters;
+
+  // initialize centroids from random
+  centroids->s_ph = s_ph;
+  centroids->size = num_clusters;
+  centroids->ph = (sph *) malloc(s_ph * sizeof(sph));
+  for (i=0; i<s_ph; ++i)
+    d2_centroid_randn(p_data, i, centroids->ph + i);
+
+  // initialize auxiliary variables
+  var_mph var_work;
+  d2_allocate_work(p_data, &var_work);
+
+  // start centroid-based clustering here
+  for (iter=0; iter<max_iter; ++iter) {
+    VPRINTF(("Round %d ... \n", iter));
+    d2_labeling(p_data, centroids, num_clusters);
+
+    for (i=0; i<s_ph; ++i) {
+      VPRINTF(("\t phase %d: \n", i));            
+
+      if (d2_alg_type == 0) 
+	d2_centroid_sphBregman(p_data, i, centroids->ph + i, centroids->ph + i);
+
+    }
+  }
+
+  d2_free_work(&var_work);
 
   return 0;
 }
