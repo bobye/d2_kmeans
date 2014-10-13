@@ -11,11 +11,18 @@ extern "C" {
 
 
 #ifdef __APPLE__
+
 #include <Accelerate/Accelerate.h>
+
 #elif defined __GNUC__
+
 #include <cblas.h>
 #include <clapack.h>
+
 #endif
+
+
+#include "blas_like.h"
 
 #ifdef  _D2_DOUBLE
 #define _D2_SCALAR          double
