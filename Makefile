@@ -47,7 +47,7 @@ all: test
 -include $(DEPENDENCY_FILES)
 
 test: $(ALL_OBJECTS)
-	$(CXX) $(LDFLAGS) -o $@ $(ALL_OBJECTS) $(LIBRARIES)
+	$(CXX) $(LDFLAGS) $(DEFINES) -o $@ $(ALL_OBJECTS) $(LIBRARIES)
 
 .PHONY: clean
 clean:

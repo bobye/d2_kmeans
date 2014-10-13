@@ -2,7 +2,6 @@
 #define _GLOBAL_H_
 
 #define _D2_DOUBLE
-#define _VERBOSE_OUTPUT
 
 #ifdef _D2_DOUBLE
 #define SCALAR double
