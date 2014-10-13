@@ -1,6 +1,7 @@
 
 function [fval, x] = kantorovich(X, wX, Y, wY, x0)
 
+    
   global A;
   global optim_options;
   global lpoptim_options;  
@@ -9,11 +10,20 @@ function [fval, x] = kantorovich(X, wX, Y, wY, x0)
   n = size(X,2);
   m = size(Y,2);
 
+  
   wX = wX/sum(wX);
   wY = wY/sum(wY);
 
   if (length(wX) ~= n || length(wY) ~= m ) 
      error('format not correct');
+  end
+  
+  % might fail when input is NaN
+  if any(isnan(X(:))) || any(isnan(Y(:))) || any(isnan(wX)) || any(isnan(wY))
+        fprintf('%f ',X);fprintf('\n');
+        fprintf('%f ',wX);fprintf('\n');
+        fprintf('%f ',Y);fprintf('\n');
+        fprintf('%f ',wY);fprintf('\n');
   end
 
   D = pdist2(X', Y', 'sqeuclidean');
@@ -29,7 +39,20 @@ function [fval, x] = kantorovich(X, wX, Y, wY, x0)
 %      lpoptim = lpoptim_options;
   else
       x0 = reshape(x0,[n*m,1]);
+      if any(isnan(x0))
+          fprintf('%f ',x0);fprintf('\n');
+          x0=[];
+      end
 %      lpoptim = optim_options;
+  end
+  
+  if any(isnan(f)) || any(isnan(Aeq(:))) || any(isnan(beq))
+      disp X;
+      disp Y;
+      disp D;
+      %fprintf('%f ',f);fprintf('\n');
+      %fprintf('%f ',Aeq);fprintf('\n');
+      %fprintf('%f ',beq);fprintf('\n');
   end
   
   [x, fval, exitflag] = linprog(f, [], [], Aeq, beq, zeros(n*m,1), [], x0, optim_options );

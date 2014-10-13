@@ -9,7 +9,7 @@ stdoutput = 1;
 ctime=zeros(2,1);
 num_of_cores = 12;
 optim_options   = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off');
-lpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Simplex', 'on');
+lpoptim_options = optimset('Display','off', 'Diagnostics','off');
 qpoptim_options = optimset('Display','off', 'LargeScale','off', 'Diagnostics','off', 'Algorithm','active-set');
 %% Load data
 
@@ -45,7 +45,6 @@ end
 
 fclose(fp);
 toc;
-
 %%
 global max_stride;
 global statusIterRec;
@@ -54,10 +53,14 @@ max_stride = max(cellfun(@(x) max(x.stride), db));
 kantorovich_prepare;
 
 matlabpool('open', num_of_cores);
-clusters = d2clusters(db, 6);
+
+% ignore textures
+db(2) = [];
+
+[clusters, labels] = d2clusters(db, 10);
 matlabpool('close');
 
-save clusters.dat clusters IDX
+save clusters.mat clusters IDX labels
 
 n = size(statusIterRec,1);
 
