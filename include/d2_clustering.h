@@ -31,6 +31,12 @@ extern "C" {
 
   int d2_free(mph *p_data);
 
+
+  int d2_centroid_sphBregman(mph *p_data, // data
+			     int idx_ph, // index of phases
+			     sph *c0,
+			     sph *c);
+
 #ifdef __cplusplus
 }
 #endif
