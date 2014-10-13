@@ -1,5 +1,7 @@
+#include "global.h"
 #include "util.hh"
 #include <sstream>
+
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);
@@ -16,3 +18,4 @@ std::vector<std::string> split(const std::string &s, char delim) {
     split(s, delim, elems);
     return elems;
 }
+

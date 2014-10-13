@@ -5,21 +5,19 @@
 extern "C" {
 #endif
 
-#define SCALAR double
-#define SCALAR_SCANF_TYPE ("%lf")
+#include "global.h"
 
   typedef struct {
-    int avg_str;
-    int dim;
+    int dim, str, size;
     int *p_str;
     SCALAR *p_supp;
     SCALAR *p_w;  
-  } sph;
-  
+  } sph; 
 
   typedef struct {
-    int s_ph; // size of phases
-    int size;
+    int s_ph, size; // size of phases
+    int *label;
+    int num_of_labels;
     sph *ph;
   } mph;
 

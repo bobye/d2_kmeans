@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "d2_clustering.h"
-
+#include "d2_math.h"
 
 int d2_free(mph *p_data) {
   int i;
@@ -15,34 +15,59 @@ int d2_free(mph *p_data) {
   return 0;
 }
 
+int d2_allocate_sph(sph *p_data_sph,
+		    const int d,
+		    const int stride,
+		    const int num,
+		    const double semicol) {
+
+  int n;
+  n = num * d * (stride + semicol);
+
+  p_data_sph->dim = d;
+  p_data_sph->str = stride;
+  p_data_sph->size = num;
+
+  p_data_sph->p_str  = (int *) malloc(num * sizeof(int));
+  p_data_sph->p_supp = (SCALAR *) malloc(n * sizeof(SCALAR));
+  p_data_sph->p_w    = (SCALAR *) malloc(n * sizeof(SCALAR));  
+
+  if (!(p_data_sph->p_str && p_data_sph->p_supp && p_data_sph->p_w)) {
+    return -1;
+  }
+
+  return 0;
+}
+
+int d2_free_sph(sph *p_data_sph) {
+  free(p_data_sph->p_str);
+  free(p_data_sph->p_supp);
+  free(p_data_sph->p_w);
+  return 0;
+}
+
 int d2_allocate(mph *p_data,
 		const int size_of_phases,
 		const int size_of_samples,
 		const int *avg_strides,
 		const int *dimension_of_phases) {
-  int i,n;
-  int success;
+  int i;
+  int success = 0;
 
   p_data->s_ph = size_of_phases;
   p_data->size = size_of_samples; 
   p_data->ph   = (sph *) malloc(size_of_phases * sizeof(sph));
 
-  success = 0;
+
   for (i=0; i<p_data->s_ph; ++i) {
 
-    p_data->ph[i].dim     = dimension_of_phases[i];
-    p_data->ph[i].avg_str = avg_strides[i];
-
-    n = p_data->size * p_data->ph[i].dim * (p_data->ph[i].avg_str + 0.6);
-
-    p_data->ph[i].p_str  = (int *) malloc(size_of_samples * sizeof(int)); 
-    p_data->ph[i].p_supp = (SCALAR *) malloc(n * sizeof(SCALAR));
-    p_data->ph[i].p_w    = (SCALAR *) malloc(n * sizeof(SCALAR));
-
-    if (!(p_data->ph[i].p_str && p_data->ph[i].p_supp && p_data->ph[i].p_w)) {
-      success=-1;
-      break;
-    }
+    p_data->label = (int *) calloc(size_of_samples, sizeof(int)); // initialize to zero
+    success = d2_allocate_sph(p_data->ph + i, 
+			      dimension_of_phases[i], 
+			      avg_strides[i], 
+			      size_of_samples, 
+			      0.6);
+    if (success != 0) break;
   }
   return success;
 }
@@ -93,4 +118,39 @@ int d2_load(void *fp_void, mph *p_data) {
 }
 
 
+
+int d2_centroid_sphBregman(mph *p_data, // data
+			   int idx_ph, // index of phases
+			   sph *c0) {
+  int i,j,k;
+  sph *data_ph = p_data->ph + idx_ph;
+  int num_of_labels = p_data->num_of_labels;
+  int dim = data_ph->dim;
+  int str = data_ph->str;
+  int *p_str = data_ph->p_str;
+  SCALAR *p_supp = data_ph->p_supp;
+  SCALAR *p_w = data_ph->p_w;
+
+
+  if (!c0) {
+    // initialization 
+    d2_allocate_sph(c0, dim, str, num_of_labels, 0);
+    for (i=0; i<num_of_labels; ++i) {
+      c0->p_str[i] = str;
+    }
+    for (i=0; i<num_of_labels*str; ++i) {
+      c0->p_w[i] = 1./str;
+    }
+
+    // compute mean and cov
+    SCALAR *means, *covs;
+    means = (SCALAR *) malloc(dim * num_of_labels);
+    covs  = (SCALAR *) malloc(dim * dim * num_of_labels);
+    d2_mean(data_ph, p_data->label, means);
+    d2_cov(data_ph, p_data->label, covs);
+    for (i=0; i<num_of_labels; ++i) {      
+      d2_mvnrnd(means+i*dim, covs+i*dim*dim, str, c0->p_supp + i*str*dim);
+    }
+  }
+}
 
