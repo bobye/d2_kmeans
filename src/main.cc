@@ -7,6 +7,7 @@
 #include "d2_clustering.h"
 #include "util.hh"
 
+int d2_alg_type = 0;
 
 // ./bin/test mountaindat.txt 2 1000 3,3 6,11
 int main(int argc, char *argv[])
@@ -46,11 +47,12 @@ int main(int argc, char *argv[])
     cerr << "Allocation Failed!" << endl;
   }
 
-  sph c;
-  d2_centroid_sphBregman(&data, 0, NULL, &c);
-  
+  mph c;
+  //d2_centroid_sphBregman(&data, 0, NULL, &c);
+  d2_clustering(1, 1, &data, &c);
 
   d2_free(&data);
+  d2_free(&c);
 
   return 0;
 }
