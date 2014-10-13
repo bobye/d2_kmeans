@@ -2,7 +2,7 @@ CC=gcc -std=c99
 CXX=g++
 
 ARCH_FLAGS=
-CFLAGS=-Wextra -Wall -pedantic-errors $(ARCH_FLAGS) -O3
+CFLAGS=-Wextra -Wall -pedantic-errors $(ARCH_FLAGS)
 LDFLAGS=$(ARCH_FLAGS)
 DEFINES=
 INCLUDES=-Iinclude/

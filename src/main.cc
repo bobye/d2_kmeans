@@ -46,6 +46,10 @@ int main(int argc, char *argv[])
     cerr << "Allocation Failed!" << endl;
   }
 
+  sph c;
+  d2_centroid_sphBregman(&data, 0, NULL, &c);
+  
+
   d2_free(&data);
 
   return 0;
