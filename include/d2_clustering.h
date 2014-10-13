@@ -1,42 +1,37 @@
 #ifndef _D2_CLUSTERING_H_
 #define _D2_CLUSTERING_H_
 
-#define SCALAR double
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-  /* setup problem type of D2 clustering */
-  extern int d2_initialize(const int size_of_modalities, 
-			   const int *dimensions_of_modalities 
-			   );
+#define SCALAR double
+#define SCALAR_SCANF_TYPE ("%lf")
 
+  typedef struct {
+    int avg_str;
+    int dim;
+    int *p_str;
+    SCALAR *p_supp;
+    SCALAR *p_w;  
+  } sph;
+  
 
-  /* assign data blocks, memory are pre-allocated */
-  extern int d2_assign_data(const int size_of_samples,
-			    /** IN **/ int *size_of_supports,
-			    /** IN **/ SCALAR *data_block_supp,
-			    /** IN **/ SCALAR *data_block_w
-			    );
+  typedef struct {
+    int s_ph; // size of phases
+    int size;
+    sph *ph;
+  } mph;
 
-  /* compute the centroid of labeled sub-array, memory for outputs are pre-allocated */
-  extern int d2_compute_centroid(const int label_of_interest,
-				 /** IN     **/ int *labels,
-				 /** IN/OUT **/ int *size_of_supp, 
-				 /** OUT    **/ SCALAR *centroid_supp, 
-				 /** OUT    **/ SCALAR *centroid_w
-				 ); // centroid_supp and centroid_w should allocate enough space subject to size_of_supp
+  int d2_allocate(mph *p_data,
+		  const int size_of_phases,
+		  const int size_of_samples,
+		  const int *avg_strides,
+		  const int *dimension_of_phases);
 
-  extern int d2_clustering(const int size_of_clusters,
-			   /** OUT **/ int *labels,
-			   /** OUT **/ int *size_of_supp,
-			   /** OUT **/ SCALAR *cluster_supp,
-			   /** OUT **/ SCALAR *cluster_w,
-			   /** IN  **/ int reset
-			   );
+  int d2_load(void *fp, mph *p_data);
 
-  extern int d2_free();
+  int d2_free(mph *p_data);
 
 #ifdef __cplusplus
 }

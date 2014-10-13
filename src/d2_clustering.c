@@ -1,98 +1,96 @@
+#include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "d2_clustering.h"
 
 
-int s_modalities, // size of modalities
-  *d_modalities; // dimension of each modality
-int s_samples; // size of total samples
-int *s_supp; // size of supports, 2D array of s_modalities * s_samples in column major order
-SCALAR **p_supp, **p_w; // array of pointers of support vectors and weights, use as p_supp[s_supp[]]
-
-
-int d2_initialize(const int size_of_modalities,
-		  const int *dimensions_of_modalities) {
+int d2_free(mph *p_data) {
   int i;
-  
-  s_modalities = size_of_modalities;
-
-  if (0 >= s_modalities) return -1;// s_modalities should >= 1
-
-  d_modalities = (int*) malloc(s_modalities * sizeof(int));
-
-  if (dimensions_of_modalities == NULL) {
-    for (i=0; i<=s_modalities; ++i) d_modalities[i] = 1;
+  for (i=0; i<p_data->s_ph; ++i) {
+    free(p_data->ph[i].p_str);
+    free(p_data->ph[i].p_supp);
+    free(p_data->ph[i].p_w);
   }
-  else {
-    for (i=0; i<=s_modalities; ++i) {      
-      d_modalities[i] = dimensions_of_modalities[i];
+  free(p_data->ph);
+  return 0;
+}
+
+int d2_allocate(mph *p_data,
+		const int size_of_phases,
+		const int size_of_samples,
+		const int *avg_strides,
+		const int *dimension_of_phases) {
+  int i,n;
+  int success;
+
+  p_data->s_ph = size_of_phases;
+  p_data->size = size_of_samples; 
+  p_data->ph   = (sph *) malloc(size_of_phases * sizeof(sph));
+
+  success = 0;
+  for (i=0; i<p_data->s_ph; ++i) {
+
+    p_data->ph[i].dim     = dimension_of_phases[i];
+    p_data->ph[i].avg_str = avg_strides[i];
+
+    n = p_data->size * p_data->ph[i].dim * (p_data->ph[i].avg_str + 0.6);
+
+    p_data->ph[i].p_str  = (int *) malloc(size_of_samples * sizeof(int)); 
+    p_data->ph[i].p_supp = (SCALAR *) malloc(n * sizeof(SCALAR));
+    p_data->ph[i].p_w    = (SCALAR *) malloc(n * sizeof(SCALAR));
+
+    if (!(p_data->ph[i].p_str && p_data->ph[i].p_supp && p_data->ph[i].p_w)) {
+      success=-1;
+      break;
+    }
+  }
+  return success;
+}
+
+int d2_load(void *fp_void, mph *p_data) {
+  FILE *fp = (FILE *) fp_void;
+
+  int i,j,n,dim;
+  int **p_str, str, strxdim;
+  double **p_supp, **p_w, *p_supp_sph, *p_w_sph;
+  int s_ph = p_data->s_ph;
+  int size = p_data->size;
+
+  p_str  = (int **) malloc(s_ph * sizeof(int *));
+  p_supp = (double **) malloc(s_ph * sizeof(double *));
+  p_w    = (double **) malloc(s_ph * sizeof(double *));
+
+  for (n=0; n<s_ph; ++n) {
+    p_str[n]  = p_data->ph[n].p_str;
+    p_supp[n] = p_data->ph[n].p_supp;
+    p_w[n]    = p_data->ph[n].p_w;
+  }
+
+  for (i=0; i<size; ++i) {
+    for (n=0; n<s_ph; ++n) {      
+      // read dimension and stride    
+      fscanf(fp, "%d", &dim); assert(dim == p_data->ph[n].dim);
+      fscanf(fp, "%d", p_str[n]); 
+      str = *(p_str[n]);
+
+      // read weights      
+      p_supp_sph = p_supp[n];
+      for (j=0; j<str; ++j, ++p_supp_sph)
+	fscanf(fp, SCALAR_SCANF_TYPE, p_supp_sph); 
+      p_supp[n] = p_supp_sph;
+
+      // read support vec
+      p_w_sph = p_w[n];strxdim = str*dim;
+      for (j=0; j<strxdim; ++j, ++p_w_sph)
+	fscanf(fp, SCALAR_SCANF_TYPE, p_w_sph); 
+      p_w[n] = p_w_sph;
+
+      p_str[n] ++;
     }
   }
 
   return 0;
-}		  
-
-int d2_free() {
-  s_modalities = -1;
-  free(d_modalities);
-  free(p_supp); free(p_w); 
-  return 0;
 }
 
-int d2_assign_data(const int size_of_samples,
-		   /** IN **/ int *size_of_supports,
-		   /** IN **/ SCALAR *data_block_supp,
-		   /** IN **/ SCALAR *data_block_w
-		   ){
-  int i,j,m;
-  SCALAR *count_supp = data_block_supp;
-  SCALAR *count_w = data_block_w;
-    
-  s_samples = size_of_samples;
-  s_supp = size_of_supports;
 
-  p_supp = ( SCALAR **) malloc(s_samples * s_modalities * sizeof( SCALAR *));
-  p_w    = ( SCALAR **) malloc(s_samples * s_modalities * sizeof( SCALAR *));
-
-
-  j=0; 
-  for (i=0; i<s_samples; ++i) 
-    for (m=0; m<s_modalities; ++m) {
-      p_supp[j] = count_supp;
-      p_w[j]    = count_w;
-    
-      count_supp += s_supp[j]* d_modalities[m];
-      count_w += s_supp[j];
-      ++j;
-    }
-
-  return 0;
-
-}
-
-int d2_compute_centroid(const int label_of_interest,
-			/** IN     **/ int *labels,
-			/** IN/OUT **/ int *size_of_supp, 
-			/** OUT    **/ SCALAR *centroid_supp, 
-			/** OUT    **/ SCALAR *centroid_w,
-			/** IN     **/ int reset
-			){
-  // step 1: setup initial guess
-  if (reset == 1) {
-    int i, nzm =0, nzc =0;
-    SCALAR *pca_mat, *centers;
-    for (int i=0; i<s_modalities; ++i) {
-      nzc += d_modalities[i];
-      nzm += d_modalities[i] * d_modalities[i];
-    }
-    pca_mat = (SCALAR *) malloc( nzm * sizeof(SCALAR) );
-    // PCA setup
-    for (i=0; i<size_of_samples; ++i)
-      if (-1 == label_of_interest || labels[i] == label_of_interest) {
-	
-      } 
-  }
-  // step 2a: fix centroid_supp, update centroid_w
-  // step 2b: fix centroid_w, update centroid_supp
-  // step 3: stop criterion, output statistics
-}
 

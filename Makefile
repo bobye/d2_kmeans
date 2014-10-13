@@ -12,17 +12,18 @@ LIBRARIES=
 C_SOURCE_FILES=\
 	src/d2_clustering.c
 
-CPP_SOURCE_FILES=
+CPP_SOURCE_FILES=\
+	src/util.cc
 
-
-SOURCE_FILES_WITH_MAIN=src/main.cc
+SOURCE_FILES_WITH_MAIN=\
+	src/main.cc
 
 SOURCE_OBJECTS=\
 	$(patsubst %.c, %.o, $(C_SOURCE_FILES))\
-	$(patsubst %.c, %.o, $(CPP_SOURCE_FILES))
+	$(patsubst %.cc, %.o, $(CPP_SOURCE_FILES))
 
 ALL_OBJECTS=\
-	$(SOURCE_OBJECTS) \
+	$(SOURCE_OBJECTS)\
 	$(patsubst %.cc, %.o, $(SOURCE_FILES_WITH_MAIN))
 
 DEPENDENCY_FILES=\

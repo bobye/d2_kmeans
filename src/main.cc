@@ -1,48 +1,51 @@
-#include <fstream>
-#include <iostream>
+#include <stdio.h>
+#include <string>
 #include <vector>
+#include <iostream>
 
 #include "d2_clustering.h"
-
-#define MODAL_SIZE (2)
-using std::vector;
-using std::ifstream;
-using std::cout;
-using std::endl;
+#include "util.hh"
 
 
+// ./bin/test mountaindat.txt 2 1000 3,3 6,11
 int main(int argc, char *argv[])
 { 
+  using namespace std;
 
-  int size_of_modalities = MODAL_SIZE;
-  int dimensions_of_modalities[MODAL_SIZE];
+  int size_of_phases = atoi(argv[2]);
+  int size_of_samples = atoi(argv[3]);
 
-  vector<int> size_of_supports;
-  vector<SCALAR> data_block_supp, data_block_w;
+  vector<int> dimension_of_phases(size_of_phases);  
+  vector<int> avg_strides(size_of_phases);
 
-  ifstream fp("mountaindat.txt");
-  int istart = 0;
-  while (fp.good()) {
-    for (int i=0; i<size_of_modalities; ++i) {
-      int dim, size;
-      fp >> dim >> size;
-      if (0 == istart) dimensions_of_modalities[i] = dim;
-      size_of_supports.push_back(size);
+  vector<string> ss1 = split(string(argv[4]), ',');
+  vector<string> ss2 = split(string(argv[5]), ',');
 
-      SCALAR c;
-      for (int j=0; j<size; ++j) {fp >> c; data_block_w.push_back(c);}
-      for (int j=0; j<size * dim; ++j) {fp >> c; data_block_supp.push_back(c);}
-      
-    }
-    ++istart;
+  for (int i=0; i<size_of_phases; ++i) {
+    dimension_of_phases[i] = atoi(ss1[i].c_str());
+    avg_strides[i] = atoi(ss2[i].c_str());
+  }    
+  
+
+  mph data;
+
+  FILE *fp;
+  
+  int err = d2_allocate(&data, 
+			size_of_phases,
+			size_of_samples,
+			&avg_strides[0],
+			&dimension_of_phases[0]);
+
+  if (err == 0) {
+    fp = fopen(argv[1], "r+");
+    d2_load(fp, &data);  
+    fclose(fp);
+  } else {
+    cerr << "Allocation Failed!" << endl;
   }
-  fp.close();
 
-  int size_of_samples = istart;
-
-  //////////////////////////////////////
-  d2_initialize(size_of_modalities, dimensions_of_modalities);
-  d2_assign_data(size_of_samples, &size_of_supports[0], &data_block_supp[0], &data_block_w[0]);
+  d2_free(&data);
 
   return 0;
 }
