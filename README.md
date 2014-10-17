@@ -12,7 +12,7 @@ scalable and parallel D2 (discrete distribution) clustering
     profile_kantorovich.m --- profiling LP solution of transportation problem
     centroid_sph*.m --- computing centroid of a single phase
 ```
-- C/C++ sources (algorithms should be implemented in C98, but tests or others can be in C++)
+- C/C++ sources (algorithms should be implemented in C99 std, but tests or others can be in C++)
 ```
   include/
   src/
