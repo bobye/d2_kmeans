@@ -19,3 +19,11 @@ scalable and parallel D2 (discrete distribution) clustering
   Makefile
 ```
 - Dataset
+We implement multi-phases D2, which means each object can be represented
+by multiple D2. For example, an image can be represented by a D2 in color
+space and a D2 in texture space. To read a 2-phase 1000 entries with the 
+first phase in 3 dimension and 6 avg bins, and the second phase  in 3 dimension
+and 11 bins. You may type
+```bash
+./bin/test mountaindat.txt 2 1000 3,3 6,11
+```
