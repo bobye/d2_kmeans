@@ -6,6 +6,7 @@
 
 #include "d2_clustering.h"
 #include "util.hh"
+#include <cstdlib>
 
 int d2_alg_type = 0;
 

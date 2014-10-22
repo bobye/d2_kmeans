@@ -6,6 +6,7 @@
 extern "C" {
 #endif
 
+  #include <stdlib.h>
 
   // element-wise op
   void _dvmul(int n, double *a, double *b, double *c);// c = a .* b
