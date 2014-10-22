@@ -9,11 +9,11 @@
 
 int d2_alg_type = 0;
 
-// ./test mountaindat.txt 2 1000 3,3 6,11
+// ./d2 mountaindat.txt 2 1000 3,3 6,11
 int main(int argc, char *argv[])
 { 
   using namespace std;
-  assert(argc == 5);
+  assert(argc == 6);
 
   int size_of_phases = atoi(argv[2]);
   int size_of_samples = atoi(argv[3]);
