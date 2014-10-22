@@ -66,7 +66,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
   
   // compute C
   for (i=0, p_scal = C, p_scal2 = p_supp;i < size;  ++i) {
-    _D2_FUNC(pdist2)(dim, str, p_str[i], c->p_supp + label[i]*dim*str, p_scal2, p_scal);
+    _D2_FUNC(pdist2)(dim, str, p_str[i], &c->p_supp[label[i]*dim*str], p_scal2, p_scal);
     p_scal += str*p_str[i]; p_scal2 += dim*p_str[i];
   }
 
