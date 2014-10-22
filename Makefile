@@ -12,8 +12,9 @@ LIBRARIES=-framework accelerate
 C_SOURCE_FILES=\
 	src/d2_clustering.c\
 	src/d2_math.c\
-	src/d2_centroids.c\
-	src/blas_like.c
+	src/blas_like.c\
+	src/d2_centroid_rand.c\
+	src/d2_centroid_Bregman.c
 
 CPP_SOURCE_FILES=\
 	src/util.cc
