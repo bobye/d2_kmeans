@@ -13,7 +13,7 @@ extern "C" {
 
   // data structure to store d2 of one phase
   typedef struct {
-    int dim, str, size, col;
+    int dim, str, col, max_col;
     int *p_str;
     SCALAR *p_supp;
     SCALAR *p_w;  
@@ -70,7 +70,7 @@ extern "C" {
 			__OUT__ sph *c);
   
   // interface of Bregman ADMM
-  int d2_allocate_work_sphBregman(sph *ph, 
+  int d2_allocate_work_sphBregman(sph *ph, int size,
 				  __OUT__ var_sphBregman * var_phwork);
   int d2_free_work_sphBregman(var_sphBregman * var_phwork);
   int d2_centroid_sphBregman(mph *p_data, // data

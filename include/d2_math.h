@@ -14,7 +14,7 @@ extern "C" {
 
 
 
-  void d2_mean(sph * data, int * label, int num_of_labels, 
+  void d2_mean(sph * data, int * label, int num_of_entries, int num_of_labels, 
 	       /** OUT **/ SCALAR * means, /** OUT **/ SCALAR * covs);
   void d2_mvnrnd(SCALAR * mean, SCALAR * cov, int d, int n, /** OUT **/ SCALAR * sample);
 
