@@ -29,11 +29,11 @@ int d2_allocate_sph(sph *p_data_sph,
   assert(d>0 && stride >0 && num >0);
 
   n = num * (stride + semicol) * d; // pre-allocate
-  m = num * (stride + semicol);
+  m = num * (stride + semicol); p_data_sph->max_col = m;
 
   p_data_sph->dim = d;  
   p_data_sph->str = stride;
-  p_data_sph->size = num;
+  //  p_data_sph->size = num;
 
 
   p_data_sph->p_str  = (int *) malloc(num * sizeof(int));
@@ -110,15 +110,13 @@ int d2_load(void *fp_void, mph *p_data) {
       if (c!=1) {
 	VPRINTF(("Warning: only read %d d2!\n", i));
 	p_data->size = i;
-	for (j=0; j<s_ph; ++j) p_data->ph[j].size = i;
-
 	free(p_w); free(p_supp); free(p_str);
 	return 0;
       }
       assert(dim == p_data->ph[n].dim);
       fscanf(fp, "%d", p_str[n]); 
       str = *(p_str[n]); assert(str > 0);
-      p_data->ph[n].col += str;
+      p_data->ph[n].col += str; assert(p_data->ph[n].col < p_data->ph[n].max_col);
 
       // read weights      
       p_w_sph = p_w[n];
@@ -154,7 +152,8 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
       (SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR)); 
 
     if (d2_alg_type == 0) {
-      d2_allocate_work_sphBregman(p_data->ph +i, var_work->l_var_sphBregman+i);
+      d2_allocate_work_sphBregman(p_data->ph +i, p_data->size, 
+				  var_work->l_var_sphBregman+i);
     }
   }
   return 0;
