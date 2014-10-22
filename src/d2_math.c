@@ -1,5 +1,6 @@
 //#define _VERBOSE_OUTPUT
 
+#include "math.h"
 #include "d2_math.h"
 #include "stdio.h"
 
@@ -99,7 +100,7 @@ void d2_mvnrnd(SCALAR * mean, /** IN/OUT **/ SCALAR * cov, int d, int n,
   SCALAR *univar_sample;
   
   // Cholesky factorization
-  _D2_CLAPACK_FUNC(potrf_)("U", &d, cov, &d, &info); 
+  _D2_LAPACKE_FUNC(potrf_)("U", &d, cov, &d, &info); 
   if (info) {VPRINTF(("Cholesky factorization is not successful!")); return;}
 
   // set lower triangular part to zero

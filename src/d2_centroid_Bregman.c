@@ -1,5 +1,6 @@
 #include "d2_clustering.h"
 #include "d2_math.h"
+#include "stdio.h"
 
 int d2_allocate_work_sphBregman(sph *ph, int size, var_sphBregman * var_phwork) {
       var_phwork->X = 
