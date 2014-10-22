@@ -164,6 +164,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
     }
   }
 
+  free(Z0);
   free(label_count);
 
   return 0;
