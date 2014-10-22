@@ -42,16 +42,15 @@ void d2_mean(sph * data, int * label, int num_of_labels,
 
   counts = (int*) calloc(num_of_labels, sizeof(int));
   p_supp = data->p_supp; p_w = data->p_w; p_str = data->p_str;
+
   for (i=0; i<data->size; ++i) {
-    
     _D2_CBLAS_FUNC(gemv)(CblasColMajor, CblasNoTrans, 
-			 dim, *p_str, 1., p_supp, dim,
+			 dim, p_str[i], 1., p_supp, dim,
 			 p_w, 1,
 			 1., means + label[i]*dim, 1);
 
-    p_supp = p_supp + *p_str * dim;
-    p_w = p_w + *p_str;
-    p_str = p_str + 1;
+    p_supp = p_supp + p_str[i] * dim;
+    p_w = p_w + p_str[i];
     ++counts[label[i]];
   }
 

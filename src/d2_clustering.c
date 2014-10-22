@@ -28,7 +28,7 @@ int d2_allocate_sph(sph *p_data_sph,
   int n, m;
   assert(d>0 && stride >0 && num >0);
 
-  n = num * (stride + semicol) * d;
+  n = num * (stride + semicol) * d; // pre-allocate
   m = num * (stride + semicol);
 
   p_data_sph->dim = d;  
@@ -58,7 +58,9 @@ int d2_free_sph(sph *p_data_sph) {
 int d2_allocate(mph *p_data,
 		const int size_of_phases,
 		const int size_of_samples,
-		const int *avg_strides,
+		const int *avg_strides, /* it is very important to make sure 
+					   that avg_strides are specified correctly,
+					   otherwise it will cause memory problems. */
 		const int *dimension_of_phases) {
   int i;
   int success = 0;
@@ -109,6 +111,8 @@ int d2_load(void *fp_void, mph *p_data) {
 	VPRINTF(("Warning: only read %d d2!\n", i));
 	p_data->size = i;
 	for (j=0; j<s_ph; ++j) p_data->ph[j].size = i;
+
+	free(p_w); free(p_supp); free(p_str);
 	return 0;
       }
       assert(dim == p_data->ph[n].dim);
@@ -118,19 +122,21 @@ int d2_load(void *fp_void, mph *p_data) {
 
       // read weights      
       p_w_sph = p_w[n];
-      for (j=0; j<str; ++j, ++p_w_sph)
-	fscanf(fp, SCALAR_STDIO_TYPE, p_w_sph); 
-      p_w[n] = p_w_sph;
+      for (j=0; j<str; ++j)
+	fscanf(fp, SCALAR_STDIO_TYPE, &p_w_sph[j]); 
+      p_w[n] = p_w[n] + str;
 
       // read support vec
       p_supp_sph = p_supp[n];strxdim = str*dim;
-      for (j=0; j<strxdim; ++j, ++p_supp_sph)
-	fscanf(fp, SCALAR_STDIO_TYPE, p_supp_sph); 
-      p_supp[n] = p_supp_sph;
+      for (j=0; j<strxdim; ++j)
+	fscanf(fp, SCALAR_STDIO_TYPE, &p_supp_sph[j]); 
+      p_supp[n] = p_supp[n] + strxdim;
 
       p_str[n] ++;
     }
   }
+
+  free(p_w); free(p_supp); free(p_str);
 
   return 0;
 }
@@ -145,7 +151,7 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
 
   for (i=0; i<p_data->s_ph; ++i) {
     var_work->g_var[i].C = 
-      (SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR));
+      (SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR)); 
 
     if (d2_alg_type == 0) {
       d2_allocate_work_sphBregman(p_data->ph +i, var_work->l_var_sphBregman+i);
@@ -159,9 +165,7 @@ int d2_free_work(var_mph *var_work) {
   for (i=0; i<var_work->s_ph; ++i) {
     free(var_work->g_var[i].C);
     if (d2_alg_type) {
-      free(var_work->l_var_sphBregman[i].X);
-      free(var_work->l_var_sphBregman[i].Z);
-      free(var_work->l_var_sphBregman[i].Y);
+      d2_free_work_sphBregman(var_work->l_var_sphBregman + i);
     }
   }
   free(var_work->g_var);
@@ -184,7 +188,7 @@ int d2_clustering(int num_clusters,
   int s_ph = p_data->s_ph;
   int size = p_data->size;
   int *label = p_data->label;
-  assert(k>0 && max_iter > 0);
+  assert(num_clusters>0 && max_iter > 0);
 
   for (i=0; i<size; ++i) 
     label[i] = rand() % num_clusters;
