@@ -7,6 +7,7 @@ int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   int num_of_labels = p_data->num_of_labels;
   int dim = data_ph->dim;
   int str = data_ph->str;
+  SCALAR *means, *covs;
   
   // initialization 
   d2_allocate_sph(c, dim, str, num_of_labels, 0.);
@@ -25,7 +26,6 @@ int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   c->col = str * num_of_labels;
   
   // compute mean and cov
-  SCALAR *means, *covs;
   means = (SCALAR *) calloc(dim * num_of_labels, sizeof(SCALAR));
   covs  = (SCALAR *) calloc(dim * dim * num_of_labels, sizeof(SCALAR));
   d2_mean(data_ph, p_data->label, p_data->size, num_of_labels, means, covs);   
