@@ -15,7 +15,7 @@ int d2_free(mph *p_data) {
     free(p_data->ph[i].p_w);
   }
   free(p_data->ph);
-  free(p_data->label);
+  if (!p_data->label) free(p_data->label);
   return 0;
 }
 
