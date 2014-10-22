@@ -2,12 +2,18 @@
 
 #include <Accelerate/Accelerate.h>
 
-#elif defined __GNUC__
+#elif defined __INTEL_COMPILER
 
+#include <mkl.h>
+
+#elif defined __GNUC__
+#include <math.h>
 #include <cblas.h>
-#include <clapack.h>
 
 #endif
+
+#define __USE_C99_MATH
+#include <stdbool.h>
 
 #include "blas_like.h"
 

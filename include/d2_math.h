@@ -24,10 +24,14 @@ extern "C" {
 
 #include <Accelerate/Accelerate.h>
 
-#elif defined __GNUC__
+#elif defined __INTEL_COMPILER
 
+#include <mkl.h>
+
+#elif defined __GNUC__
+#include <math.h>
 #include <cblas.h>
-#include <clapack.h>
+#include <lapacke.h>
 
 #endif
 
