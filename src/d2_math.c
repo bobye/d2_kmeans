@@ -30,7 +30,7 @@ double randn () {
   return X1;
 }
 
-void d2_mean(sph * data, int * label, int num_of_labels, 	     
+void d2_mean(sph * data, int * label, int num_of_entries, int num_of_labels, 	     
 	     /** OUT **/ SCALAR * means,
 	     /** OUT **/ SCALAR * covs) {
   int i, j, k, m, idx, dim, dim2, *p_str;  
@@ -43,7 +43,7 @@ void d2_mean(sph * data, int * label, int num_of_labels,
   counts = (int*) calloc(num_of_labels, sizeof(int));
   p_supp = data->p_supp; p_w = data->p_w; p_str = data->p_str;
 
-  for (i=0; i<data->size; ++i) {
+  for (i=0; i<num_of_entries; ++i) {
     _D2_CBLAS_FUNC(gemv)(CblasColMajor, CblasNoTrans, 
 			 dim, p_str[i], 1., p_supp, dim,
 			 p_w, 1,
@@ -63,7 +63,7 @@ void d2_mean(sph * data, int * label, int num_of_labels,
   }
 
   p_supp = data->p_supp; p_w = data->p_w; p_str = data->p_str;  
-  for (i=0; i<data->size; ++i) {
+  for (i=0; i<num_of_entries; ++i) {
     p_cov  = covs  + label[i]*dim2;
     p_mean = means + label[i]*dim;
     for (m=0; m<*p_str; ++m) {
