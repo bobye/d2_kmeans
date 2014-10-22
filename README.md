@@ -25,5 +25,5 @@ space and a D2 in texture space. To read a 2-phase 1000 entries with the
 first phase in 3 dimension and 6 avg bins, and the second phase  in 3 dimension
 and 11 bins. You may type
 ```bash
-./bin/test mountaindat.txt 2 1000 3,3 6,11
+./d2 mountaindat.txt 2 1000 3,3 6,11
 ```
