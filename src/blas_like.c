@@ -1,3 +1,5 @@
+#include <math.h>
+
 #ifdef __APPLE__
 
 #include <Accelerate/Accelerate.h>
@@ -7,16 +9,15 @@
 #include <mkl.h>
 
 #elif defined __GNUC__
-#include <math.h>
+
 #include <cblas.h>
 
 #endif
 
 #define __USE_C99_MATH
 #include <stdbool.h>
-
 #include "blas_like.h"
-
+#include <stdio.h>
 
 // a(:,*) = a(:,*) .+ b
 void _dgcmv(int m, int n, double *a, double *b) {
