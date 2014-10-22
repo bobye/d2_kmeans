@@ -7,6 +7,10 @@ extern "C" {
 
 #include "global.h"
 
+#define __IN__
+#define __OUT__ 
+#define __IN_OUT__
+
   // data structure to store d2 of one phase
   typedef struct {
     int dim, str, size, col;
@@ -17,26 +21,27 @@ extern "C" {
 
   // data structure to store d2 of multiple phases
   typedef struct {
-    int s_ph, size; // size of phases
+    int s_ph /* size of phases */, size /* size of entries */;
     int *label;
     int num_of_labels;
     sph *ph;
   } mph;
 
 
-  int d2_allocate_sph(sph *p_data_sph,
+  /* basic utilities */
+  int d2_allocate_sph(__OUT__ sph *p_data_sph,
 		      const int d,
 		      const int stride,
 		      const int num,
 		      const double semicol);
 
-  int d2_allocate(mph *p_data,
+  int d2_allocate(__OUT__ mph *p_data,
 		  const int size_of_phases,
 		  const int size_of_samples,
 		  const int *avg_strides,
 		  const int *dimension_of_phases);
 
-  int d2_load(void *fp, mph *p_data);
+  int d2_load(void *fp, __OUT__ mph *p_data);
   int d2_free(mph *p_data);
 
   // working variables that are visible in all algorithms
@@ -48,33 +53,38 @@ extern "C" {
   typedef struct {
     SCALAR *X, *Z;
     SCALAR *Y;
+    SCALAR *Xc, *Zr;
   } var_sphBregman;
 
   // union of working variables across multiple phases
   typedef struct {
     int s_ph;
     var_sph *g_var;
-    var_sphBregman *l_var_sphBregman; // may not initialized
-  } var_mph;  
+    var_sphBregman *l_var_sphBregman; // may not initialized, which depends on the actual centroid algorithm used.
+  } var_mph; 
 
 
   // interface of random centroids
   int d2_centroid_randn(mph *p_data, 
 			int idx_ph, 
-			sph *c);
+			__OUT__ sph *c);
   
   // interface of Bregman ADMM
   int d2_allocate_work_sphBregman(sph *ph, 
-				  var_sphBregman * var_phwork);
+				  __OUT__ var_sphBregman * var_phwork);
+  int d2_free_work_sphBregman(var_sphBregman * var_phwork);
   int d2_centroid_sphBregman(mph *p_data, // data
 			     var_mph * var_work, // working data
 			     int idx_ph, // index of phases
 			     sph *c0,
-			     sph *c);
+			     __OUT__ sph *c);
 
 
   // interface to users
-  int d2_clustering(int k, int max_iter, mph *p_data, /** OUT **/ mph *centroids);
+  int d2_clustering(int k, 
+		    int max_iter, 
+		    mph *p_data, 
+		    __OUT__ mph *centroids);
 
 #ifdef __cplusplus
 }

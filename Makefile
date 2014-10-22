@@ -32,7 +32,7 @@ ALL_OBJECTS=\
 DEPENDENCY_FILES=\
 	$(patsubst %.o, %.d, $(ALL_OBJECTS))
 
-all: test
+all: d2
 
 %.o: %.c Makefile
 	@# Make dependecy file
@@ -48,7 +48,7 @@ all: test
 
 -include $(DEPENDENCY_FILES)
 
-test: $(ALL_OBJECTS)
+d2: $(ALL_OBJECTS)
 	$(CXX) $(LDFLAGS) $(DEFINES) -o $@ $(ALL_OBJECTS) $(LIBRARIES)
 
 .PHONY: clean
