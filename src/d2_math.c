@@ -109,7 +109,7 @@ void d2_mvnrnd(SCALAR * mean, /** IN/OUT **/ SCALAR * cov, int d, int n,
     }
 
   // Generate std random normal 
-  univar_sample = (SCALAR *) malloc(d * n);
+  univar_sample = _D2_MALLOC_SCALAR(d * n);
   for (i=0; i<d*n; ++i) univar_sample[i] = randn();
 
   // chol(cov) * univar_sample
