@@ -1,5 +1,5 @@
-CC=gcc -std=c99
-CXX=g++
+CC=icc -std=c99
+CXX=icpc
 
 MKL_DIR=/gpfs/home/jxy198/work/software/intel/composerxe/mkl
 
