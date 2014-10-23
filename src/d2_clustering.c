@@ -10,12 +10,12 @@ extern int d2_alg_type;
 int d2_free(mph *p_data) {
   int i;
   for (i=0; i<p_data->s_ph; ++i) {
-    free(p_data->ph[i].p_str);
-    free(p_data->ph[i].p_supp);
-    free(p_data->ph[i].p_w);
+    _D2_FREE(p_data->ph[i].p_str);
+    _D2_FREE(p_data->ph[i].p_supp);
+    _D2_FREE(p_data->ph[i].p_w);
   }
-  free(p_data->ph);
-  if (!p_data->label) free(p_data->label);
+  _D2_FREE(p_data->ph);
+  if (!p_data->label) _D2_FREE(p_data->label);
   return 0;
 }
 
@@ -36,9 +36,9 @@ int d2_allocate_sph(sph *p_data_sph,
   //  p_data_sph->size = num;
 
 
-  p_data_sph->p_str  = (int *) malloc(num * sizeof(int));
-  p_data_sph->p_supp = (SCALAR *) malloc(n * sizeof(SCALAR));
-  p_data_sph->p_w    = (SCALAR *) malloc(m * sizeof(SCALAR));  
+  p_data_sph->p_str  = _D2_CALLOC_INT(num);
+  p_data_sph->p_supp = _D2_MALLOC_SCALAR(n);
+  p_data_sph->p_w    = _D2_MALLOC_SCALAR(m);
 
 
   if (!(p_data_sph->p_str && p_data_sph->p_supp && p_data_sph->p_w)) {
@@ -49,9 +49,9 @@ int d2_allocate_sph(sph *p_data_sph,
 }
 
 int d2_free_sph(sph *p_data_sph) {
-  free(p_data_sph->p_str);
-  free(p_data_sph->p_supp);
-  free(p_data_sph->p_w);
+  _D2_FREE(p_data_sph->p_str);
+  _D2_FREE(p_data_sph->p_supp);
+  _D2_FREE(p_data_sph->p_w);
   return 0;
 }
 
@@ -72,7 +72,7 @@ int d2_allocate(mph *p_data,
 
   for (i=0; i<p_data->s_ph; ++i) {
 
-    p_data->label = (int *) calloc(size_of_samples, sizeof(int)); // initialize to zero
+    p_data->label = _D2_CALLOC_INT(size_of_samples); // initialize to zero
     p_data->num_of_labels = 1; // default
     success = d2_allocate_sph(p_data->ph + i, 
 			      dimension_of_phases[i], 
@@ -110,7 +110,7 @@ int d2_load(void *fp_void, mph *p_data) {
       if (c!=1) {
 	VPRINTF(("Warning: only read %d d2!\n", i));
 	p_data->size = i;
-	free(p_w); free(p_supp); free(p_str);
+	_D2_FREE(p_w); _D2_FREE(p_supp); _D2_FREE(p_str);
 	return 0;
       }
       assert(dim == p_data->ph[n].dim);
@@ -134,7 +134,7 @@ int d2_load(void *fp_void, mph *p_data) {
     }
   }
 
-  free(p_w); free(p_supp); free(p_str);
+  _D2_FREE(p_w); _D2_FREE(p_supp); _D2_FREE(p_str);
 
   return 0;
 }
@@ -149,7 +149,7 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
 
   for (i=0; i<p_data->s_ph; ++i) {
     var_work->g_var[i].C = 
-      (SCALAR *) malloc (p_data->ph[i].str * p_data->ph[i].col * sizeof(SCALAR)); 
+      _D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->ph[i].col);
 
     if (d2_alg_type == 0) {
       d2_allocate_work_sphBregman(p_data->ph +i, p_data->size, 
@@ -162,7 +162,7 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
 int d2_free_work(var_mph *var_work) {
   int i;
   for (i=0; i<var_work->s_ph; ++i) {
-    free(var_work->g_var[i].C);
+    _D2_FREE(var_work->g_var[i].C);
     if (d2_alg_type) {
       d2_free_work_sphBregman(var_work->l_var_sphBregman + i);
     }

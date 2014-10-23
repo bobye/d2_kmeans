@@ -1,13 +1,18 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #define _D2_DOUBLE
 #define _VERBOSE_OUTPUT
 
 #ifdef _D2_DOUBLE
 #define SCALAR double
 #define SCALAR_STDIO_TYPE ("%lf ")
-#elif defined D2_SINGLE
+#elif defined _D2_SINGLE
 #define SCALAR float
 #define SCALAR_STDIO_TYPE ("%f ")
 #endif
@@ -28,6 +33,11 @@
 #define _D2_FUNC(x)         _s ## x
 #define _D2_CBLAS_FUNC(x)   cblas_s ## x
 #define _D2_LAPACKE_FUNC(x) s ## x
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* _GLOBAL_H_ */
