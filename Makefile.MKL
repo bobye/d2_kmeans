@@ -1,7 +1,7 @@
 CC=gcc -std=c99
 CXX=g++
 
-MKL_DIR=/usr/global/intel/mkl/11.0.0.079
+MKL_DIR=/gpfs/home/jxy198/work/software/intel/composerxe/mkl
 
 ARCH_FLAGS=
 CFLAGS=-Wextra -Wall -pedantic-errors -O3 $(ARCH_FLAGS)
