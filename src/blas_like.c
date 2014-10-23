@@ -1,23 +1,34 @@
 #include <math.h>
 
-#ifdef __APPLE__
-
-#include <Accelerate/Accelerate.h>
-
-#elif defined __INTEL_COMPILER
-
-#include <mkl.h>
-
-#elif defined __GNUC__
-
-#include <cblas.h>
-
-#endif
-
 #define __USE_C99_MATH
 #include <stdbool.h>
 #include "blas_like.h"
 #include <stdio.h>
+
+#define SCALAR double
+
+#ifdef __APPLE__
+
+#include <Accelerate/Accelerate.h>
+#define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
+#define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
+#define _D2_FREE(x)         free(x)
+
+#elif defined __USE_MKL__
+#include <mkl.h>
+#define _D2_MALLOC_SCALAR(x)       (SCALAR *) mkl_malloc( (x) *sizeof(SCALAR), 16) 
+#define _D2_MALLOC_INT(x)       (int *) mkl_malloc( (x) *sizeof(int), 16)
+#define _D2_FREE(x)         mkl_free(x)
+
+#elif defined __GNUC__
+#include <cblas.h>
+#include <lapacke.h>
+#define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
+#define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
+#define _D2_FREE(x)         free(x)
+
+#endif
+
 
 // a(:,*) = a(:,*) .+ b
 void _dgcmv(int m, int n, double *a, double *b) {
@@ -103,13 +114,13 @@ void _dcnorm(int m, int n, double *a, double *sa) {
   bool isAllocated = true;
   if (!sa) {
     isAllocated = false;
-    sa = (double *) malloc(n *sizeof(double) );
+    sa = _D2_MALLOC_SCALAR(n);
   }    
   _dcsum(m, n, a, sa);
   for (i=0, pa=sa; i<n; ++i, ++pa) {
     for (j=0; j<m; ++j, ++a) (*a) /= *pa;
   }
-  if (!isAllocated) free(sa);
+  if (!isAllocated) _D2_FREE(sa);
 }
 
 // normalize by row
@@ -119,14 +130,14 @@ void _drnorm(int m, int n, double *a, double *sa) {
   bool isAllocated = true;
   if (!sa) {
     isAllocated = false;
-    sa = (double *) malloc(m *sizeof(double) );
+    sa = _D2_MALLOC_SCALAR(m);
   }    
   _drsum(m, n, a, sa);
   for (i=0; i<n; ++i) {
     pa = sa;
     for (j=0; j<m; ++j, ++a, ++pa) (*a) /= *pa;
   }
-  if (!isAllocated) free(sa);
+  if (!isAllocated) _D2_FREE(sa);
 }
 
 // c = a.*b
@@ -140,10 +151,10 @@ void _dpdist2(int d, int n, int m, double * A, double * B, double *C) {
   double *AA, *BB, *sA, *sB;
   //assert(d>0 && n>0 && m>0);
 
-  AA = (double*) malloc(d*n*sizeof(double));
-  BB = (double*) malloc(d*m*sizeof(double));
-  sA = (double*) malloc(n*sizeof(double));
-  sB = (double*) malloc(m*sizeof(double));
+  AA = _D2_MALLOC_SCALAR(d*n);
+  BB = _D2_MALLOC_SCALAR(d*m);
+  sA = _D2_MALLOC_SCALAR(n);
+  sB = _D2_MALLOC_SCALAR(m);
 
   _dvmul(d*n, A, A, AA);
   _dvmul(d*m, B, B, BB);
@@ -157,10 +168,10 @@ void _dpdist2(int d, int n, int m, double * A, double * B, double *C) {
   _dgcmv(n, m, C, sA);
   _dgrmv(n, m, C, sB);
   
-  free(AA);
-  free(BB);
-  free(sA);
-  free(sB);
+  _D2_FREE(AA);
+  _D2_FREE(BB);
+  _D2_FREE(sA);
+  _D2_FREE(sB);
 }
 
 // inplace a -> exp(a)

@@ -3,25 +3,20 @@
 #include "stdio.h"
 
 int d2_allocate_work_sphBregman(sph *ph, int size, var_sphBregman * var_phwork) {
-      var_phwork->X = 
-	(SCALAR *) malloc (ph->str * ph->col * sizeof(SCALAR));
-      var_phwork->Z = 
-	(SCALAR *) malloc (ph->str * ph->col * sizeof(SCALAR));
-      var_phwork->Xc=
-	(SCALAR *) malloc (ph->col * sizeof(SCALAR));
-      var_phwork->Zr=
-	(SCALAR *) malloc (ph->str * size * sizeof(SCALAR));
-      var_phwork->Y = 
-	(SCALAR *) calloc (ph->str * ph->col, sizeof(SCALAR)); // initialized
+  var_phwork->X = _D2_MALLOC_SCALAR (ph->str * ph->col);
+  var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col);
+  var_phwork->Xc= _D2_MALLOC_SCALAR (ph->col);
+  var_phwork->Zr= _D2_MALLOC_SCALAR (ph->str * size);
+  var_phwork->Y = _D2_CALLOC_SCALAR (ph->str * ph->col); // initialized
   return 0;
 }
 
 int d2_free_work_sphBregman(var_sphBregman *var_phwork) {
-  free(var_phwork->X);
-  free(var_phwork->Z);
-  free(var_phwork->Y);
-  free(var_phwork->Xc);
-  free(var_phwork->Zr);
+  _D2_FREE(var_phwork->X);
+  _D2_FREE(var_phwork->Z);
+  _D2_FREE(var_phwork->Y);
+  _D2_FREE(var_phwork->Xc);
+  _D2_FREE(var_phwork->Zr);
   return 0;
 }
 
@@ -84,10 +79,10 @@ int d2_centroid_sphBregman(mph *p_data, // data
   }
 
   // allocate buffer of Z
-  Z0 = (SCALAR *) malloc(str*col * sizeof(SCALAR));
+  Z0 = _D2_MALLOC_SCALAR(str*col);
 
   // calculate labels counts
-  label_count = (int *) calloc(num_of_labels, sizeof(int));    
+  label_count = _D2_CALLOC_INT(num_of_labels);    
   for (i=0; i<size; ++i) 
     ++label_count[label[i]];
 
@@ -164,8 +159,8 @@ int d2_centroid_sphBregman(mph *p_data, // data
     }
   }
 
-  free(Z0);
-  free(label_count);
+  _D2_FREE(Z0);
+  _D2_FREE(label_count);
 
   return 0;
 }

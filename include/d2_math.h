@@ -18,23 +18,33 @@ extern "C" {
 	       /** OUT **/ SCALAR * means, /** OUT **/ SCALAR * covs);
   void d2_mvnrnd(SCALAR * mean, SCALAR * cov, int d, int n, /** OUT **/ SCALAR * sample);
 
-
-
 #ifdef __APPLE__
 
 #include <Accelerate/Accelerate.h>
+#define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
+#define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
+#define _D2_CALLOC_SCALAR(x)       (SCALAR *) calloc( (x) , sizeof(SCALAR)) 
+#define _D2_CALLOC_INT(x)       (int *) calloc( (x) , sizeof(int))
+#define _D2_FREE(x)         free(x)
 
-#elif defined __INTEL_COMPILER
-
+#elif defined __USE_MKL__
 #include <mkl.h>
+#define _D2_MALLOC_SCALAR(x)       (SCALAR *) mkl_malloc( (x) *sizeof(SCALAR), 16) 
+#define _D2_MALLOC_INT(x)       (int *) mkl_malloc( (x) *sizeof(int), 16)
+#define _D2_CALLOC_SCALAR(x)       (SCALAR *) mkl_calloc( (x) , sizeof(SCALAR), 16) 
+#define _D2_CALLOC_INT(x)       (int *) mkl_calloc( (x) , sizeof(int), 16)
+#define _D2_FREE(x)         mkl_free(x)
 
 #elif defined __GNUC__
-#include <math.h>
 #include <cblas.h>
 #include <lapacke.h>
+#define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
+#define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
+#define _D2_CALLOC_SCALAR(x)       (SCALAR *) calloc( (x) , sizeof(SCALAR)) 
+#define _D2_CALLOC_INT(x)       (int *) calloc( (x) , sizeof(int))
+#define _D2_FREE(x)         free(x)
 
 #endif
-
 
 
 #ifdef __cplusplus

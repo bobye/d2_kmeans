@@ -1,4 +1,3 @@
-#include "global.h"
 #include "util.hh"
 #include <sstream>
 
