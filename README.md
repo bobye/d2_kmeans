@@ -17,7 +17,7 @@ scalable and parallel D2 (discrete distribution) clustering
   include/
   src/
   Makefile -- OSX Accelerate (for BLAS and LAPACK)
-  Makefile.MKL --- GNU C/C++ compiler and MKL (for BLAS and LAPACK)
+  Makefile.MKL --- ICC/ICPC and MKL (for BLAS and LAPACK)
 ```
 - Dataset
 We implement multi-phases D2, which means each object can be represented
