@@ -2,6 +2,30 @@
 #include "mosek.h"
 #include <stdio.h>
 
+#define SCALAR double
+
+#ifdef __APPLE__
+
+#include <Accelerate/Accelerate.h>
+#define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
+#define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
+#define _D2_FREE(x)         free(x)
+
+#elif defined __USE_MKL__
+#include <mkl.h>
+#define _D2_MALLOC_SCALAR(x)       (SCALAR *) mkl_malloc( (x) *sizeof(SCALAR), 16) 
+#define _D2_MALLOC_INT(x)       (int *) mkl_malloc( (x) *sizeof(int), 16)
+#define _D2_FREE(x)         mkl_free(x)
+
+#elif defined __GNUC__
+#include <cblas.h>
+#include <lapacke.h>
+#define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
+#define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
+#define _D2_FREE(x)         free(x)
+
+#endif
+
 MSKenv_t   env = NULL;
 /* This function prints log output from MOSEK to the terminal. */
 static void MSKAPI printstr(void *handle,
@@ -48,6 +72,21 @@ void d2_solver_release() {
   MSK_deleteenv(&env);
 }
 
+double d2_match_by_sample(int d, int n, double *X, int m, double *Y, 
+			  /** OUT **/ double *x, /** OUT **/ double *lambda) {
+  int i;
+  double *wX, *wY, fval;
+  wX = _D2_MALLOC_SCALAR(n);
+  wY = _D2_MALLOC_SCALAR(m);
+  for (i=0; i<n; ++i) wX[i] = 1./n;
+  for (i=0; i<m; ++i) wY[i] = 1./m;
+
+  fval = d2_match_by_coordinates(d, n, X, wX, m, Y, wY, x, lambda);
+  _D2_FREE(wX);
+  _D2_FREE(wY);
+
+  return fval;
+}
 
 double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
 			   /** OUT **/ double *x, /** OUT **/ double *lambda) {
@@ -57,7 +96,7 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
   MSKtask_t    task = NULL;
   MSKrescodee r;
   MSKint32t    i,j;
-  double ones[] = {1.0, 1.0};
+  double ones[] = {1.0, 1.0}, fval = 0.0;
   MSKint32t *asub = (MSKint32t *) malloc(2*m*n* sizeof(MSKint32t));
 
   for (j=0; j<m; ++j) {
@@ -69,7 +108,9 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
 
   /* Create the optimization task. */
   r = MSK_maketask(env,numcon,numvar,&task);
-  //if ( r==MSK_RES_OK ) r = MSK_linkfunctotaskstream(task,MSK_STREAM_LOG,NULL,printstr);
+  if ( r==MSK_RES_OK ) {
+    //r = MSK_linkfunctotaskstream(task,MSK_STREAM_LOG,NULL,printstr);
+  }
 
   r = MSK_appendcons(task,numcon);
   r = MSK_appendvars(task,numvar); 
@@ -127,21 +168,24 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
           case MSK_SOL_STA_NEAR_OPTIMAL:
           {
             //double *xx = (double*) calloc(numvar,sizeof(double));
+	    MSK_getprimalobj(task, MSK_SOL_BAS, &fval);
             if ( x )
             {
               MSK_getxx(task,
                         MSK_SOL_BAS,    /* Request the basic solution. */
-                        x);
-
-              MSK_gety (task,
-                        MSK_SOL_BAS,    /* Request the dual solution: be careful about exact +- of variables */
-                        lambda);
-        
+                        x);        
               //printf("Optimal primal solution\n");
               //for(j=0; j<numvar; ++j) printf("x[%d]: %e\n",j,xx[j]);
 
               //free(x);
             }
+
+	    if (lambda) 
+	    {
+	      MSK_gety (task,
+                        MSK_SOL_BAS,    /* Request the dual solution: be careful about exact +- of variables */
+                        lambda);
+	    }	    
             else 
               r = MSK_RES_ERR_SPACE;
 
@@ -175,14 +219,16 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
         }
       }
     }
-  return 0;
+  return fval;
 }
 
 
 double d2_match_by_coordinates(int d, int n, double *X, double *wX, int m, double *Y,  double*wY,
 			       /** OUT **/ double *x, /** OUT **/ double *lambda) {
-  double *C;
-  C = (double*) malloc( n*m * sizeof(double)); //_D2_MALLOC_SCALAR(n*m)
+  double *C, fval;
+  C = _D2_MALLOC_SCALAR(n*m);
   _dpdist2(d, n, m, X, Y, C);
-  return d2_match_by_distmat(n, m, C, wX, wY, x, lambda);
+  fval = d2_match_by_distmat(n, m, C, wX, wY, x, lambda);
+  _D2_FREE(C);
+  return fval;
 }
