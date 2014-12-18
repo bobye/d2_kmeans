@@ -87,7 +87,7 @@ int d2_allocate(mph *p_data,
 int d2_load(void *fp_void, mph *p_data) {
   FILE *fp = (FILE *) fp_void;
 
-  int i,j,n,dim,c;
+  int i,j,n,dim,c,*num_of_columns_read;
   int **p_str, str, strxdim;
   double **p_supp, **p_w, *p_supp_sph, *p_w_sph;
   int s_ph = p_data->s_ph;
@@ -102,7 +102,7 @@ int d2_load(void *fp_void, mph *p_data) {
     p_supp[n] = p_data->ph[n].p_supp;
     p_w[n]    = p_data->ph[n].p_w;
   }
-
+  
   for (i=0; i<size; ++i) {
     for (n=0; n<s_ph; ++n) {      
       // read dimension and stride    
@@ -110,13 +110,24 @@ int d2_load(void *fp_void, mph *p_data) {
       if (c!=1) {
 	VPRINTF(("Warning: only read %d d2!\n", i));
 	p_data->size = i;
-	_D2_FREE(p_w); _D2_FREE(p_supp); _D2_FREE(p_str);
+	free(p_w); free(p_supp); free(p_str); 
 	return 0;
       }
       assert(dim == p_data->ph[n].dim);
       fscanf(fp, "%d", p_str[n]); 
       str = *(p_str[n]); assert(str > 0);
-      p_data->ph[n].col += str; assert(p_data->ph[n].col < p_data->ph[n].max_col);
+
+      if (p_data->ph[n].col + str >= p_data->ph[n].max_col) {
+	VPRINTF(("Warning: preallocated memory for phase %d is insufficient! Reallocated.\n", n));
+	p_data->ph[n].p_supp = (double *) realloc(p_data->ph[n].p_supp, 2 * dim * p_data->ph[n].max_col * sizeof(double));
+	p_data->ph[n].p_w = (double *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(double));
+	assert(p_data->ph[n].p_supp != NULL && p_data->ph[n].p_w != NULL);
+	p_data->ph[n].max_col *= 2;		// resize
+	p_supp[n] = p_data->ph[n].p_supp + p_data->ph[n].col * dim;
+	p_w[n]    = p_data->ph[n].p_w + p_data->ph[n].col;
+      }
+
+      p_data->ph[n].col += str; 
 
       // read weights      
       p_w_sph = p_w[n];
@@ -134,7 +145,8 @@ int d2_load(void *fp_void, mph *p_data) {
     }
   }
 
-  _D2_FREE(p_w); _D2_FREE(p_supp); _D2_FREE(p_str);
+  // free the pointer space
+  free(p_w); free(p_supp); free(p_str); 
 
   return 0;
 }
