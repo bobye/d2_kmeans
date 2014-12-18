@@ -26,7 +26,7 @@ int d2_free_work_sphBregman(var_sphBregman *var_phwork) {
 int d2_centroid_sphBregman(mph *p_data, // data
 			   var_mph * var_work,
 			   int idx_ph, // index of phases
-			   sph *c0,
+			   sph *c0, // initial gauss for the centroid
 			   __OUT__ sph *c) {
   sph *data_ph = p_data->ph + idx_ph;
   int *label = p_data->label;

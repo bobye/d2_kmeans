@@ -55,12 +55,18 @@ int d2_free_sph(sph *p_data_sph) {
   return 0;
 }
 
+/** Allocate memory for data, it is possible that the pre-allocated memory is
+    insufficient when loading data. In that case, memory will be reallocated. 
+ */
 int d2_allocate(mph *p_data,
 		const int size_of_phases,
 		const int size_of_samples,
-		const int *avg_strides, /* it is very important to make sure 
-					   that avg_strides are specified correctly,
-					   otherwise it will cause memory problems. */
+		const int *avg_strides, /* It is very important to make sure 
+					   that avg_strides are specified correctly.
+					   It articulates how sparse the centroid could be. 
+					   By default, it should be the average number
+					   of bins of data objects.
+					*/
 		const int *dimension_of_phases) {
   int i;
   int success = 0;
@@ -84,6 +90,8 @@ int d2_allocate(mph *p_data,
   return success;
 }
 
+
+/** Load Data Set: see specification of format at README.md */
 int d2_load(void *fp_void, mph *p_data) {
   FILE *fp = (FILE *) fp_void;
 
@@ -191,25 +199,26 @@ int d2_labeling(mph *p_data,
   return 0;
 }
 
+
+/** the main algorithm for d2 clustering */
 int d2_clustering(int num_clusters, 
 		  int max_iter, 
 		  mph *p_data, 
-		  /** OUT **/ mph *centroids){
+		  __OUT__ mph *centroids){
   int i,j,k,iter;
   int s_ph = p_data->s_ph;
   int size = p_data->size;
   int *label = p_data->label;
   assert(num_clusters>0 && max_iter > 0);
 
-  for (i=0; i<size; ++i) 
-    label[i] = rand() % num_clusters;
+  // label all objects randomly
+  for (i=0; i<size; ++i) label[i] = rand() % num_clusters;
 
   // initialize centroids from random
   centroids->s_ph = s_ph;
   centroids->size = num_clusters;
   centroids->ph = (sph *) malloc(s_ph * sizeof(sph));
-  for (i=0; i<s_ph; ++i)
-    d2_centroid_randn(p_data, i, centroids->ph + i);
+  for (i=0; i<s_ph; ++i) d2_centroid_randn(p_data, i, centroids->ph + i);
 
   // initialize auxiliary variables
   var_mph var_work;
@@ -233,3 +242,4 @@ int d2_clustering(int num_clusters,
 
   return 0;
 }
+
