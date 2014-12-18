@@ -2,6 +2,7 @@
 #include "d2_math.h"
 #include "stdio.h"
 
+
 int d2_allocate_work_sphBregman(sph *ph, int size, var_sphBregman * var_phwork) {
   var_phwork->X = _D2_MALLOC_SCALAR (ph->str * ph->col);
   var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col);
@@ -20,6 +21,7 @@ int d2_free_work_sphBregman(var_sphBregman *var_phwork) {
   return 0;
 }
 
+
 /* See matlab/centroid_sphBregman.m 
  * for a prototype implementation in Matlab. 
  */
@@ -31,9 +33,10 @@ int d2_centroid_sphBregman(mph *p_data, // data
   sph *data_ph = p_data->ph + idx_ph;
   int *label = p_data->label;
   int num_of_labels = p_data->num_of_labels;
+  char *label_switch = var_work->label_switch;
   int dim = data_ph->dim;
   int col = data_ph->col;
-  int str = data_ph->str;
+  int str;
   int size = p_data->size;
   int *p_str = data_ph->p_str;
   SCALAR *p_supp = data_ph->p_supp;
@@ -58,6 +61,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
   } else {
     *c = *c0; // warm start (for clustering purpose)
   }  
+  str = c->str;
   
   // compute C
   for (i=0, p_scal = C, p_scal2 = p_supp;i < size;  ++i) {
@@ -73,10 +77,11 @@ int d2_centroid_sphBregman(mph *p_data, // data
    * Indeed, we may only need to reinitialize for entries 
    * whose label are changed  
    */
-  for (i=0, p_scal = Z; i<size; ++i) {
-    tmp = 1./(str * p_str[i]);
-    for (j=0; j<str*p_str[i]; ++j, ++p_scal) *p_scal = tmp;
-  }
+  for (i=0, p_scal = Z; i<size; ++i) 
+    if (label_switch[i] == 1) {
+      tmp = 1./(str * p_str[i]);
+      for (j=0; j<str*p_str[i]; ++j, ++p_scal) *p_scal = tmp;
+    }
 
   // allocate buffer of Z
   Z0 = _D2_MALLOC_SCALAR(str*col);

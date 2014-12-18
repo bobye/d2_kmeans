@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
   mph c;
 
-  d2_clustering(1, 1, &data, &c);
+  d2_clustering(1, 10, &data, &c);
 
   d2_free(&data);
   d2_free(&c);

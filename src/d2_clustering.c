@@ -3,6 +3,7 @@
 #include <assert.h>
 #include "d2_clustering.h"
 #include "d2_math.h"
+#include "d2_solver.h"
 
 
 extern int d2_alg_type;
@@ -74,12 +75,13 @@ int d2_allocate(mph *p_data,
   p_data->s_ph = size_of_phases;
   p_data->size = size_of_samples; 
   p_data->ph   = (sph *) malloc(size_of_phases * sizeof(sph));
+  p_data->num_of_labels = 0; // default
 
+  // initialize to all labels to invalid -1
+  p_data->label = _D2_MALLOC_INT(size_of_samples); 
+  //  for (i=0; i<p_data->size; ++i)  p_data->label[i] = -1;
 
   for (i=0; i<p_data->s_ph; ++i) {
-
-    p_data->label = _D2_CALLOC_INT(size_of_samples); // initialize to zero
-    p_data->num_of_labels = 1; // default
     success = d2_allocate_sph(p_data->ph + i, 
 			      dimension_of_phases[i], 
 			      avg_strides[i], 
@@ -95,9 +97,9 @@ int d2_allocate(mph *p_data,
 int d2_load(void *fp_void, mph *p_data) {
   FILE *fp = (FILE *) fp_void;
 
-  int i,j,n,dim,c,*num_of_columns_read;
+  int i,j,n;
   int **p_str, str, strxdim;
-  double **p_supp, **p_w, *p_supp_sph, *p_w_sph;
+  double **p_supp, **p_w;
   int s_ph = p_data->s_ph;
   int size = p_data->size;
 
@@ -113,6 +115,8 @@ int d2_load(void *fp_void, mph *p_data) {
   
   for (i=0; i<size; ++i) {
     for (n=0; n<s_ph; ++n) {      
+      double *p_supp_sph, *p_w_sph, w_sum;
+      int dim, strxdim, c;
       // read dimension and stride    
       c=fscanf(fp, "%d", &dim); 
       if (c!=1) {
@@ -138,9 +142,14 @@ int d2_load(void *fp_void, mph *p_data) {
       p_data->ph[n].col += str; 
 
       // read weights      
-      p_w_sph = p_w[n];
-      for (j=0; j<str; ++j)
+      p_w_sph = p_w[n]; w_sum = 0.;
+      for (j=0; j<str; ++j) {
 	fscanf(fp, SCALAR_STDIO_TYPE, &p_w_sph[j]); 
+	w_sum += p_w_sph[j];
+      }
+      for (j=0; j<str; ++j) {
+	p_w_sph[j] /= w_sum; // normalize all weights
+      }
       p_w[n] = p_w[n] + str;
 
       // read support vec
@@ -176,6 +185,9 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
 				  var_work->l_var_sphBregman+i);
     }
   }
+
+  var_work->label_switch = (char *) malloc(p_data->size * sizeof(char)); 
+
   return 0;
 }
 
@@ -189,19 +201,77 @@ int d2_free_work(var_mph *var_work) {
   }
   free(var_work->g_var);
   free(var_work->l_var_sphBregman);
+  free(var_work->label_switch);
   return 0;
 }
 
-int d2_labeling(mph *p_data,
+/** Compute the distance from each point to the all centroids.
+    This part can be parallelized.
+ */
+int d2_labeling(__IN_OUT__ mph *p_data,
 		mph *centroids,
-		int num_clusters) {
+		var_mph * var_work,
+		bool isFirstTime) {
+  int i,j,n;
+  int **p_str;
+  double **p_supp, **p_w;
+  int s_ph = p_data->s_ph;
+  int size = p_data->size;
 
+  p_str  = (int **) malloc(s_ph * sizeof(int *));
+  p_supp = (double **) malloc(s_ph * sizeof(double *));
+  p_w    = (double **) malloc(s_ph * sizeof(double *));
+
+  for (n=0; n<s_ph; ++n) {
+    p_str[n]  = p_data->ph[n].p_str;
+    p_supp[n] = p_data->ph[n].p_supp;
+    p_w[n]    = p_data->ph[n].p_w;
+  }
+  
+  for (i=0; i<p_data->size; ++i) {
+    double min_distance = -1;	
+    int min_label = -1;
+
+    for (j=0; j<centroids->size; ++j) {
+      double d = 0.0;
+      for (n=0; n<p_data->s_ph; ++n) {
+	int str = centroids->ph[n].str;
+	int dim = p_data->ph[n].dim;
+	assert(dim == centroids->ph[n].dim);
+	if (d2_alg_type == 0) 
+	  d += d2_match_by_coordinates(dim, 
+				       p_str[n][i], p_supp[n], p_w[n],
+				       str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
+				       NULL, // x and lambda are implemented later
+				       NULL);
+	p_supp[n] += dim * p_str[n][i];
+	p_w[n] += p_str[n][i];
+      }
+
+      if (min_distance < 0 || d < min_distance) {
+	min_distance = d; min_label = j;
+      }
+    }
+
+    if (p_data->label[i] == min_label && !isFirstTime) {
+      if (d2_alg_type == 0) {
+	var_work->label_switch[i] = 0;
+      }
+    } else {
+      p_data->label[i] = min_label;
+      if (d2_alg_type == 0) {
+	var_work->label_switch[i] = 1;
+      }
+    }
+  }
+
+  free(p_str); free(p_supp); free(p_w);
   return 0;
 }
 
 
 /** the main algorithm for d2 clustering */
-int d2_clustering(int num_clusters, 
+int d2_clustering(int num_of_clusters, 
 		  int max_iter, 
 		  mph *p_data, 
 		  __OUT__ mph *centroids){
@@ -209,14 +279,15 @@ int d2_clustering(int num_clusters,
   int s_ph = p_data->s_ph;
   int size = p_data->size;
   int *label = p_data->label;
-  assert(num_clusters>0 && max_iter > 0);
+  assert(num_of_clusters>0 && max_iter > 0);
 
-  // label all objects randomly
-  for (i=0; i<size; ++i) label[i] = rand() % num_clusters;
+  // label all objects as invalid numbers
+  p_data->num_of_labels = num_of_clusters;
+  for (i=0; i<size; ++i) label[i] = rand() % num_of_clusters;
 
   // initialize centroids from random
   centroids->s_ph = s_ph;
-  centroids->size = num_clusters;
+  centroids->size = num_of_clusters;
   centroids->ph = (sph *) malloc(s_ph * sizeof(sph));
   for (i=0; i<s_ph; ++i) d2_centroid_randn(p_data, i, centroids->ph + i);
 
@@ -227,8 +298,16 @@ int d2_clustering(int num_clusters,
   // start centroid-based clustering here
   for (iter=0; iter<max_iter; ++iter) {
     VPRINTF(("Round %d ... \n", iter));
-    d2_labeling(p_data, centroids, num_clusters);
+    VPRINTF(("\tLabeling all instances ... ")); VFLUSH;
+    d2_solver_setup();
+    if (iter == 0)
+      d2_labeling(p_data, centroids, &var_work, true);
+    else 
+      d2_labeling(p_data, centroids, &var_work, false);
+    d2_solver_release();
+    VPRINTF(("\t [done]\n"));
 
+    VPRINTF(("\tUpdate centroids ... \n"));
     for (i=0; i<s_ph; ++i) {
       VPRINTF(("\t phase %d: \n", i));            
 
