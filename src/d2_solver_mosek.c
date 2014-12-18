@@ -219,6 +219,10 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
         }
       }
     }
+
+  MSK_deletetask(&task);
+  free(asub);
+
   return fval;
 }
 
