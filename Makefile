@@ -59,6 +59,10 @@ d2: $(ALL_OBJECTS)
 transportation_test: src/transportation_test.c src/d2_solver_mosek.o src/blas_like.o
 	$(CC) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
 	install_name_tool -change  @loader_path/libmosek64.7.0.dylib  @loader_path/../../../mosek/7/tools/platform/osx64x86/bin/libmosek64.7.0.dylib $@
+	./$@
+
+test: transportation_test
+	cd test; ./test_script.sh; cd ..
 
 .PHONY: clean
 clean:
