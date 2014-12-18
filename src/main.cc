@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 
   if (err == 0) {
     fp = fopen(argv[1], "r+");
-    d2_load(fp, &data);  
+    d2_read(fp, &data);  
     fclose(fp);
   } else {
     cerr << "Allocation Failed!" << endl;
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
   mph c;
 
-  d2_clustering(1, 10, &data, &c);
+  d2_clustering(3, 10, &data, &c);
 
   d2_free(&data);
   d2_free(&c);

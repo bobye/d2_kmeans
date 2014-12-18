@@ -1,9 +1,9 @@
 //#define _VERBOSE_OUTPUT
 
-#include "math.h"
+#include <math.h>
 #include "d2_math.h"
 #include "stdio.h"
-
+#include <time.h>       /* time */
 
 double randn () {
   double U1, U2, W, mult;
@@ -109,6 +109,7 @@ void d2_mvnrnd(SCALAR * mean, /** IN/OUT **/ SCALAR * cov, int d, int n,
     }
 
   // Generate std random normal 
+  srand (time(NULL));
   univar_sample = _D2_MALLOC_SCALAR(d * n);
   for (i=0; i<d*n; ++i) univar_sample[i] = randn();
 
