@@ -94,7 +94,7 @@ int d2_allocate(mph *p_data,
 
 
 /** Load Data Set: see specification of format at README.md */
-int d2_load(void *fp_void, mph *p_data) {
+int d2_read(void *fp_void, mph *p_data) {
   FILE *fp = (FILE *) fp_void;
 
   int i,j,n;
@@ -147,6 +147,7 @@ int d2_load(void *fp_void, mph *p_data) {
 	fscanf(fp, SCALAR_STDIO_TYPE, &p_w_sph[j]); 
 	w_sum += p_w_sph[j];
       }
+      assert(abs(w_sum - 1) == 0);
       for (j=0; j<str; ++j) {
 	p_w_sph[j] /= w_sum; // normalize all weights
       }
@@ -165,6 +166,40 @@ int d2_load(void *fp_void, mph *p_data) {
   // free the pointer space
   free(p_w); free(p_supp); free(p_str); 
 
+  return 0;
+}
+
+int d2_write(void *fp_void, mph *p_data) {
+  FILE *fp = (FILE *) fp_void;
+  int i, j, k, d, n;
+  double **p_supp, **p_w;
+  int s_ph = p_data->s_ph;
+  int size = p_data->size;
+
+  p_supp = (double **) malloc(s_ph * sizeof(double *));
+  p_w    = (double **) malloc(s_ph * sizeof(double *));
+  
+  for (n=0; n<s_ph; ++n) {
+    p_supp[n] = p_data->ph[n].p_supp;
+    p_w[n]    = p_data->ph[n].p_w;
+  }
+
+  for (i=0; i<size; ++i) {
+    for (j=0; j<s_ph; ++j) {
+      int dim = p_data->ph[j].dim;
+      int str = p_data->ph[j].p_str[i];
+      fprintf(fp, "%d\n", dim);
+      fprintf(fp, "%d\n", str);
+      for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[j][k]);
+      fprintf(fp, "\n"); p_w[j] += str;
+      for (k=0; k<str; ++k) {
+	for (d=0; d<dim; ++d) fprintf(fp, "%f ", p_supp[j][d]);
+	fprintf(fp, "\n"); p_supp[j] += dim;
+      }
+    }
+  }
+
+  free(p_supp); free(p_w);
   return 0;
 }
 
@@ -212,7 +247,7 @@ int d2_labeling(__IN_OUT__ mph *p_data,
 		mph *centroids,
 		var_mph * var_work,
 		bool isFirstTime) {
-  int i,j,n;
+  int i,j,n,count = 0;
   int **p_str;
   double **p_supp, **p_w;
   int s_ph = p_data->s_ph;
@@ -233,24 +268,29 @@ int d2_labeling(__IN_OUT__ mph *p_data,
     int min_label = -1;
 
     for (j=0; j<centroids->size; ++j) {
-      double d = 0.0;
+      double d = 0.0, val;
       for (n=0; n<p_data->s_ph; ++n) {
 	int str = centroids->ph[n].str;
 	int dim = p_data->ph[n].dim;
 	assert(dim == centroids->ph[n].dim);
-	if (d2_alg_type == 0) 
-	  d += d2_match_by_coordinates(dim, 
+	if (d2_alg_type == 0) { 
+	  val = d2_match_by_coordinates(dim, 
 				       p_str[n][i], p_supp[n], p_w[n],
 				       str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
 				       NULL, // x and lambda are implemented later
 				       NULL);
-	p_supp[n] += dim * p_str[n][i];
-	p_w[n] += p_str[n][i];
+	  d += val;
+	}
       }
 
       if (min_distance < 0 || d < min_distance) {
 	min_distance = d; min_label = j;
       }
+    }
+
+    for (n=0; n<p_data->s_ph; ++n) {
+      p_supp[n] += p_data->ph[n].dim * p_str[n][i];
+      p_w[n] += p_str[n][i];
     }
 
     if (p_data->label[i] == min_label && !isFirstTime) {
@@ -262,11 +302,14 @@ int d2_labeling(__IN_OUT__ mph *p_data,
       if (d2_alg_type == 0) {
 	var_work->label_switch[i] = 1;
       }
+      count ++;
     }
   }
 
   free(p_str); free(p_supp); free(p_w);
-  return 0;
+  VPRINTF(("\t %d objects change their labels [done]\n", count));
+  
+  return count;
 }
 
 
@@ -290,6 +333,7 @@ int d2_clustering(int num_of_clusters,
   centroids->size = num_of_clusters;
   centroids->ph = (sph *) malloc(s_ph * sizeof(sph));
   for (i=0; i<s_ph; ++i) d2_centroid_randn(p_data, i, centroids->ph + i);
+  // d2_write(stdout, centroids);
 
   // initialize auxiliary variables
   var_mph var_work;
@@ -298,14 +342,13 @@ int d2_clustering(int num_of_clusters,
   // start centroid-based clustering here
   for (iter=0; iter<max_iter; ++iter) {
     VPRINTF(("Round %d ... \n", iter));
-    VPRINTF(("\tLabeling all instances ... ")); VFLUSH;
+    VPRINTF(("\tRe-labeling all instances ... ")); VFLUSH;
     d2_solver_setup();
     if (iter == 0)
       d2_labeling(p_data, centroids, &var_work, true);
     else 
       d2_labeling(p_data, centroids, &var_work, false);
     d2_solver_release();
-    VPRINTF(("\t [done]\n"));
 
     VPRINTF(("\tUpdate centroids ... \n"));
     for (i=0; i<s_ph; ++i) {

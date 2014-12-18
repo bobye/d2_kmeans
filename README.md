@@ -11,12 +11,14 @@ space and a D2 in texture space. The format of data is as follows:
 ;; start of first object
 d1 ;; dimension of the first phase
 n1 ;; number of bins in the first phase
+w{1} w{2} ... w{n1} ;; weights of bins
 x{1,1} x{1,2} ... x{1,d1}
 x{2,1} x{2,2} ... x{2,d1}
 ...
 x{n1,1} x{n1,2} ... x{n1,d1}
 d2 ;; dimension of the second phase
 n2 ;; number of bins in the second phase
+w{1} w{2} ... w{n2} 
 x{1,1} x{1,2} ... x{1,d2}
 x{2,1} x{2,2} ... x{2,d2}
 ...
