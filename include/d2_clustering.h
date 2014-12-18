@@ -41,7 +41,8 @@ extern "C" {
 		  const int *avg_strides,
 		  const int *dimension_of_phases);
 
-  int d2_load(void *fp, __OUT__ mph *p_data);
+  int d2_read(void *fp, __OUT__ mph *p_data);
+  int d2_write(void *fp, mph *p_data);
   int d2_free(mph *p_data);
 
   // working variables that are visible in all algorithms

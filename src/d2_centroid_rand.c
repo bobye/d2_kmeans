@@ -19,7 +19,7 @@ int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   
   // set weight
   for (i=0; i<num_of_labels*str; ++i) {
-    c->p_w[i] = 1./str;
+    c->p_w[i] = (double) 1./(double) str;
   }
 
   // set column
