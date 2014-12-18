@@ -60,7 +60,8 @@ extern "C" {
   typedef struct {
     int s_ph;
     var_sph *g_var;
-    var_sphBregman *l_var_sphBregman; // may not initialized, which depends on the actual centroid algorithm used.
+    var_sphBregman *l_var_sphBregman; // may not initialized, which depends on the actual centroid algorithm used.    
+    char *label_switch;
   } var_mph; 
 
 

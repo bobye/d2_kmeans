@@ -19,8 +19,10 @@ extern "C" {
 
 #ifdef _VERBOSE_OUTPUT
 #define VPRINTF(x) printf x
+#define VFLUSH fflush(stdout)
 #else
 #define VPRINTF(x) 
+#define VFLUSH 
 #endif
 
 #ifdef  _D2_DOUBLE
