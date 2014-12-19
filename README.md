@@ -35,24 +35,3 @@ and 11 bins. You may type
 ```bash
 time ./d2 mountaindat.txt 2 1000 3,3 6,11
 ```
-
-
-## Algorithm Prototypes
-It contains prototype version in Matlab.
-```
-  matlab/
-    d2_clustering.m --- old scripts
-    d2clusters.m --- old clustering framework
-    profile_centroid.m --- profiling the convergence of centroid updates
-    profile_kantorovich.m --- profiling LP solution of transportation problem
-    centroid_sph*.m --- computing centroid of a single phase
-```
-
-## C/C++ sources
-Core algorithms, aka main source, should be implemented in C99 std, but tests or others can be in C++ or other languages.
-```
-  include/
-  src/
-  Makefile -- OSX Accelerate (for BLAS and LAPACK)
-  Makefile.MKL --- ICC/ICPC and MKL (for BLAS and LAPACK)
-```
