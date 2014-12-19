@@ -61,7 +61,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
   } else {
     *c = *c0; // warm start (for clustering purpose)
   }  
-  str = c->str;
+  str = c->str; assert(str > 0);
   
   // compute C
   for (i=0, p_scal = C, p_scal2 = p_supp;i < size;  ++i) {
@@ -72,8 +72,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
   // rho is an important hyper-parameter
   rho = _D2_CBLAS_FUNC(asum)(str*col, C, 1) / (str*col);
 
-
-  /* Currently we reinitialize Z, which may not be necessary
+  /* 
    * Indeed, we may only need to reinitialize for entries 
    * whose label are changed  
    */
@@ -86,22 +85,26 @@ int d2_centroid_sphBregman(mph *p_data, // data
   // allocate buffer of Z
   Z0 = _D2_MALLOC_SCALAR(str*col);
 
-  // calculate labels counts
+  /** Calculate labels counts:
+      it could be possible that some clusters might not 
+      have any instances
+   */
   label_count = _D2_CALLOC_INT(num_of_labels);    
-  for (i=0; i<size; ++i) 
-    ++label_count[label[i]];
+  for (i=0; i<size; ++i) ++label_count[label[i]];
+  for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
 
   // main loop
   for (iter=0; iter < max_niter; ++iter) {
 
     // step 1: update X    
+    // X = Z.*exp(- (C + Y)/rho)
     _D2_CBLAS_FUNC(copy)(str*col, C, 1, X, 1);
     _D2_CBLAS_FUNC(axpy)(str*col, 1, Y, 1, X, 1);
     _D2_CBLAS_FUNC(scal)(str*col, -1./rho, X, 1);
     _D2_FUNC(exp)(str*col, X);
     _D2_FUNC(vmul)(str*col, X, Z, X);
     // normalize X
-    _D2_FUNC(cnorm)(str, col, X, Xc);
+    _D2_FUNC(cnorm)(str, col, X, Xc); 
     _D2_FUNC(grms)(str, col, X, p_w);
 
     // step 2: update Z
@@ -114,7 +117,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
     
     // normalize Z
     for (i=0, p_scal = Z;i<size; ++i) {
-      _D2_FUNC(rnorm)(str, p_str[i], p_scal, Zr + str*i);
+      _D2_FUNC(rnorm)(str, p_str[i], p_scal, Zr + str*i); 
       _D2_FUNC(gcms)(str, p_str[i], p_scal, c->p_w + str*label[i]);
       p_scal = p_scal + str*p_str[i];
     }
