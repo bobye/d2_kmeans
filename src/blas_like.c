@@ -29,6 +29,10 @@
 
 #endif
 
+void _dgzero(int n, double *a) {
+  int i;
+  for (i=0; i<n; ++i) assert(a[i] > 1E-10);
+}
 
 // a(:,*) = a(:,*) .+ b
 void _dgcmv(int m, int n, double *a, double *b) {
@@ -136,6 +140,41 @@ void _drnorm(int m, int n, double *a, double *sa) {
   for (i=0; i<n; ++i) {
     pa = sa;
     for (j=0; j<m; ++j, ++a, ++pa) (*a) /= *pa;
+  }
+  if (!isAllocated) _D2_FREE(sa);
+}
+
+// center by column
+void _dccenter(int m, int n, double *a, double *sa) {
+  int i, j;
+  double *pa;
+  bool isAllocated = true;
+  if (!sa) {
+    isAllocated = false;
+    sa = _D2_MALLOC_SCALAR(n);
+  }    
+  _dcsum(m, n, a, sa);
+  cblas_dscal(n, 1./m, sa, 1);
+  for (i=0, pa=sa; i<n; ++i, ++pa) {
+    for (j=0; j<m; ++j, ++a) (*a) -= *pa;
+  }
+  if (!isAllocated) _D2_FREE(sa);
+}
+
+// center by row
+void _drcenter(int m, int n, double *a, double *sa) {
+  int i, j;
+  double *pa;
+  bool isAllocated = true;
+  if (!sa) {
+    isAllocated = false;
+    sa = _D2_MALLOC_SCALAR(m);
+  }    
+  _drsum(m, n, a, sa);
+  cblas_dscal(m, 1./n, sa, 1);
+  for (i=0; i<n; ++i) {
+    pa = sa;
+    for (j=0; j<m; ++j, ++a, ++pa) (*a) -= *pa;
   }
   if (!isAllocated) _D2_FREE(sa);
 }
