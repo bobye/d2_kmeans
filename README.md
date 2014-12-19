@@ -29,7 +29,7 @@ x{n2,1} x{n2,2} ... x{n2,d2}
 ```
 It is required that `w{i}` are strictly larger than zero.
 
-To read a 2-phase 1000 entries with the first phase in 3 dimension
+To read 1000 2-phase entries with the first phase in 3 dimension
 and 6 average number of bins, and the second phase  in 3 dimension
 and 11 bins. You may type
 ```bash
