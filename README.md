@@ -27,6 +27,7 @@ x{n2,1} x{n2,2} ... x{n2,d2}
 ;; start of the second object
 ...
 ```
+It is required that w{i} are strictly larger than zero.
 
 To read a 2-phase 1000 entries with the first phase in 3 dimension
 and 6 average number of bins, and the second phase  in 3 dimension

@@ -25,6 +25,8 @@ int main(int argc, char *argv[])
   vector<string> ss1 = split(string(argv[4]), ',');
   vector<string> ss2 = split(string(argv[5]), ',');
 
+  assert(size_of_phases == ss1.size() && size_of_phases == ss2.size());
+
   for (int i=0; i<size_of_phases; ++i) {
     dimension_of_phases[i] = atoi(ss1[i].c_str());
     avg_strides[i] = atoi(ss2[i].c_str());

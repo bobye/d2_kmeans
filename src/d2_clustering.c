@@ -144,12 +144,12 @@ int d2_read(void *fp_void, mph *p_data) {
       // read weights      
       p_w_sph = p_w[n]; w_sum = 0.;
       for (j=0; j<str; ++j) {
-	fscanf(fp, SCALAR_STDIO_TYPE, &p_w_sph[j]); 
+	fscanf(fp, SCALAR_STDIO_TYPE, &p_w_sph[j]); assert(p_w_sph[j] > 1E-6);
 	w_sum += p_w_sph[j];
       }
-      assert(abs(w_sum - 1) == 0);
+      //assert(fabs(w_sum - 1.0) <= 1E-6);
       for (j=0; j<str; ++j) {
-	p_w_sph[j] /= w_sum; // normalize all weights
+	p_w_sph[j] /= w_sum; // re-normalize all weights
       }
       p_w[n] = p_w[n] + str;
 
