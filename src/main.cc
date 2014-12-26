@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 
   mph c;
 
-  d2_clustering(3, 10, &data, &c);
+  d2_clustering(3, 20, &data, &c);
 
   d2_free(&data);
   d2_free(&c);
