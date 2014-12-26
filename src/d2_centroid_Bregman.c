@@ -49,7 +49,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
   SCALAR *Zr= var_work->l_var_sphBregman[idx_ph].Zr;
 
   int i,j;
-  int max_niter = 1000, iter;
+  int max_niter = 500, iter;
   SCALAR rho, obj, primres, dualres;
   SCALAR tmp, *Z0;
   SCALAR *p_scal, *p_scal2;
@@ -94,7 +94,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
   for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
 
   // main loop
-  for (iter=0; iter < max_niter; ++iter) {
+  for (iter=0; iter <= max_niter; ++iter) {
 
     // step 1: update X    
     // X = Z.*exp(- (C + Y)/rho)
