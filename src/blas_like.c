@@ -99,6 +99,16 @@ void _dcsum(int m, int n, double *a, double *b) {
   }
 }
 
+// b(*) += sum(a(:,*))
+void _dcsum2(int m, int n, double *a, double *b) {
+  int i,j;
+  double *pa, *pb;
+  for (i=0,pa=a,pb=b; i<n; ++i, ++pb) {
+    for (j=0; j<m; ++j, ++pa)
+      *pb += *pa;
+  }
+}
+
 
 // b(*) = sum(a(*,:))
 void _drsum(int m, int n, double *a, double *b) {
@@ -106,6 +116,15 @@ void _drsum(int m, int n, double *a, double *b) {
   double *pa, *pb;
   for (j=0,pb=b; j<m; ++j, ++pb) 
     *pb = 0;
+  for (i=0,pa=a; i<n; ++i)
+    for (j=0,pb=b; j<m; ++j, ++pa, ++pb)
+      *pb += *pa;  
+}
+
+// b(*) += sum(a(*,:))
+void _drsum2(int m, int n, double *a, double *b) {
+  int i,j;
+  double *pa, *pb;
   for (i=0,pa=a; i<n; ++i)
     for (j=0,pb=b; j<m; ++j, ++pa, ++pb)
       *pb += *pa;  

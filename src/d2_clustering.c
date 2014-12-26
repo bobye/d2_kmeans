@@ -350,7 +350,7 @@ int d2_clustering(int num_of_clusters,
       label_change_count = d2_labeling(p_data, centroids, &var_work, false);
     d2_solver_release();
 
-    if (!label_change_count) break;
+    if (label_change_count < 0.01 * size) break;
 
     VPRINTF(("\tUpdate centroids ... \n"));
     for (i=0; i<s_ph; ++i) {

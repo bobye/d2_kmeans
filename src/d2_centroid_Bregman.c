@@ -36,7 +36,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
   char *label_switch = var_work->label_switch;
   int dim = data_ph->dim;
   int col = data_ph->col;
-  int str;
+  int str, strxdim;
   int size = p_data->size;
   int *p_str = data_ph->p_str;
   SCALAR *p_supp = data_ph->p_supp;
@@ -62,10 +62,11 @@ int d2_centroid_sphBregman(mph *p_data, // data
     *c = *c0; // warm start (for clustering purpose)
   }  
   str = c->str; assert(str > 0);
-  
+  strxdim = str * dim;
+
   // compute C
   for (i=0, p_scal = C, p_scal2 = p_supp;i < size;  ++i) {
-    _D2_FUNC(pdist2)(dim, str, p_str[i], &c->p_supp[label[i]*dim*str], p_scal2, p_scal);
+    _D2_FUNC(pdist2)(dim, str, p_str[i], &c->p_supp[label[i]*strxdim], p_scal2, p_scal);
     p_scal += str*p_str[i]; p_scal2 += dim*p_str[i];
   }
 
@@ -132,27 +133,28 @@ int d2_centroid_sphBregman(mph *p_data, // data
     _D2_FUNC(cnorm)(str, size, Zr, NULL);
 
     for (i=0; i<size; ++i) 
-      _D2_CBLAS_FUNC(axpy)(str, 1./label_count[label[i]], Zr + str*i, 1, c->p_w +label[i]*str, 1);
+      _D2_CBLAS_FUNC(axpy)(str, 1, Zr + str*i, 1, c->p_w +label[i]*str, 1);
     _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, NULL);
     
 
     // step 5: update c->p_supp (optional)
-    for (i=0; i<str*dim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
+    for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
+    for (i=0; i<str*num_of_labels; ++i) Zr[i] = 0; //reset Zr to temporarily storage
     for (i=0, p_scal = X, p_scal2 = p_supp;i < size;  ++i) {
       _D2_CBLAS_FUNC(gemm)(CblasColMajor, CblasNoTrans, CblasTrans, 
 			   dim, str, p_str[i], 1, p_scal2, dim, p_scal, str, 1, 
-			   c->p_supp + label[i]*dim*str, dim);
+			   c->p_supp + label[i]*strxdim, dim);
+      _D2_FUNC(rsum2)(str, p_str[i], p_scal, Zr + label[i]*str);
       p_scal += str*p_str[i]; p_scal2 += dim*p_str[i];
     }
     for (i=0; i<num_of_labels; ++i) {
-      _D2_CBLAS_FUNC(scal)(str*dim, 1./label_count[i], c->p_supp + i*dim*str, 1);
-      _D2_FUNC(irms)(dim, str, c->p_supp + i*dim*str, c->p_w + i*str);
+      _D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, Zr + i*str);
     }
 
 
     // re-calculate C
     for (i=0, p_scal = C, p_scal2 = p_supp;i < size;  ++i) {
-      _D2_FUNC(pdist2)(dim, str, p_str[i], c->p_supp + label[i]*dim*str, p_scal2, p_scal);
+      _D2_FUNC(pdist2)(dim, str, p_str[i], c->p_supp + label[i]*strxdim, p_scal2, p_scal);
       p_scal += str*p_str[i]; p_scal2 += dim*p_str[i];
     }
     
