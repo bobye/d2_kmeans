@@ -338,17 +338,19 @@ int d2_clustering(int num_of_clusters,
   // initialize auxiliary variables
   var_mph var_work;
   d2_allocate_work(p_data, &var_work);
-
+  int label_change_count;
   // start centroid-based clustering here
   for (iter=0; iter<max_iter; ++iter) {
     VPRINTF(("Round %d ... \n", iter));
     VPRINTF(("\tRe-labeling all instances ... ")); VFLUSH;
     d2_solver_setup();
     if (iter == 0)
-      d2_labeling(p_data, centroids, &var_work, true);
+      label_change_count = d2_labeling(p_data, centroids, &var_work, true);
     else 
-      d2_labeling(p_data, centroids, &var_work, false);
+      label_change_count = d2_labeling(p_data, centroids, &var_work, false);
     d2_solver_release();
+
+    if (!label_change_count) break;
 
     VPRINTF(("\tUpdate centroids ... \n"));
     for (i=0; i<s_ph; ++i) {
