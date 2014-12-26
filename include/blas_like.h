@@ -20,6 +20,7 @@ extern "C" {
   void _dgcms(int m, int n, double *a, double *b); // a = diag(b) * a
   void _dicms(int m, int n, double *a, double *b); // a = diag(1./b) * a
   void _dcsum(int m, int n, double *a, double *b); // b(*) = sum(a(:,*))
+  void _dcsum2(int m, int n, double *a, double *b); // b(*) += sum(a(:,*))
   void _dcnorm(int m, int n, double *a, double *sa); // replace a(:,*) -> a(:,*) / sum(a(:,*))
   void _dccenter(int m, int n, double *a, double *sa); // replace a(:,*) -> a(:,*) - mean(a(:,*))
   // row-wise op
@@ -27,6 +28,7 @@ extern "C" {
   void _dgrms(int m, int n, double *a, double *b); // a = a * diag(b) 
   void _dirms(int m, int n, double *a, double *b); // a = a * diag(1./b) 
   void _drsum(int m, int n, double *a, double *b); // b(*) = sum(a(*,:))
+  void _drsum2(int m, int n, double *a, double *b); // b(*) += sum(a(*,:))
   void _drnorm(int m, int n, double *a, double *sa); // inplace a(*,:) = a(*,:) / sum(a(*,:))
   void _drcenter(int m, int n, double *a, double *sa); // replace a(*,:) -> a(*,:) - mean(a(*,:))
 
