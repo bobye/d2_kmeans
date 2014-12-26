@@ -33,5 +33,5 @@ To read 1000 2-phase entries with the first phase in 3 dimension
 and 6 average number of bins, and the second phase  in 3 dimension
 and 11 bins. You may type
 ```bash
-time ./d2 mountaindat.txt 2 1000 3,3 6,11
+time ./d2 -i mountaindat.txt -p 2 -n 1000 -d 3,3 -s 6,11
 ```
