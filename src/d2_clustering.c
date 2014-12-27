@@ -335,8 +335,8 @@ int d2_clustering(int num_of_clusters,
   centroids->s_ph = s_ph;
   centroids->size = num_of_clusters;
   centroids->ph = (sph *) malloc(s_ph * sizeof(sph));
-  for (i=0; i<s_ph; ++i) d2_centroid_randn(p_data, i, centroids->ph + i);
-  // d2_write(stdout, centroids);
+  for (i=0; i<s_ph; ++i) d2_centroid_rands(p_data, i, centroids->ph + i);
+  // d2_write(stdout, centroids); getchar();
 
   // initialize auxiliary variables
   var_mph var_work;
