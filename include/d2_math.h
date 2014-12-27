@@ -18,6 +18,8 @@ extern "C" {
 	       /** OUT **/ SCALAR * means, /** OUT **/ SCALAR * covs);
   void d2_mvnrnd(SCALAR * mean, SCALAR * cov, int d, int n, /** OUT **/ SCALAR * sample);
 
+  void shuffle(int * array, size_t n);
+
 #ifdef __APPLE__
 
 #include <Accelerate/Accelerate.h>
