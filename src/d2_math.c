@@ -55,12 +55,14 @@ void d2_mean(sph * data, int * label, int num_of_entries, int num_of_labels,
     ++counts[label[i]];
   }
 
-  VPRINTF(("Means of different clusters:\n"));
+  //  VPRINTF(("Means of different clusters:\n"));
   for (i=0; i<num_of_labels; ++i) {
-    _D2_CBLAS_FUNC(scal)(dim, 1./(counts[i]-dim), means + i*dim, 1);
+    _D2_CBLAS_FUNC(scal)(dim, 1./counts[i], means + i*dim, 1);
+    /*
     VPRINTF(("  mean%d= ", i+1));
     for (j=0; j<dim; ++j) VPRINTF((SCALAR_STDIO_TYPE, means[i*dim+j]));
     VPRINTF(("\n"));
+    */
   }
 
   p_supp = data->p_supp; p_w = data->p_w; p_str = data->p_str;  
@@ -78,9 +80,10 @@ void d2_mean(sph * data, int * label, int num_of_entries, int num_of_labels,
   }
 
 
-  VPRINTF(("Covariances of different clusters:\n"));
+  //  VPRINTF(("Covariances of different clusters:\n"));
   for (i=0; i<num_of_labels; ++i) {
     _D2_CBLAS_FUNC(scal)(dim2, 1./(counts[i]-dim), covs + i*dim2, 1);
+    /*
     VPRINTF(("  cov%d=", i+1));
     for (j=0; j<dim; ++j) {
       VPRINTF(("\t"));
@@ -88,6 +91,7 @@ void d2_mean(sph * data, int * label, int num_of_entries, int num_of_labels,
 	VPRINTF((SCALAR_STDIO_TYPE, covs[i*dim2+j*dim+k]));
       VPRINTF(("\n"));
     }
+    */
   }
 }
 

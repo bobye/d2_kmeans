@@ -246,7 +246,8 @@ int d2_free_work(var_mph *var_work) {
 int d2_labeling(__IN_OUT__ mph *p_data,
 		mph *centroids,
 		var_mph * var_work,
-		bool isFirstTime) {
+		bool isFirstTime,
+		int selected_phase) {
   int i,j,n,count = 0;
   int **p_str;
   double **p_supp, **p_w;
@@ -269,19 +270,20 @@ int d2_labeling(__IN_OUT__ mph *p_data,
 
     for (j=0; j<centroids->size; ++j) {
       double d = 0.0, val;
-      for (n=0; n<p_data->s_ph; ++n) {
-	int str = centroids->ph[n].str;
-	int dim = p_data->ph[n].dim;
-	assert(dim == centroids->ph[n].dim);
-	if (d2_alg_type == 0) { 
-	  val = d2_match_by_coordinates(dim, 
-				       p_str[n][i], p_supp[n], p_w[n],
-				       str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
-				       NULL, // x and lambda are implemented later
-				       NULL);
-	  d += val;
+      for (n=0; n<p_data->s_ph; ++n) 
+	if (selected_phase < 0 || n == selected_phase) {
+	  int str = centroids->ph[n].str;
+	  int dim = p_data->ph[n].dim;
+	  assert(dim == centroids->ph[n].dim);
+	  if (d2_alg_type == 0) { 
+	    val = d2_match_by_coordinates(dim, 
+					  p_str[n][i], p_supp[n], p_w[n],
+					  str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
+					  NULL, // x and lambda are implemented later
+					  NULL);
+	    d += val;
+	  }
 	}
-      }
 
       if (min_distance < 0 || d < min_distance) {
 	min_distance = d; min_label = j;
@@ -317,7 +319,8 @@ int d2_labeling(__IN_OUT__ mph *p_data,
 int d2_clustering(int num_of_clusters, 
 		  int max_iter, 
 		  mph *p_data, 
-		  __OUT__ mph *centroids){
+		  __OUT__ mph *centroids,
+		  int selected_phase){
   int i,j,k,iter;
   int s_ph = p_data->s_ph;
   int size = p_data->size;
@@ -345,21 +348,23 @@ int d2_clustering(int num_of_clusters,
     VPRINTF(("\tRe-labeling all instances ... ")); VFLUSH;
     d2_solver_setup();
     if (iter == 0)
-      label_change_count = d2_labeling(p_data, centroids, &var_work, true);
+      label_change_count = d2_labeling(p_data, centroids, &var_work, true, selected_phase);
     else 
-      label_change_count = d2_labeling(p_data, centroids, &var_work, false);
+      label_change_count = d2_labeling(p_data, centroids, &var_work, false, selected_phase);
     d2_solver_release();
 
-    if (label_change_count < 0.01 * size) break;
+    /* termination criterion */
+    if (label_change_count < 0.005 * size) break;
 
     VPRINTF(("\tUpdate centroids ... \n"));
-    for (i=0; i<s_ph; ++i) {
-      VPRINTF(("\t phase %d: \n", i));            
 
-      if (d2_alg_type == 0) 
-	d2_centroid_sphBregman(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);
-
-    }
+    for (i=0; i<s_ph; ++i) 
+      if (selected_phase < 0 || i == selected_phase) {
+	VPRINTF(("\t phase %d: \n", i));            
+      
+	if (d2_alg_type == 0) 
+	  d2_centroid_sphBregman(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);
+      }
   }
 
   d2_free_work(&var_work);
