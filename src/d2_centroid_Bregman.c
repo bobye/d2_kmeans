@@ -1,6 +1,10 @@
 #include "d2_clustering.h"
 #include "d2_math.h"
 #include "stdio.h"
+#include "d2_param.h"
+
+/* choose options */
+const BADMM_options *p_badmm_options = &badmm_clu_options;
 
 
 int d2_allocate_work_sphBregman(sph *ph, int size, var_sphBregman * var_phwork) {
@@ -49,7 +53,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
   SCALAR *Zr= var_work->l_var_sphBregman[idx_ph].Zr;
 
   int i,j;
-  int max_niter = 500, iter;
+  int max_niter = p_badmm_options->maxIters, iter;
   SCALAR rho, obj, primres, dualres;
   SCALAR tmp, *Z0;
   SCALAR *p_scal, *p_scal2;
@@ -71,7 +75,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
   }
 
   // rho is an important hyper-parameter
-  rho = _D2_CBLAS_FUNC(asum)(str*col, C, 1) / (str*col);
+  rho = p_badmm_options->rhoCoeff * _D2_CBLAS_FUNC(asum)(str*col, C, 1) / (str*col);
 
   /* 
    * Indeed, we may only need to reinitialize for entries 
@@ -138,6 +142,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
     
 
     // step 5: update c->p_supp (optional)
+    if (iter % p_badmm_options->updatePerLoops == 0) {
     for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
     for (i=0; i<str*num_of_labels; ++i) Zr[i] = 0; //reset Zr to temporarily storage
     for (i=0, p_scal = X, p_scal2 = p_supp;i < size;  ++i) {
@@ -156,6 +161,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
     for (i=0, p_scal = C, p_scal2 = p_supp;i < size;  ++i) {
       _D2_FUNC(pdist2)(dim, str, p_str[i], c->p_supp + label[i]*strxdim, p_scal2, p_scal);
       p_scal += str*p_str[i]; p_scal2 += dim*p_str[i];
+    }
     }
     
     // step 6: check residuals

@@ -86,7 +86,8 @@ extern "C" {
   int d2_clustering(int k, 
 		    int max_iter, 
 		    mph *p_data, 
-		    __OUT__ mph *centroids);
+		    __OUT__ mph *centroids,
+		    int selected_phase);
 
 #ifdef __cplusplus
 }
