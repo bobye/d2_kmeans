@@ -20,6 +20,11 @@ int main(int argc, char *argv[])
   int size_of_samples;
   char *ss1_c_str = 0, *ss2_c_str = 0, *filename = 0;
 
+  /* default settings */
+  int selected_phase = -1; 
+  int number_of_clusters = 3; 
+  int max_iters = 20; 
+
   /* IO specification */
   int ch;
   static struct option long_options[] = {
@@ -27,11 +32,14 @@ int main(int argc, char *argv[])
     {"phase", 1, 0, 'p'},
     {"ifile", 1, 0, 'i'},
     {"ofile", 1, 0, 'o'},
+    {"phase_only", 1, 0, 't'},
+    {"clusters", 1, 0, 'c'},
+    {"max_iters", 1, 0, 'm'},
     {NULL, 0, NULL, 0}
   };
   
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:t:c:m:", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i':
       filename = optarg;
@@ -47,6 +55,15 @@ int main(int argc, char *argv[])
       break;
     case 's':
       ss2_c_str = optarg;
+      break;
+    case 't':
+      selected_phase = atoi(optarg); assert(selected_phase >= 0);
+      break;
+    case 'c':
+      number_of_clusters = atoi(optarg); assert(number_of_clusters > 0);
+      break;
+    case 'm':
+      max_iters = max(atoi(optarg), max_iters);
       break;
     default:
       printf ("?? getopt returned character code 0%o ??\n", ch);
@@ -88,7 +105,7 @@ int main(int argc, char *argv[])
 
   mph c;
 
-  d2_clustering(3, 20, &data, &c);
+  d2_clustering(number_of_clusters, max_iters, &data, &c, selected_phase);
 
   d2_free(&data);
   d2_free(&c);
