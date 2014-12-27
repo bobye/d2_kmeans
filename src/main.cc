@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
   using namespace std;
 
   int size_of_phases;
-  int size_of_samples;
-  char *ss1_c_str = 0, *ss2_c_str = 0, *filename = 0;
+  long size_of_samples;
+  char *ss1_c_str = 0, *ss2_c_str = 0, *filename = 0, *ofilename = 0;
 
   /* default settings */
   int selected_phase = -1; 
@@ -44,11 +44,14 @@ int main(int argc, char *argv[])
     case 'i':
       filename = optarg;
       break;
+    case 'o':
+      ofilename = optarg;
+      break;
     case 'p':
       size_of_phases = atoi(optarg);
       break;
     case 'n':
-      size_of_samples = atoi(optarg);
+      size_of_samples = atol(optarg);
       break;
     case 'd':
       ss1_c_str = optarg;
@@ -107,6 +110,14 @@ int main(int argc, char *argv[])
 
   d2_clustering(number_of_clusters, max_iters, &data, &c, selected_phase);
 
+  if (ofilename) {
+    fp = fopen(ofilename, "w");
+    d2_write(fp, &c);
+    fclose(fp);
+  } else {
+    d2_write(stdout, &c);
+  }
+  
   d2_free(&data);
   d2_free(&c);
 

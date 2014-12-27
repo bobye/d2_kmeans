@@ -13,15 +13,18 @@ extern "C" {
 
   // data structure to store d2 of one phase
   typedef struct {
-    int dim, str, col, max_col;
+    int dim, str;
+    long col, max_col;
     int *p_str;
-    SCALAR *p_supp;
+    long *p_str_cum;
+    SCALAR *p_supp;    
     SCALAR *p_w;  
   } sph; 
 
   // data structure to store d2 of multiple phases
   typedef struct {
-    int s_ph /* size of phases */, size /* size of entries */;
+    int s_ph /* size of phases */;
+    long size /* size of entries */;
     int *label;
     int num_of_labels;
     sph *ph;
@@ -32,12 +35,12 @@ extern "C" {
   int d2_allocate_sph(__OUT__ sph *p_data_sph,
 		      const int d,
 		      const int stride,
-		      const int num,
+		      const long num,
 		      const double semicol);
 
   int d2_allocate(__OUT__ mph *p_data,
 		  const int size_of_phases,
-		  const int size_of_samples,
+		  const long size_of_samples,
 		  const int *avg_strides,
 		  const int *dimension_of_phases);
 
@@ -66,13 +69,18 @@ extern "C" {
   } var_mph; 
 
 
-  // interface of random centroids
+  // interface of random centroids from multivariate normal samples
   int d2_centroid_randn(mph *p_data, 
+			int idx_ph, 
+			__OUT__ sph *c);
+
+  // interface of random centroids from observations
+  int d2_centroid_rands(mph *p_data, 
 			int idx_ph, 
 			__OUT__ sph *c);
   
   // interface of Bregman ADMM
-  int d2_allocate_work_sphBregman(sph *ph, int size,
+  int d2_allocate_work_sphBregman(sph *ph, long size,
 				  __OUT__ var_sphBregman * var_phwork);
   int d2_free_work_sphBregman(var_sphBregman * var_phwork);
   int d2_centroid_sphBregman(mph *p_data, // data
