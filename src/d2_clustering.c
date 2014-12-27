@@ -23,7 +23,7 @@ int d2_free(mph *p_data) {
 int d2_allocate_sph(sph *p_data_sph,
 		    const int d,
 		    const int stride,
-		    const int num,
+		    const long num,
 		    const double semicol) {
 
   int n, m;
@@ -38,6 +38,7 @@ int d2_allocate_sph(sph *p_data_sph,
 
 
   p_data_sph->p_str  = _D2_CALLOC_INT(num);
+  p_data_sph->p_str_cum  = _D2_CALLOC_LONG(num);
   p_data_sph->p_supp = _D2_MALLOC_SCALAR(n);
   p_data_sph->p_w    = _D2_MALLOC_SCALAR(m);
 
@@ -51,6 +52,7 @@ int d2_allocate_sph(sph *p_data_sph,
 
 int d2_free_sph(sph *p_data_sph) {
   _D2_FREE(p_data_sph->p_str);
+  _D2_FREE(p_data_sph->p_str_cum);
   _D2_FREE(p_data_sph->p_supp);
   _D2_FREE(p_data_sph->p_w);
   return 0;
@@ -61,7 +63,7 @@ int d2_free_sph(sph *p_data_sph) {
  */
 int d2_allocate(mph *p_data,
 		const int size_of_phases,
-		const int size_of_samples,
+		const long size_of_samples,
 		const int *avg_strides, /* It is very important to make sure 
 					   that avg_strides are specified correctly.
 					   It articulates how sparse the centroid could be. 
@@ -97,11 +99,12 @@ int d2_allocate(mph *p_data,
 int d2_read(void *fp_void, mph *p_data) {
   FILE *fp = (FILE *) fp_void;
 
-  int i,j,n;
-  int **p_str, str, strxdim;
+  long i,j;
+  int n;
+  int **p_str, str;
   double **p_supp, **p_w;
   int s_ph = p_data->s_ph;
-  int size = p_data->size;
+  long size = p_data->size;
 
   p_str  = (int **) malloc(s_ph * sizeof(int *));
   p_supp = (double **) malloc(s_ph * sizeof(double *));
@@ -120,7 +123,7 @@ int d2_read(void *fp_void, mph *p_data) {
       // read dimension and stride    
       c=fscanf(fp, "%d", &dim); 
       if (c!=1) {
-	VPRINTF(("Warning: only read %d d2!\n", i));
+	VPRINTF(("Warning: only read %ld d2!\n", i));
 	p_data->size = i;
 	free(p_w); free(p_supp); free(p_str); 
 	return 0;
@@ -163,6 +166,15 @@ int d2_read(void *fp_void, mph *p_data) {
     }
   }
 
+  for (n=0; n<s_ph; ++n) {
+    long * p_str_cum = p_data->ph[n].p_str_cum;
+    int * p_str = p_data->ph[n].p_str;
+    p_str_cum[0] = 0;
+    for (i=1; i<size; ++i) {
+      p_str_cum[i] = p_str_cum[i-1] + p_str[i-1];
+    }
+  }
+
   // free the pointer space
   free(p_w); free(p_supp); free(p_str); 
 
@@ -171,10 +183,11 @@ int d2_read(void *fp_void, mph *p_data) {
 
 int d2_write(void *fp_void, mph *p_data) {
   FILE *fp = (FILE *) fp_void;
-  int i, j, k, d, n;
+  long i, j;
+  int k, d, n;
   double **p_supp, **p_w;
   int s_ph = p_data->s_ph;
-  int size = p_data->size;
+  long size = p_data->size;
 
   p_supp = (double **) malloc(s_ph * sizeof(double *));
   p_w    = (double **) malloc(s_ph * sizeof(double *));
@@ -185,18 +198,19 @@ int d2_write(void *fp_void, mph *p_data) {
   }
 
   for (i=0; i<size; ++i) {
-    for (j=0; j<s_ph; ++j) {
-      int dim = p_data->ph[j].dim;
-      int str = p_data->ph[j].p_str[i];
-      fprintf(fp, "%d\n", dim);
-      fprintf(fp, "%d\n", str);
-      for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[j][k]);
-      fprintf(fp, "\n"); p_w[j] += str;
-      for (k=0; k<str; ++k) {
-	for (d=0; d<dim; ++d) fprintf(fp, "%f ", p_supp[j][d]);
-	fprintf(fp, "\n"); p_supp[j] += dim;
+    for (j=0; j<s_ph; ++j) 
+      if (p_data->ph[j].p_str != NULL) {
+	int dim = p_data->ph[j].dim;
+	int str = p_data->ph[j].p_str[i];
+	fprintf(fp, "%d\n", dim);
+	fprintf(fp, "%d\n", str);
+	for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[j][k]);
+	fprintf(fp, "\n"); p_w[j] += str;
+	for (k=0; k<str; ++k) {
+	  for (d=0; d<dim; ++d) fprintf(fp, "%f ", p_supp[j][d]);
+	  fprintf(fp, "\n"); p_supp[j] += dim;
+	}
       }
-    }
   }
 
   free(p_supp); free(p_w);
@@ -243,16 +257,17 @@ int d2_free_work(var_mph *var_work) {
 /** Compute the distance from each point to the all centroids.
     This part can be parallelized.
  */
-int d2_labeling(__IN_OUT__ mph *p_data,
+long d2_labeling(__IN_OUT__ mph *p_data,
 		mph *centroids,
 		var_mph * var_work,
 		bool isFirstTime,
 		int selected_phase) {
-  int i,j,n,count = 0;
+  long i,j, count = 0;
+  int n;
   int **p_str;
   double **p_supp, **p_w;
   int s_ph = p_data->s_ph;
-  int size = p_data->size;
+  long size = p_data->size;
 
   p_str  = (int **) malloc(s_ph * sizeof(int *));
   p_supp = (double **) malloc(s_ph * sizeof(double *));
@@ -264,7 +279,7 @@ int d2_labeling(__IN_OUT__ mph *p_data,
     p_w[n]    = p_data->ph[n].p_w;
   }
   
-  for (i=0; i<p_data->size; ++i) {
+  for (i=0; i<size; ++i) {
     double min_distance = -1;	
     int min_label = -1;
 
@@ -309,7 +324,7 @@ int d2_labeling(__IN_OUT__ mph *p_data,
   }
 
   free(p_str); free(p_supp); free(p_w);
-  VPRINTF(("\t %d objects change their labels [done]\n", count));
+  VPRINTF(("\t %ld objects change their labels [done]\n", count));
   
   return count;
 }
@@ -321,10 +336,14 @@ int d2_clustering(int num_of_clusters,
 		  mph *p_data, 
 		  __OUT__ mph *centroids,
 		  int selected_phase){
-  int i,j,k,iter;
+  long i,j;
+  int k,iter;
   int s_ph = p_data->s_ph;
-  int size = p_data->size;
+  long size = p_data->size;
   int *label = p_data->label;
+  long label_change_count;
+  var_mph var_work;
+
   assert(num_of_clusters>0 && max_iter > 0);
 
   // label all objects as invalid numbers
@@ -335,13 +354,14 @@ int d2_clustering(int num_of_clusters,
   centroids->s_ph = s_ph;
   centroids->size = num_of_clusters;
   centroids->ph = (sph *) malloc(s_ph * sizeof(sph));
-  for (i=0; i<s_ph; ++i) d2_centroid_rands(p_data, i, centroids->ph + i);
+  for (i=0; i<s_ph; ++i) 
+    if (selected_phase < 0 || i == selected_phase) 
+      d2_centroid_rands(p_data, i, centroids->ph + i);
   // d2_write(stdout, centroids); getchar();
 
   // initialize auxiliary variables
-  var_mph var_work;
   d2_allocate_work(p_data, &var_work);
-  int label_change_count;
+
   // start centroid-based clustering here
   for (iter=0; iter<max_iter; ++iter) {
     VPRINTF(("Round %d ... \n", iter));
@@ -360,7 +380,7 @@ int d2_clustering(int num_of_clusters,
 
     for (i=0; i<s_ph; ++i) 
       if (selected_phase < 0 || i == selected_phase) {
-	VPRINTF(("\t phase %d: \n", i));            
+	VPRINTF(("\t phase %ld: \n", i));            
       
 	if (d2_alg_type == 0) 
 	  d2_centroid_sphBregman(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);

@@ -96,13 +96,14 @@ void merge(const int dim, const SCALAR * m_supp, const SCALAR * m_w, const int m
 
 /* initialize with random samples */
 int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
-  int i, j, k, *array;
+  long i, j, k, *array;
   sph *data_ph = p_data->ph + idx_ph;
   int num_of_labels = p_data->num_of_labels;
   int dim = data_ph->dim;
   int str = data_ph->str;
-  int size = p_data->size;
+  long size = p_data->size;
   int strxdim = str*dim;
+  SCALAR *p_supp = data_ph->p_supp, *p_w = data_ph->p_w;
   SCALAR *m_supp, *m_w;
 
   // initialization 
@@ -117,24 +118,26 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   c->col = str * num_of_labels;
   
   // generate index array
-  array = (int *) malloc(size * sizeof(int));
+  array = (long *) malloc(size * sizeof(long));
+  for (i = 0; i < size; ++i) array[i] = i;
   shuffle(array, size);
 
   i = 0; j = 0;
-  m_supp = data_ph->p_supp; m_w = data_ph->p_w;
   while (i<size && j<num_of_labels) {
-    while (i<size && data_ph->p_str[i] < str) 
-      { m_supp = m_supp + data_ph->p_str[i]*dim; m_w = m_w + data_ph->p_str[i];  ++i; }
+    while (i<size && data_ph->p_str[array[i]] < str)  { ++i; }
     if (i == size) break;
 
-    if (data_ph->p_str[i] == str) {
+    m_supp = p_supp + data_ph->p_str_cum[array[i]]*dim; 
+    m_w = p_w + data_ph->p_str_cum[array[i]];
+
+    if (data_ph->p_str[array[i]] == str) {
       _D2_CBLAS_FUNC(copy)(strxdim, m_supp, 1, c->p_supp + j*strxdim , 1);
       _D2_CBLAS_FUNC(copy)(str, m_w, 1, c->p_w + j*str , 1);
     } else {
-      merge(dim, m_supp, m_w, data_ph->p_str[i], c->p_supp + j*strxdim, c->p_w + j*str, str);
+      merge(dim, m_supp, m_w, data_ph->p_str[array[i]], c->p_supp + j*strxdim, c->p_w + j*str, str);
     }
 
-    m_supp = m_supp + data_ph->p_str[i]*dim; m_w = m_w + data_ph->p_str[i];  ++i; ++j;
+    ++i; ++j;
   }
 
   assert(j == num_of_labels);
