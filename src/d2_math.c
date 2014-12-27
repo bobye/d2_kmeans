@@ -36,7 +36,7 @@ double randn () {
    Only effective if N is much smaller than RAND_MAX;
    if this may not be the case, use a better random
    number generator. */
-void shuffle(int *array, size_t n)
+void shuffle(long *array, size_t n)
 {
     if (n > 1) 
     {
@@ -44,24 +44,25 @@ void shuffle(int *array, size_t n)
         for (i = 0; i < n - 1; i++) 
         {
           size_t j = i + rand() / (RAND_MAX / (n - i) + 1);
-          int t = array[j];
+          long t = array[j];
           array[j] = array[i];
           array[i] = t;
         }
     }
 }
 
-void d2_mean(sph * data, int * label, int num_of_entries, int num_of_labels, 	     
+void d2_mean(sph * data, int * label, long num_of_entries, int num_of_labels, 	     
 	     /** OUT **/ SCALAR * means,
 	     /** OUT **/ SCALAR * covs) {
-  int i, j, k, m, idx, dim, dim2, *p_str;  
+  long i, j;
+  int k, m, idx, dim, dim2, *p_str;  
   SCALAR *p_supp, *p_w, *p_mean, *p_cov;
-  int *counts;
+  long *counts;
   
   dim = data->dim;
   dim2 = dim * dim;
 
-  counts = (int*) calloc(num_of_labels, sizeof(int));
+  counts = (long*) calloc(num_of_labels, sizeof(int));
   p_supp = data->p_supp; p_w = data->p_w; p_str = data->p_str;
 
   for (i=0; i<num_of_entries; ++i) {
