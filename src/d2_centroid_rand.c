@@ -1,6 +1,6 @@
 #include "d2_clustering.h"
 #include "d2_math.h"
-
+#include <assert.h>
 /* initialize with multivariate normal */
 int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   int i;
