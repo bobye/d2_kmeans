@@ -109,11 +109,18 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
     var_work->g_var[i].C = 
       _D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->ph[i].col);
 
+    var_work->g_var[i].X = NULL;
+    var_work->g_var[i].L = NULL;
+
     if (d2_alg_type == D2_CENTROID_BADMM) {
       d2_allocate_work_sphBregman(p_data->ph +i, p_data->size, 
 				  var_work->l_var_sphBregman+i);
     }
-    if (d2_alg_type == D2_CENTROID_ADMM && d2_alg_type == D2_CENTROID_GRADDEC) {
+    if (d2_alg_type == D2_CENTROID_ADMM) {
+      var_work->g_var[i].X = 
+	_D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->ph[i].col);
+    }
+    if (d2_alg_type == D2_CENTROID_GRADDEC) {
       var_work->g_var[i].X = 
 	_D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->ph[i].col);
       var_work->g_var[i].L = 
@@ -130,7 +137,10 @@ int d2_free_work(var_mph *var_work) {
   int i;
   for (i=0; i<var_work->s_ph; ++i) {
     _D2_FREE(var_work->g_var[i].C);
-    if (d2_alg_type) {
+    if (var_work->g_var[i].X) _D2_FREE(var_work->g_var[i].X);
+    if (var_work->g_var[i].L) _D2_FREE(var_work->g_var[i].L);
+
+    if (d2_alg_type == D2_CENTROID_BADMM) {
       d2_free_work_sphBregman(var_work->l_var_sphBregman + i);
     }
   }
@@ -148,7 +158,7 @@ long d2_labeling(__IN_OUT__ mph *p_data,
 		var_mph * var_work,
 		bool isFirstTime,
 		int selected_phase) {
-  long i,j, count = 0;
+  long i, count = 0;
   int **p_str;
   int n;
   double **p_supp, **p_w;
@@ -173,7 +183,7 @@ long d2_labeling(__IN_OUT__ mph *p_data,
     double min_distance = -1;	
     int min_label = -1;
     int n;
-    int j;
+    long j;
 
     for (j=0; j<centroids->size; ++j) {
       double d = 0.0, val;
@@ -182,7 +192,7 @@ long d2_labeling(__IN_OUT__ mph *p_data,
 	  int str = centroids->ph[n].str;
 	  int dim = p_data->ph[n].dim;
 	  assert(dim == centroids->ph[n].dim);
-	  if (d2_alg_type == 0) { 
+	  if (d2_alg_type == D2_CENTROID_BADMM) { 
 	    val = d2_match_by_coordinates(dim, 
 					  p_str[n][i], p_supp[n] + p_str_cum[n][i]*dim, p_w[n] + p_str_cum[n][i],
 					  str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
@@ -190,7 +200,12 @@ long d2_labeling(__IN_OUT__ mph *p_data,
 					  NULL);
 	    d += val;
 	  }
-	  if (d2_alg_type == 2) {
+	  if (d2_alg_type == D2_CENTROID_GRADDEC) {
+	    val = d2_match_by_coordinates(dim, 					  
+					  str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
+					  p_str[n][i], p_supp[n] + p_str_cum[n][i]*dim, p_w[n] + p_str_cum[n][i],
+					  var_work->g_var[n].X + p_str_cum[n][i]*str, 
+					  var_work->g_var[n].L + i*str);
 	  }
 	}
 
@@ -225,8 +240,8 @@ int d2_clustering(int num_of_clusters,
 		  mph *p_data, 
 		  __OUT__ mph *centroids,
 		  int selected_phase){
-  long i,j;
-  int k,iter;
+  long i;
+  int iter;
   int s_ph = p_data->s_ph;
   long size = p_data->size;
   int *label = p_data->label;
