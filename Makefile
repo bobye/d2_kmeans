@@ -2,6 +2,7 @@ CC=gcc -std=c99
 CXX=g++
 
 MOSEK=$(HOME)/mosek/7/tools/platform/osx64x86
+MOSEK_VERSION=7.1
 
 ARCH_FLAGS=
 CFLAGS=-Wextra -Wall -pedantic-errors -O3 $(ARCH_FLAGS)
@@ -13,10 +14,12 @@ LIBRARIES=-framework accelerate
 
 C_SOURCE_FILES=\
 	src/d2_clustering.c\
+	src/d2_clustering_io.c\
 	src/d2_math.c\
 	src/blas_like.c\
 	src/d2_centroid_rand.c\
 	src/d2_centroid_Bregman.c\
+	src/d2_centroid_GradDecent.c\
 	src/d2_solver_mosek.c
 
 CPP_SOURCE_FILES=\
@@ -54,11 +57,11 @@ all: d2
 
 d2: $(ALL_OBJECTS)
 	$(CXX) $(LDFLAGS) $(DEFINES) -o $@ $(ALL_OBJECTS) $(LIBRARIES)
-	install_name_tool -change  @loader_path/libmosek64.7.0.dylib  @loader_path/../../../mosek/7/tools/platform/osx64x86/bin/libmosek64.7.0.dylib $@
+	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  @loader_path/../../../mosek/7/tools/platform/osx64x86/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 
 transportation_test: src/transportation_test.c src/d2_solver_mosek.o src/blas_like.o
 	$(CC) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
-	install_name_tool -change  @loader_path/libmosek64.7.0.dylib  @loader_path/../../../mosek/7/tools/platform/osx64x86/bin/libmosek64.7.0.dylib $@
+	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  @loader_path/../../../mosek/7/tools/platform/osx64x86/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 	./$@
 
 test: transportation_test

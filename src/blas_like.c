@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "blas_like.h"
 #include <stdio.h>
+#include <assert.h>
 
 #define SCALAR double
 

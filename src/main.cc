@@ -9,9 +9,13 @@
 #include <cstdlib>
 #include <getopt.h> /* for getopt_long; GNU extension */
 
+/* centroid methods
+ * 0: Bregman ADMM
+ * 1: ADMM
+ * 2: Gradient Decent
+ */
 int d2_alg_type = 0;
 
-// ./d2 mountaindat.txt 2 1000 3,3 6,11
 int main(int argc, char *argv[])
 { 
   using namespace std;
