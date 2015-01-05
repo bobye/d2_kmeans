@@ -7,7 +7,7 @@
 
 /* choose options */
 
-const BADMM_options badmm_clu_options = {200, 2.0, 10};
+const BADMM_options badmm_clu_options = {500, 2.0, 10};
 const BADMM_options badmm_cen_options = {2000, 1.0, 10};
 
 
@@ -107,8 +107,10 @@ int d2_centroid_sphBregman(mph *p_data, // data
   for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
 
   // main loop
+  printf("\titer\tobj\t\tprimres\t\tdualres\t\tseconds\n");
+  printf("\t----------------------------------------------------------------\n");
+  nclock_start();
   for (iter=0; iter <= max_niter; ++iter) {
-
     // step 1: update X    
     // X = Z.*exp(- (C + Y)/rho)
     _D2_CBLAS_FUNC(copy)(str*col, C, 1, X, 1);
@@ -173,12 +175,13 @@ int d2_centroid_sphBregman(mph *p_data, // data
     
     // step 6: check residuals
     obj = _D2_CBLAS_FUNC(dot)(str*col, C, 1, X, 1) / size;
-    if (iter%100 == 0) {
+    if (iter%100 == 0 || (iter < 100 && iter%20 == 0) ) {
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, X, 1);
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, Z0,1);
       primres = _D2_CBLAS_FUNC(asum)(str*col, X, 1) / size;
       dualres = _D2_CBLAS_FUNC(asum)(str*col,Z0, 1) / size;
-      printf("\t%d\t%f\t%f\t%f\n", iter, obj, primres, dualres);
+      printf("\t%d\t%f\t%f\t%f", iter, obj, primres, dualres);
+      printf("\t%f\n", nclock_end());
     }
   }
 
