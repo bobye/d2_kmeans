@@ -4,6 +4,8 @@
 #include "d2_clustering.h"
 #include "d2_math.h"
 #include "d2_solver.h"
+#include "d2_param.h"
+
 #include <omp.h>
 
 extern int d2_alg_type;
@@ -100,16 +102,22 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
   var_work->s_ph = p_data->s_ph;
 
   var_work->g_var = (var_sph *) malloc(p_data->s_ph * sizeof(var_sph));
-  if (d2_alg_type == 0) 
+  if (d2_alg_type == D2_CENTROID_BADMM) 
     var_work->l_var_sphBregman = (var_sphBregman *) malloc(p_data->s_ph * sizeof(var_sphBregman));
 
   for (i=0; i<p_data->s_ph; ++i) {
     var_work->g_var[i].C = 
       _D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->ph[i].col);
 
-    if (d2_alg_type == 0) {
+    if (d2_alg_type == D2_CENTROID_BADMM) {
       d2_allocate_work_sphBregman(p_data->ph +i, p_data->size, 
 				  var_work->l_var_sphBregman+i);
+    }
+    if (d2_alg_type == D2_CENTROID_ADMM && d2_alg_type == D2_CENTROID_GRADDEC) {
+      var_work->g_var[i].X = 
+	_D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->ph[i].col);
+      var_work->g_var[i].L = 
+	_D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->size);
     }
   }
 

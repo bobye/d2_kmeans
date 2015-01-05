@@ -1,15 +1,15 @@
-CC=gcc -std=c99
-CXX=g++
+CC=gcc-4.8 -std=c99
+CXX=g++-4.8
 
 MOSEK=$(HOME)/mosek/7/tools/platform/osx64x86
 MOSEK_VERSION=7.1
 
-ARCH_FLAGS=
+ARCH_FLAGS=-fopenmp
 CFLAGS=-Wextra -Wall -pedantic-errors -O3 $(ARCH_FLAGS)
-LDFLAGS=$(ARCH_FLAGS) -L$(MOSEK)/bin -lmosek64 -pthread
+LDFLAGS=$(ARCH_FLAGS)
 DEFINES=
 INCLUDES=-Iinclude/ -I$(MOSEK)/h
-LIBRARIES=-framework accelerate
+LIBRARIES=-framework accelerate -L$(MOSEK)/bin -lmosek64 -pthread -fopenmp
 
 
 C_SOURCE_FILES=\
