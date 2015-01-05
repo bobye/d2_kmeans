@@ -180,8 +180,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, Z0,1);
       primres = _D2_CBLAS_FUNC(asum)(str*col, X, 1) / size;
       dualres = _D2_CBLAS_FUNC(asum)(str*col,Z0, 1) / size;
-      printf("\t%d\t%f\t%f\t%f", iter, obj, primres, dualres);
-      printf("\t%f\n", nclock_end());
+      printf("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end());
     }
   }
 
