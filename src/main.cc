@@ -14,7 +14,9 @@
  * 1: ADMM
  * 2: Gradient Decent
  */
-int d2_alg_type = 0;
+#include "d2_param.h"
+int d2_alg_type = D2_CENTROID_GRADDEC;
+//int d2_alg_type = D2_CENTROID_BADMM;
 
 int main(int argc, char *argv[])
 { 
