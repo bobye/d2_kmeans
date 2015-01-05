@@ -106,11 +106,12 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
     var_work->l_var_sphBregman = (var_sphBregman *) malloc(p_data->s_ph * sizeof(var_sphBregman));
 
   for (i=0; i<p_data->s_ph; ++i) {
-    var_work->g_var[i].C = 
-      _D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->ph[i].col);
-
+    var_work->g_var[i].C = NULL;
     var_work->g_var[i].X = NULL;
     var_work->g_var[i].L = NULL;
+
+    var_work->g_var[i].C = 
+      _D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->ph[i].col);
 
     if (d2_alg_type == D2_CENTROID_BADMM) {
       d2_allocate_work_sphBregman(p_data->ph +i, p_data->size, 
@@ -136,7 +137,7 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
 int d2_free_work(var_mph *var_work) {
   int i;
   for (i=0; i<var_work->s_ph; ++i) {
-    _D2_FREE(var_work->g_var[i].C);
+    if (var_work->g_var[i].C) _D2_FREE(var_work->g_var[i].C);
     if (var_work->g_var[i].X) _D2_FREE(var_work->g_var[i].X);
     if (var_work->g_var[i].L) _D2_FREE(var_work->g_var[i].L);
 
@@ -145,7 +146,7 @@ int d2_free_work(var_mph *var_work) {
     }
   }
   free(var_work->g_var);
-  free(var_work->l_var_sphBregman);
+  if (d2_alg_type == D2_CENTROID_BADMM) free(var_work->l_var_sphBregman);
   free(var_work->label_switch);
   return 0;
 }
@@ -192,21 +193,12 @@ long d2_labeling(__IN_OUT__ mph *p_data,
 	  int str = centroids->ph[n].str;
 	  int dim = p_data->ph[n].dim;
 	  assert(dim == centroids->ph[n].dim);
-	  if (d2_alg_type == D2_CENTROID_BADMM) { 
-	    val = d2_match_by_coordinates(dim, 
-					  p_str[n][i], p_supp[n] + p_str_cum[n][i]*dim, p_w[n] + p_str_cum[n][i],
-					  str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
-					  NULL, // x and lambda are implemented later
-					  NULL);
-	    d += val;
-	  }
-	  if (d2_alg_type == D2_CENTROID_GRADDEC) {
-	    val = d2_match_by_coordinates(dim, 					  
-					  str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
-					  p_str[n][i], p_supp[n] + p_str_cum[n][i]*dim, p_w[n] + p_str_cum[n][i],
-					  var_work->g_var[n].X + p_str_cum[n][i]*str, 
-					  var_work->g_var[n].L + i*str);
-	  }
+	  val = d2_match_by_coordinates(dim, 
+					p_str[n][i], p_supp[n] + p_str_cum[n][i]*dim, p_w[n] + p_str_cum[n][i],
+					str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
+					NULL, // x and lambda are implemented later
+					NULL);
+	  d += val;
 	}
 
       if (min_distance < 0 || d < min_distance) {
@@ -267,15 +259,14 @@ int d2_clustering(int num_of_clusters,
   d2_allocate_work(p_data, &var_work);
 
   // start centroid-based clustering here
+  d2_solver_setup();
   for (iter=0; iter<max_iter; ++iter) {
     VPRINTF(("Round %d ... \n", iter));
     VPRINTF(("\tRe-labeling all instances ... ")); VFLUSH;
-    d2_solver_setup();
     if (iter == 0)
       label_change_count = d2_labeling(p_data, centroids, &var_work, true, selected_phase);
     else 
       label_change_count = d2_labeling(p_data, centroids, &var_work, false, selected_phase);
-    d2_solver_release();
 
     /* termination criterion */
     if (label_change_count < 0.005 * size) break;
@@ -286,10 +277,13 @@ int d2_clustering(int num_of_clusters,
       if (selected_phase < 0 || i == selected_phase) {
 	VPRINTF(("\t phase %ld: \n", i));            
       
-	if (d2_alg_type == 0) 
+	if (d2_alg_type == D2_CENTROID_BADMM) 
 	  d2_centroid_sphBregman(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);
+	if (d2_alg_type == D2_CENTROID_GRADDEC)
+	  d2_centroid_sphGradDecent(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);
       }
   }
+  d2_solver_release();
 
   d2_free_work(&var_work);
 
