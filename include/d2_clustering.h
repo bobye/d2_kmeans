@@ -51,6 +51,8 @@ extern "C" {
   // working variables that are visible in all algorithms
   typedef struct {
     SCALAR *C;
+    SCALAR *X;
+    SCALAR *L;
   } var_sph;
 
   // working variables specific to Bregman ADMM
@@ -88,6 +90,14 @@ extern "C" {
 			     int idx_ph, // index of phases
 			     sph *c0,
 			     __OUT__ sph *c);
+
+
+  // interface of Gradient Decent
+  int d2_centroid_sphGradDecent(mph *p_data,
+				var_mph * var_work,
+				int idx_ph,
+				sph *c0,
+				__OUT__ sph *c);
 
 
   // interface to users
