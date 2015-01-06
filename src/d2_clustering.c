@@ -99,6 +99,8 @@ int d2_allocate(mph *p_data,
 
 int d2_allocate_work(mph *p_data, var_mph *var_work) {
   int i;
+  long size = p_data->size;
+  int num_of_labels = p_data->num_of_labels;
   var_work->s_ph = p_data->s_ph;
 
   var_work->g_var = (var_sph *) malloc(p_data->s_ph * sizeof(var_sph));
@@ -106,30 +108,30 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
     var_work->l_var_sphBregman = (var_sphBregman *) malloc(p_data->s_ph * sizeof(var_sphBregman));
 
   for (i=0; i<p_data->s_ph; ++i) {
+    int str = p_data->ph[i].str;
+    int col = p_data->ph[i].col;
+
     var_work->g_var[i].C = NULL;
     var_work->g_var[i].X = NULL;
     var_work->g_var[i].L = NULL;
 
-    var_work->g_var[i].C = 
-      _D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->ph[i].col);
-
+    if (d2_alg_type == D2_CENTROID_BADMM || d2_alg_type == D2_CENTROID_ADMM) {
+      var_work->g_var[i].C = _D2_MALLOC_SCALAR(str * col);
+    }
     if (d2_alg_type == D2_CENTROID_BADMM) {
       d2_allocate_work_sphBregman(p_data->ph +i, p_data->size, 
 				  var_work->l_var_sphBregman+i);
     }
     if (d2_alg_type == D2_CENTROID_ADMM) {
-      var_work->g_var[i].X = 
-	_D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->ph[i].col);
+      var_work->g_var[i].X = _D2_MALLOC_SCALAR(str * col);
     }
-    if (d2_alg_type == D2_CENTROID_GRADDEC) {
-      var_work->g_var[i].X = 
-	_D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->ph[i].col);
-      var_work->g_var[i].L = 
-	_D2_MALLOC_SCALAR(p_data->ph[i].str * p_data->size);
+    if (d2_alg_type == D2_CENTROID_GRADDEC || d2_alg_type == D2_CENTROID_ADMM) {
+      var_work->g_var[i].X = _D2_MALLOC_SCALAR(str * col);
+      var_work->g_var[i].L = _D2_MALLOC_SCALAR(str * size);
     }
   }
 
-  var_work->label_switch = (char *) malloc(p_data->size * sizeof(char)); 
+  var_work->label_switch = (char *) malloc(size * sizeof(char)); 
 
   return 0;
 }
@@ -281,6 +283,8 @@ int d2_clustering(int num_of_clusters,
 	  d2_centroid_sphBregman(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);
 	if (d2_alg_type == D2_CENTROID_GRADDEC)
 	  d2_centroid_sphGradDecent(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);
+	if (d2_alg_type == D2_CENTROID_ADMM)
+	  d2_centroid_sphADMM(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);
       }
   }
   d2_solver_release();
