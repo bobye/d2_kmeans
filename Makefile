@@ -20,6 +20,7 @@ C_SOURCE_FILES=\
 	src/d2_centroid_rand.c\
 	src/d2_centroid_Bregman.c\
 	src/d2_centroid_GradDecent.c\
+	src/d2_centroid_ADMM.c\
 	src/d2_solver_mosek.c
 
 CPP_SOURCE_FILES=\
