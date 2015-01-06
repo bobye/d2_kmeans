@@ -57,6 +57,8 @@ int d2_centroid_sphGradDecent(mph *p_data,
 
     fval0 = fval;
     fval = 0;
+
+    /* compute exact distances */
 #pragma omp parallel for reduction(+:fval)
     for (i=0; i<size; ++i) {
       fval += d2_match_by_coordinates(dim,
@@ -67,15 +69,15 @@ int d2_centroid_sphGradDecent(mph *p_data,
     }
     fval /= size;
 
-    // compute p_grad
+    /* compute p_grad */
     _D2_FUNC(ccenter)(str, size, L, NULL);
     for (i=0; i<num_of_labels*str; ++i) p_grad[i] = 0; //reset
     for (i=0; i < size; ++i)
       _D2_CBLAS_FUNC(axpy)(str, 1./label_count[label[i]], L + i*str, 1, p_grad + label[i]*str, 1);
     for (i=0; i < num_of_labels*str; ++i) p_grad[i] = p_grad[i] * c->p_w[i] * (1-c->p_w[i]);
 
-    // update c->p_supp
-    for (i=0; i<str*dim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
+    /* update c->p_supp */
+    for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
     for (i=0; i < size;  ++i) {
       _D2_CBLAS_FUNC(gemm)(CblasColMajor, CblasNoTrans, CblasTrans, 
 			   dim, str, p_str[i], 1, p_supp + dim*p_str_cum[i], dim, X + str*p_str_cum[i], str, 1, 
@@ -86,7 +88,7 @@ int d2_centroid_sphGradDecent(mph *p_data,
       _D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, c->p_w + i*str);
     }
     
-    // update c->p_w
+    /* update c->p_w */
     for (i=0; i<num_of_labels*str; ++i) c->p_w[i] *= exp(-8E-3 * p_grad[i]);
     _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, NULL);
 

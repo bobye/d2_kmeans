@@ -76,12 +76,12 @@ int d2_centroid_sphBregman(mph *p_data, // data
   str = c->str; assert(str > 0);
   strxdim = str * dim;
 
-  // compute C
+  /* compute C */
   for (i=0;i < size;  ++i) {
     _D2_FUNC(pdist2)(dim, str, p_str[i], &c->p_supp[label[i]*strxdim], p_supp + dim*p_str_cum[i], C + str*p_str_cum[i]);
   }
 
-  // rho is an important hyper-parameter
+  /* rho is an important hyper-parameter */
   rho = p_badmm_options->rhoCoeff * _D2_CBLAS_FUNC(asum)(str*col, C, 1) / (str*col);
 
   /* 

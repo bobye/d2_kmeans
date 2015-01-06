@@ -98,6 +98,12 @@ extern "C" {
 				int idx_ph,
 				sph *c0,
 				__OUT__ sph *c);
+  
+  int d2_centroid_sphADMM(mph *p_data,
+			  var_mph *var_work,
+			  int idx_ph,
+			  sph *c0,
+			  __OUT__ sph *c);
 
 
   // interface to users
@@ -105,7 +111,7 @@ extern "C" {
 		    int max_iter, 
 		    mph *p_data, 
 		    __OUT__ mph *centroids,
-		    int selected_phase);
+		    int selected_phase);  
 
 #ifdef __cplusplus
 }
