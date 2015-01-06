@@ -245,17 +245,17 @@ double d2_match_by_distmat_qp(int n, int m, double *C, double *L, double rho, do
   MSKrescodee i, j;
   double fval = 0.0, ones[] = {1.0, 1.0};
   MSKint32t *asub = (MSKint32t *) malloc(2*m*n*sizeof(MSKint32t));
-  MSKint32t *bsub = (MSKint32t *) malloc(m*sizeof(MSKint32t));
-  MSKint32t *qsub = (MSKint32t *) malloc(m*sizeof(MSKint32t));
-  double *qval = (double *) malloc(m*sizeof(double));
+  MSKint32t *bsub = (MSKint32t *) malloc(n*sizeof(MSKint32t));
+  MSKint32t *qsub = (MSKint32t *) malloc(n*sizeof(MSKint32t));
+  double *qval = (double *) malloc(n*sizeof(double));
   double *xx = (double *) malloc(numvar*sizeof(double));
   for (j=0; j<m; ++j)
     for (i=0; i<n; ++i) {
       asub[2*(i+j*n)] = i;
       asub[2*(i+j*n) + 1] = n+j;
     }
-  for (j=0; j<m; ++j) {
-    bsub[j] = n + j;
+  for (j=0; j<n; ++j) {
+    bsub[j] = j;
     qsub[j] = n*m + j;
     qval[j] = rho;
   }
@@ -282,7 +282,7 @@ double d2_match_by_distmat_qp(int n, int m, double *C, double *L, double rho, do
 		    asub+j*2,
 		    ones);
   }
-  for (j=0; j<m && r == MSK_RES_OK; ++j) {
+  for (j=0; j<n && r == MSK_RES_OK; ++j) {
     r = MSK_putvarbound(task,
 			n*m + j,
 			MSK_BK_FR,
@@ -299,17 +299,17 @@ double d2_match_by_distmat_qp(int n, int m, double *C, double *L, double rho, do
     r = MSK_putconbound(task,
 			i,
 			MSK_BK_FX,
-			lw[i],
-			lw[i]);
+			lw[i] - L[i],
+			lw[i] - L[i]);
   for (i=0; i<m && r==MSK_RES_OK; ++i)
     r = MSK_putconbound(task,
 			i+n,
 			MSK_BK_FX,
-			rw[i] - L[i],
-			rw[i] - L[i]);
+			rw[i],
+			rw[i]);
 
   if (r == MSK_RES_OK) {
-    r = MSK_putqobj(task,m,qsub,qsub,qval); 
+    r = MSK_putqobj(task,n,qsub,qsub,qval); 
   }
 
 

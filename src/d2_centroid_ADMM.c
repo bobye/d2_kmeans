@@ -99,13 +99,12 @@ int d2_centroid_sphADMM(mph *p_data,
       /* step 1, update X */
       //#pragma omp parallel for 
       for (i=0; i < size; ++i) {	
-	d2_match_by_distmat_qp(p_str[i], 
-			       str, 
+	d2_match_by_distmat_qp(str, p_str[i], 
 			       C + p_str_cum[i]*str, 
 			       L + label[i]*str,
 			       rho,
-			       p_w + p_str_cum[i], 
 			       c->p_w + label[i]*str, 
+			       p_w + p_str_cum[i], 
 			       X + p_str_cum[i]*str, 
 			       X + p_str_cum[i]*str);
       }
