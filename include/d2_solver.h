@@ -19,7 +19,7 @@ extern "C" {
 
   double d2_match_by_distmat_qp(int n, int m, double *C, double *L, double rho, double *lw, double *rw, double *x0, /** OUT **/ double *x);
   
-  double d2_qp(int str, int count, double *q, double *w0, /** OUT **/ double *w);
+  double d2_qpsimple(int str, int count, double *q, /** OUT **/ double *w);
 #ifdef __cplusplus
 }
 #endif
