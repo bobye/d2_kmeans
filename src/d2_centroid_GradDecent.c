@@ -69,6 +69,9 @@ int d2_centroid_sphGradDecent(mph *p_data,
     }
     fval /= size;
 
+    printf("\t%d\t%f\t%f\n", iter, fval, nclock_end());    
+    if (fabs(fval - fval0) < 1E-4 * fval) break;
+
     /* compute p_grad */
     _D2_FUNC(ccenter)(str, size, L, NULL);
     for (i=0; i<num_of_labels*str; ++i) p_grad[i] = 0; //reset
@@ -91,9 +94,6 @@ int d2_centroid_sphGradDecent(mph *p_data,
     /* update c->p_w */
     for (i=0; i<num_of_labels*str; ++i) c->p_w[i] *= exp(-8E-3 * p_grad[i]);
     _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, NULL);
-
-    printf("\t%d\t%f\t%f\n", iter, fval, nclock_end());    
-    if (fabs(fval - fval0) < 1E-4 * fval) break;
 
   }
 
