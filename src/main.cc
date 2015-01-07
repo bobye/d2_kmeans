@@ -15,8 +15,7 @@
  * 2: Gradient Decent
  */
 #include "d2_param.h"
-int d2_alg_type = D2_CENTROID_GRADDEC;
-//int d2_alg_type = D2_CENTROID_BADMM;
+int d2_alg_type = D2_CENTROID_BADMM;
 
 int main(int argc, char *argv[])
 { 
@@ -41,6 +40,7 @@ int main(int argc, char *argv[])
     {"phase_only", 1, 0, 't'},
     {"clusters", 1, 0, 'c'},
     {"max_iters", 1, 0, 'm'},
+    {"centroid_method", 1, 0, 'M'},
     {NULL, 0, NULL, 0}
   };
   
@@ -73,6 +73,10 @@ int main(int argc, char *argv[])
       break;
     case 'm':
       max_iters = max(atoi(optarg), max_iters);
+      break;
+    case 'M':
+      d2_alg_type = atoi(optarg);
+      assert(d2_alg_type == D2_CENTROID_BADMM || d2_alg_type == D2_CENTROID_GRADDEC || d2_alg_type == D2_CENTROID_ADMM);
       break;
     default:
       printf ("?? getopt returned character code 0%o ??\n", ch);

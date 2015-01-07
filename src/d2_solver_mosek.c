@@ -238,11 +238,15 @@ double d2_match_by_coordinates(int d, int n, double *X, double *wX, int m, doubl
 }
 
 
-double d2_match_by_distmat_qp(int n, int m, double *C, double *L, double rho, double *lw, double *rw, double *x0, /** OUT **/ double *x) {
-  const MSKint32t numvar = n*m + m, numcon = n + m;
+double d2_match_by_distmat_qp(int n, int m, 
+			      double *C, double *L, double rho, 
+			      double *lw, double *rw, 
+			      double *x0, 
+			      /** OUT **/ double *x) {
+  const MSKint32t numvar = n*m + n, numcon = n + m;
   MSKtask_t task = NULL;
   MSKrescodee r;
-  MSKrescodee i, j;
+  MSKint32t i, j;
   double fval = 0.0, ones[] = {1.0, 1.0};
   MSKint32t *asub = (MSKint32t *) malloc(2*m*n*sizeof(MSKint32t));
   MSKint32t *bsub = (MSKint32t *) malloc(n*sizeof(MSKint32t));
@@ -371,5 +375,95 @@ double d2_match_by_distmat_qp(int n, int m, double *C, double *L, double rho, do
   
   MSK_deletetask(&task); 
   free(asub); free(bsub); free(qsub); free(qval); free(xx);
+  return fval;
+}
+
+
+double d2_qpsimple(int n, int count, double *c, /** OUT **/ double *w) {
+  const MSKint32t numvar = n, numcon = 1;
+  MSKtask_t task = NULL;
+  MSKrescodee r;
+  MSKint32t i, j;
+  MSKint32t zeroInt = 0;
+  double one = 1, fval = 0.0;
+
+  MSKint32t *bsub = (MSKint32t *) malloc(n*sizeof(MSKint32t));
+  MSKint32t *qsub = (MSKint32t *) malloc(n*sizeof(MSKint32t));
+  double *qval = (double *) malloc(n*sizeof(double));
+
+  for (j=0; j<n; ++j) {
+    qsub[j] = j; // Q index
+    qval[j] = count; // Q value
+  }
+  r=MSK_maketask(env, numcon, numvar, &task);
+  if ( r==MSK_RES_OK ) {
+    //r = MSK_linkfunctotaskstream(task,MSK_STREAM_LOG,NULL,printstr);
+  }
+
+  r=MSK_appendcons(task, numcon);
+  r=MSK_appendvars(task, numvar);
+  for (j=0; j<n; ++j) {
+    r = MSK_putcj(task, j, -c[j]);
+    r = MSK_putvarbound(task, j, MSK_BK_LO, 0.0, +MSK_INFINITY);
+    r = MSK_putacol(task, j, 1, &zeroInt, &one);
+  }
+  r = MSK_putconbound(task, 0, MSK_BK_FX, 1.0, 1.0);
+  r = MSK_putqobj(task, n, qsub, qsub, qval);
+  r = MSK_putobjsense(task, MSK_OBJECTIVE_SENSE_MINIMIZE);
+
+
+  if (r == MSK_RES_OK) {
+      MSKrescodee trmcode;
+      r = MSK_optimizetrm(task, &trmcode);
+      if (r == MSK_RES_OK) {
+	MSKsolstae solsta;
+	r = MSK_getsolsta( task,
+			   MSK_SOL_ITR,  /* Request the interior solution. */ 
+			   &solsta);
+	switch(solsta)
+	  {
+	  case MSK_SOL_STA_OPTIMAL:
+	  case MSK_SOL_STA_NEAR_OPTIMAL:
+	    MSK_getprimalobj(task, MSK_SOL_ITR, &fval);
+	    if ( w ) {
+	      MSK_getxx(task,
+			MSK_SOL_ITR,
+			w);
+	    }
+	    break;
+          case MSK_SOL_STA_DUAL_INFEAS_CER:
+          case MSK_SOL_STA_PRIM_INFEAS_CER:
+          case MSK_SOL_STA_NEAR_DUAL_INFEAS_CER:
+          case MSK_SOL_STA_NEAR_PRIM_INFEAS_CER:  
+            printf("Primal or dual infeasibility certificate found.\n");
+            break;
+          case MSK_SOL_STA_UNKNOWN:
+	    {
+	      char symname[MSK_MAX_STR_LEN];
+	      char desc[MSK_MAX_STR_LEN];
+
+	      /* If the solutions status is unknown, print the termination code
+		 indicating why the optimizer terminated prematurely. */
+            
+	      MSK_getcodedesc(trmcode,
+			      symname,
+			      desc);
+            
+	      printf("The solution status is unknown.\n");
+	      printf("The optimizer terminitated with code: %s\n",symname);
+	      break;
+	    }
+          default:
+            printf("Other solution status.\n");
+            break;
+
+	  }
+      }
+
+  }
+
+  MSK_deletetask(&task); 
+  free(bsub); free(qsub); free(qval); 
+
   return fval;
 }
