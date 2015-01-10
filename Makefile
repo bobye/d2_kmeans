@@ -1,15 +1,15 @@
-CC=gcc-4.8 -std=c99
-CXX=g++-4.8
+CC=gcc -std=c99
+CXX=g++
 
-MOSEK=$(HOME)/mosek/7/tools/platform/osx64x86
+MOSEK=/Users/jxy198/mosek/7/tools/platform/osx64x86
 MOSEK_VERSION=7.1
 
-ARCH_FLAGS= -fopenmp
+ARCH_FLAGS=
 CFLAGS=-Wextra -Wall -pedantic-errors -O3 $(ARCH_FLAGS)
 LDFLAGS=$(ARCH_FLAGS)
 DEFINES=
 INCLUDES=-Iinclude/ -I$(MOSEK)/h
-LIBRARIES=-framework accelerate -L$(MOSEK)/bin -lmosek64 -lpthread
+LIBRARIES=-framework Accelerate -L$(MOSEK)/bin -lmosek64 -lpthread
 
 
 C_SOURCE_FILES=\
@@ -58,11 +58,9 @@ all: d2
 
 d2: $(ALL_OBJECTS)
 	$(CXX) $(LDFLAGS) $(DEFINES) -o $@ $(ALL_OBJECTS) $(LIBRARIES)
-	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  @loader_path/../../../mosek/7/tools/platform/osx64x86/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 
 transportation_test: src/transportation_test.c src/d2_solver_mosek.o src/blas_like.o
 	$(CC) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
-	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  @loader_path/../../../mosek/7/tools/platform/osx64x86/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 	./$@
 
 test: transportation_test

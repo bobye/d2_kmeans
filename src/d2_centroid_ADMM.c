@@ -5,9 +5,10 @@
 #include "d2_solver.h"
 #include <float.h>
 #include <assert.h>
+
+#ifndef __APPLE__
 #include <omp.h>
-
-
+#endif 
 
 
 int d2_centroid_sphADMM(mph *p_data,
