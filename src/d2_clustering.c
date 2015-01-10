@@ -1,12 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdbool.h>
 #include "d2_clustering.h"
 #include "d2_math.h"
 #include "d2_solver.h"
 #include "d2_param.h"
 
+#ifndef __APPLE__
 #include <omp.h>
+#endif 
 
 extern int d2_alg_type;
 
