@@ -58,9 +58,11 @@ all: d2
 
 d2: $(ALL_OBJECTS)
 	$(CXX) $(LDFLAGS) $(DEFINES) -o $@ $(ALL_OBJECTS) $(LIBRARIES)
+	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 
 transportation_test: src/transportation_test.c src/d2_solver_mosek.o src/blas_like.o
 	$(CC) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 	./$@
 
 test: transportation_test
