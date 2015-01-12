@@ -121,11 +121,9 @@ int d2_centroid_sphADMM(mph *p_data,
     for (admm = 0; admm < admmIter; ++admm) {
       /* step 1, update X */
 
-#ifdef __USE_MKL__
-      //#pragma omp parallel for 
-#endif
+#pragma omp parallel for 
       for (i=0; i < size; ++i) {
-	printf("%ld\n", i);
+	//printf("%ld\n", i);
 	d2_match_by_distmat_qp(str, p_str[i], 
 			       C + p_str_cum[i]*str, 
 			       L + i*str,
