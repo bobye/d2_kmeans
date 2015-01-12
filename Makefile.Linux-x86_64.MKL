@@ -10,10 +10,8 @@ LDFLAGS=$(ARCH_FLAGS)
 DEFINES=-D __USE_MKL__ -openmp
 INCLUDES=-Iinclude/ -I$(MKL_DIR)/include -I$(MOSEK)/h
 LIBRARIES=-L$(MKL_DIR)/lib/intel64 -Wl,-R$(MKL_DIR)/lib/intel64\
-	-Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -Wl,--end-group\
-	-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread\
-	-lrt -L/usr/lib/x86_64-linux-gnu
-
+	-Wl,--start-group -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -lpthread -lm -Wl,--end-group\
+	-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread -lrt
 
 C_SOURCE_FILES=\
 	src/d2_clustering.c\
