@@ -1,23 +1,30 @@
-CC=icc -std=c99
+CC=icc
 CXX=icpc
 
 MKL_DIR=/gpfs/home/jxy198/work/software/intel/composerxe/mkl
+MOSEK=/gpfs/home/jxy198/work/software/mosek/7/tools/platform/linux64x86
 
-ARCH_FLAGS=
+ARCH_FLAGS=-m64
 CFLAGS=-Wextra -Wall -pedantic-errors -O3 $(ARCH_FLAGS)
 LDFLAGS=$(ARCH_FLAGS)
-DEFINES=-D __USE_MKL__
-INCLUDES=-Iinclude/ -I$(MKL_DIR)/include -m64
+DEFINES=-D __USE_MKL__ -openmp
+INCLUDES=-Iinclude/ -I$(MKL_DIR)/include -I$(MOSEK)/h
 LIBRARIES=-L$(MKL_DIR)/lib/intel64 -Wl,-R$(MKL_DIR)/lib/intel64\
-	-Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -Wl,--end-group   
+	-Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -Wl,--end-group\
+	-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread\
+	-lrt -L/usr/lib/x86_64-linux-gnu
 
 
 C_SOURCE_FILES=\
 	src/d2_clustering.c\
+	src/d2_clustering_io.c\
 	src/d2_math.c\
 	src/blas_like.c\
 	src/d2_centroid_rand.c\
-	src/d2_centroid_Bregman.c
+	src/d2_centroid_Bregman.c\
+	src/d2_centroid_GradDecent.c\
+	src/d2_centroid_ADMM.c\
+	src/d2_solver_mosek.c
 
 CPP_SOURCE_FILES=\
 	src/util.cc
@@ -57,7 +64,7 @@ d2: $(ALL_OBJECTS)
 
 .PHONY: clean
 clean:
-	@rm -f test
+	@rm -f test d2
 	@for pattern in '*.o' '*.d'; do \
 		find . -name "$$pattern" | xargs rm; \
 	done
