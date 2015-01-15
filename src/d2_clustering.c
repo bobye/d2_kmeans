@@ -241,7 +241,7 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
       var_work->label_switch[i] = 0;
     }
 
-#pragma omp parallel for reduction(+:dist_count) reduction(+:count)
+#pragma omp parallel for reduction(+:dist_count, count)
   for (i=0; i<size; ++i) 
   /* step 2 */
   if (p_tr->u[i] > p_tr->s[label[i]]) {
