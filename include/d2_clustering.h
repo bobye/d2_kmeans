@@ -21,10 +21,22 @@ extern "C" {
     SCALAR *p_w;  
   } sph; 
 
+
+  /* data structure for relabeling using triangle inequality:    
+     Using the Triangle Inequality to Accelerate k-means, Charles Elkan, ICML03
+   */
+  typedef struct {
+    SCALAR *l; /* lower bound of distance pair */
+    SCALAR *u; /* upper bound */
+    SCALAR *s; 
+    SCALAR *c; /* distance between centroids */
+    char *r;    
+  } trieq;
+
   // data structure to store d2 of multiple phases
   typedef struct {
-    int s_ph /* size of phases */;
-    long size /* size of entries */;
+    int s_ph; /* size of phases */
+    long size; /* size of entries */
     int *label;
     int num_of_labels;
     sph *ph;
@@ -68,6 +80,7 @@ extern "C" {
     var_sph *g_var;
     var_sphBregman *l_var_sphBregman; // may not initialized, which depends on the actual centroid algorithm used.    
     char *label_switch;
+    trieq tr; /* data structure for relabeling */
   } var_mph; 
 
 
