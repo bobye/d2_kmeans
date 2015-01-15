@@ -442,7 +442,10 @@ int d2_clustering(int num_of_clusters,
 
 
     /* termination criterion */
-    if (label_change_count < 0.005 * size) break;
+    if (label_change_count < 0.005 * size) {
+      VPRINTF(("Terminate!\n"));
+      break;
+    }
 
     /* make copies of centroids */
     d2_copy(centroids, &the_centroids_copy);
