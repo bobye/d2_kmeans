@@ -69,6 +69,7 @@ void d2_solver_debug() {
 }
 
 void d2_solver_release() {
+  MSK_unlinkfuncfromenvstream(&env, MSK_STREAM_LOG);
   MSK_deleteenv(&env);
 }
 

@@ -179,16 +179,18 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
 		      int selected_phase) {
   long i, count = 0, dist_count = 0;
   int **p_str;
-  int n;
   double **p_supp, **p_w;
   long **p_str_cum;
-  int s_ph = p_data->s_ph;
-  long size = p_data->size;
-  int num_of_labels = centroids->size;
+  const long size = p_data->size;
+  const int num_of_labels = centroids->size;
   int *label = p_data->label;
   trieq *p_tr = &var_work->tr;
 
   nclock_start();
+
+  {
+  int n;
+  int s_ph = p_data->s_ph;
 
   p_str  = (int **) malloc(s_ph * sizeof(int *));
   p_supp = (double **) malloc(s_ph * sizeof(double *));
@@ -201,7 +203,7 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
     p_w[n]    = p_data->ph[n].p_w;
     p_str_cum[n] = p_data->ph[n].p_str_cum;
   }
-
+  }
 
   /* step 1 */
   for (i=0; i<num_of_labels; ++i) p_tr->s[i] = DBL_MAX;
@@ -241,8 +243,8 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
       var_work->label_switch[i] = 0;
     }
 
-#pragma omp parallel for reduction(+:dist_count, count)
-  for (i=0; i<size; ++i) 
+#pragma omp parallel for reduction(+:dist_count,count)
+  for (i=0; i<size; ++i) {
   /* step 2 */
   if (p_tr->u[i] > p_tr->s[label[i]]) {
     int init_label = label[i];
@@ -312,6 +314,7 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
       }
       count += 1;
     }
+  }
   }
 
   free(p_str); free(p_supp); free(p_w); free(p_str_cum);
@@ -467,7 +470,7 @@ int d2_clustering(int num_of_clusters,
     /* post updates */
     d2_labeling_post(p_data, &the_centroids_copy, centroids, &var_work, selected_phase);
   }
-  d2_solver_release();
+  //d2_solver_release();
 
   d2_free_work(&var_work);
   d2_free(&the_centroids_copy);
