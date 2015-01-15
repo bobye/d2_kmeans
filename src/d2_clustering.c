@@ -14,16 +14,6 @@
 
 extern int d2_alg_type;
 
-int d2_free(mph *p_data) {
-  int i;
-  for (i=0; i<p_data->s_ph; ++i) {
-    if (p_data->ph[i].col > 0) d2_free_sph(p_data->ph + i);
-  }
-  free(p_data->ph);
-  if (!p_data->label) _D2_FREE(p_data->label);
-  return 0;
-}
-
 int d2_allocate_sph(sph *p_data_sph,
 		    const int d,
 		    const int stride,
@@ -99,6 +89,15 @@ int d2_allocate(mph *p_data,
   return success;
 }
 
+int d2_free(mph *p_data) {
+  int i;
+  for (i=0; i<p_data->s_ph; ++i) {
+    if (p_data->ph[i].col > 0) d2_free_sph(p_data->ph + i);
+  }
+  free(p_data->ph);
+  if (!p_data->label) _D2_FREE(p_data->label);
+  return 0;
+}
 
 int d2_allocate_work(mph *p_data, var_mph *var_work) {
   int i;
@@ -206,7 +205,7 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
 
   /* step 1 */
   for (i=0; i<num_of_labels; ++i) p_tr->s[i] = DBL_MAX;
-#pragma omp parallel for 
+#pragma omp parallel for reduction(+:dist_count)
   for (i=0; i<num_of_labels; ++i) {
     int n;
     long j;
@@ -226,7 +225,7 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
 					NULL);
 	  d += val;
 	}
-      d = sqrt(d); dist_count ++;
+      d = sqrt(d); dist_count +=1;
 
       p_tr->c[i*num_of_labels + j] = d; 
       p_tr->c[i + j*num_of_labels] = d;
@@ -242,7 +241,7 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
       var_work->label_switch[i] = 0;
     }
 
-#pragma omp parallel for  
+#pragma omp parallel for reduction(+:dist_count) reduction(+:count)
   for (i=0; i<size; ++i) 
   /* step 2 */
   if (p_tr->u[i] > p_tr->s[label[i]]) {
@@ -274,7 +273,7 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
 					    NULL);
 	      d += val;
 	    }
-	  d = sqrt(d); dist_count ++;
+	  d = sqrt(d); dist_count +=1;
 	  L[jj] = d;
 	  *U = d;
 	  min_distance = d;
@@ -300,7 +299,7 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
 					    NULL);
 	      d += val;
 	    }
-	  d = sqrt(d); dist_count ++;
+	  d = sqrt(d); dist_count +=1;
 	  L[j] = d;
 	  if (d < min_distance) {jj = j; min_distance = d; *U = d;}
 	}
@@ -311,7 +310,7 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
       if (d2_alg_type == 0) {
 	var_work->label_switch[i] = 1;
       }
-      count ++;
+      count += 1;
     }
   }
 
