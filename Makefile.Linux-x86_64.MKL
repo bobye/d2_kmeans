@@ -62,7 +62,7 @@ d2: $(ALL_OBJECTS)
 
 .PHONY: clean
 clean:
-	@rm -f test d2
+	@rm -f d2
 	@for pattern in '*.o' '*.d'; do \
 		find . -name "$$pattern" | xargs rm; \
 	done
