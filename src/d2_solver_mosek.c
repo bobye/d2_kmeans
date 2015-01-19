@@ -151,6 +151,8 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
   if ( r==MSK_RES_OK )
     {
       MSKrescodee trmcode;
+      /* Disable presolve: may lead to minor improvement */
+      // r = MSK_putintparam(task, MSK_IPAR_PRESOLVE_USE, MSK_PRESOLVE_MODE_OFF);
       /* set network flow problem */
       r = MSK_putintparam(task, MSK_IPAR_OPTIMIZER,  MSK_OPTIMIZER_NETWORK_PRIMAL_SIMPLEX);
       /* Run optimizer */
