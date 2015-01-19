@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
   /* default settings */
   int selected_phase = -1; 
   int number_of_clusters = 3; 
-  int max_iters = 20; 
+  int max_iters = 50; 
 
   /* IO specification */
   int ch;
