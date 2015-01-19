@@ -1,7 +1,26 @@
 d2_clustering
 =============
 
-scalable and parallel D2 (discrete distribution) clustering
+D2-Kmeans: accelerated and parallel clustering of discrete distributions
+
+## How to compile
+
+### Linux + Intel Compiler
+
+dependencies
+
+ - MKL
+ - openMP support
+ - Mosek 7.1
+
+### Mac OS 10.10 + Clang
+
+dependencies
+
+ - Accelerate Framework
+ - no OpenMP support
+ - Mosek 7.1
+
 
 ## Dataset and Format
 We implement multi-phases D2, which means each object can be represented
