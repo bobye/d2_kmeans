@@ -151,6 +151,8 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
   if ( r==MSK_RES_OK )
     {
       MSKrescodee trmcode;
+      /* set network flow problem */
+      r = MSK_putintparam(task, MSK_IPAR_OPTIMIZER,  MSK_OPTIMIZER_NETWORK_PRIMAL_SIMPLEX);
       /* Run optimizer */
       r = MSK_optimizetrm(task,&trmcode);      
 

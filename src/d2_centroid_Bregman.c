@@ -7,7 +7,7 @@
 
 /* choose options */
 
-const BADMM_options badmm_clu_options = {500, 2.0, 10};
+const BADMM_options badmm_clu_options = {100, 2.0, 10};
 const BADMM_options badmm_cen_options = {2000, 1.0, 10};
 
 
