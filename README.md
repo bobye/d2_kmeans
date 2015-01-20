@@ -1,4 +1,4 @@
-d2_clustering
+d2_kmeans
 =============
 
 D2-Kmeans: accelerated and parallel clustering of discrete distributions
@@ -11,7 +11,7 @@ dependencies
 
  - MKL
  - openMP support
- - Mosek 7.1
+ - Mosek 7.0+
 
 ### Mac OS 10.10 + Clang
 
@@ -19,7 +19,7 @@ dependencies
 
  - Accelerate Framework
  - no OpenMP support
- - Mosek 7.1
+ - Mosek 7.0+
 
 
 ## Dataset and Format
