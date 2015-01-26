@@ -37,7 +37,7 @@ We provides two kinds of input formats
    of bins is equal to one). The format of data is as follows:
 
    ```emacs-lisp
-   ;; file ext: .hist.d
+   ;; file ext: .hist
    n ;; number of bins
    d{1,1} d{2,1} ... d{n,1} ;; transportation cost between different bins
    d{1,2} d{2,2} ... d{n,2} ;; d has to be symmetric, and d{i,i} = 0
