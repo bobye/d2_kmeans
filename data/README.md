@@ -29,9 +29,9 @@ We provides two kinds of input formats
    
    To read 1000 2-phase entries with the first phase in 3 dimension
    and 6 average number of bins, and the second phase  in 3 dimension
-   and 11 bins. You may type
+   and 11 bins. Starting from root directory, you may type
    ```bash
-   time ./d2 -i mountaindat.txt -p 2 -n 1000 -d 3,3 -s 6,11
+   $ time ./d2 -i data/mountaindat.d2 -p 2 -n 1000 -d 3,3 -s 6,11
    ```
 2. In some cases, it would be useful to work with histograms (where the sum
    of bins is equal to one). The format of data is as follows:
@@ -39,10 +39,15 @@ We provides two kinds of input formats
    ```emacs-lisp
    ;; file ext: .hist.d
    n ;; number of bins
-   d{1,1} d{2,1} ... d{n,1} ;; cost of transportation between different bins
+   d{1,1} d{2,1} ... d{n,1} ;; transportation cost between different bins
    d{1,2} d{2,2} ... d{n,2} ;; d has to be symmetric, and d{i,i} = 0
    ...
-   d{1,n} d{2,n} ... d{n,n}
+   d{1,n} d{2,n} ... d{n,n} ;; End of transportation cost
+
+   w{1,1} w{2,1} ... w{n,1} ;; first histogram
+   w{1,2} w{2,2} ... w{n,2} ;; second histogram
+   ...
+   
    ```
    Generally, it is not necessary that the distance d^{1/p} is a true metric:
    But for using triangle inequality to accelerate the undergoing computation,
