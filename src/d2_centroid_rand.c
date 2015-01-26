@@ -25,6 +25,11 @@ int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
 
   // set column
   c->col = str * num_of_labels;
+
+  // set dist_mat
+  if (dim == 0) {
+    for (i=0; i<str * str; ++i) c->dist_mat[i] = data_ph->dist_mat[i];
+  }
   
   // compute mean and cov
   means = (SCALAR *) calloc(dim * num_of_labels, sizeof(SCALAR));
@@ -116,6 +121,11 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
 
   // set column
   c->col = str * num_of_labels;
+
+  // set dist_mat
+  if (dim == 0) {
+    for (i=0; i<str * str; ++i) c->dist_mat[i] = data_ph->dist_mat[i];
+  }
   
   // generate index array
   array = (long *) malloc(size * sizeof(long));
