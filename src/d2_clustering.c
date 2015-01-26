@@ -18,10 +18,10 @@ int d2_allocate_sph(sph *p_data_sph,
 		    const int d,
 		    const int stride,
 		    const long num,
-		    const double semicol) {
+		    double semicol) {
 
   int n, m;
-  assert(d>0 && stride >0 && num >0);
+  assert(stride >0 && num >0);
 
   n = num * (stride + semicol) * d; // pre-allocate
   m = num * (stride + semicol); p_data_sph->max_col = m;
@@ -33,13 +33,13 @@ int d2_allocate_sph(sph *p_data_sph,
 
   p_data_sph->p_str  = _D2_CALLOC_INT(num);
   p_data_sph->p_str_cum  = _D2_CALLOC_LONG(num);
-  p_data_sph->p_supp = _D2_MALLOC_SCALAR(n);
   p_data_sph->p_w    = _D2_MALLOC_SCALAR(m);
 
+  if (d>0) 
+    p_data_sph->p_supp = _D2_MALLOC_SCALAR(n);
+  else if (d==0) 
+    p_data_sph->dist_mat = _D2_MALLOC_SCALAR( stride * stride );
 
-  if (!(p_data_sph->p_str && p_data_sph->p_supp && p_data_sph->p_w)) {
-    return -1;
-  }
 
   return 0;
 }
@@ -220,11 +220,15 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
 	  int str = centroids->ph[n].str;
 	  int dim = p_data->ph[n].dim;
 	  assert(dim == centroids->ph[n].dim);
+	  if (dim > 0) {
 	  val = d2_match_by_coordinates(dim, 
 					str, centroids->ph[n].p_supp + i*str*dim, centroids->ph[n].p_w + i*str, 
 					str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
 					NULL, // x and lambda are implemented later
 					NULL);
+	  } else if (dim == 0) {
+	    val = d2_match_by_distmat(str, str, centroids->ph[n].dist_mat, centroids->ph[n].p_w + i*str, centroids->ph[n].p_w + j*str, NULL, NULL);
+	  }
 	  d += val;
 	}
       d = sqrt(d); dist_count +=1;
@@ -268,11 +272,16 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
 	      int str = centroids->ph[n].str;
 	      int dim = p_data->ph[n].dim;
 	      assert(dim == centroids->ph[n].dim);
+	      if (dim > 0) {
 	      val = d2_match_by_coordinates(dim, 
 					    p_str[n][i], p_supp[n] + p_str_cum[n][i]*dim, p_w[n] + p_str_cum[n][i],
 					    str, centroids->ph[n].p_supp + jj*str*dim, centroids->ph[n].p_w + jj*str, 
 					    NULL, // x and lambda are implemented later
 					    NULL);
+	      } else if (dim == 0) {
+		val = d2_match_by_distmat(p_str[n][i], str, centroids->ph[n].dist_mat, p_w[n] + p_str_cum[n][i], centroids->ph[n].p_w + jj*str, NULL, NULL);
+	      }
+
 	      d += val;
 	    }
 	  d = sqrt(d); dist_count +=1;
@@ -285,7 +294,6 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
 	}
 
 	/* 3b. */
-
 	if ((min_distance > L[j] || min_distance > p_tr->c[j*num_of_labels + jj] / 2.) && j!=jj) {
 	  /* compute distance */
 	  double d = 0.0, val;
@@ -294,11 +302,16 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
 	      int str = centroids->ph[n].str;
 	      int dim = p_data->ph[n].dim;
 	      assert(dim == centroids->ph[n].dim);
+	      if (dim > 0) {
 	      val = d2_match_by_coordinates(dim, 
 					    p_str[n][i], p_supp[n] + p_str_cum[n][i]*dim, p_w[n] + p_str_cum[n][i],
 					    str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
 					    NULL, // x and lambda are implemented later
 					    NULL);
+	      } else if (dim == 0) {
+		val = d2_match_by_distmat(p_str[n][i], str, centroids->ph[n].dist_mat, p_w[n] + p_str_cum[n][i], centroids->ph[n].p_w + j*str, NULL, NULL);
+	      }
+
 	      d += val;
 	    }
 	  d = sqrt(d); dist_count +=1;
@@ -344,8 +357,11 @@ int d2_copy(mph* a, mph *b) {
       }
       memcpy(b->ph[n].p_str, a->ph[n].p_str, a->size * sizeof(int));
       memcpy(b->ph[n].p_str_cum, a->ph[n].p_str_cum, a->size * sizeof(long));
-      memcpy(b->ph[n].p_supp, a->ph[n].p_supp, a->ph[n].col * a->ph[n].dim * sizeof(SCALAR));
       memcpy(b->ph[n].p_w, a->ph[n].p_w, a->ph[n].col * sizeof(SCALAR));
+      if (a->ph[n].dim > 0) 
+	memcpy(b->ph[n].p_supp, a->ph[n].p_supp, a->ph[n].col * a->ph[n].dim * sizeof(SCALAR));
+      else if (a->ph[n].dim == 0)  
+	memcpy(b->ph[n].dist_mat, a->ph[n].dist_mat, a->ph[n].str*a->ph[n].str);
     } else {
       b->ph[n].col = 0;
     }
@@ -376,11 +392,16 @@ long d2_labeling_post(mph *p_data,
 	int str = c_old->ph[n].str;
 	int dim = c_old->ph[n].dim;
 	assert(dim == c_new->ph[n].dim);
+	if (dim > 0) {
 	val = d2_match_by_coordinates(dim, 
 				      str, c_old->ph[n].p_supp + i*str*dim, c_old->ph[n].p_w + i*str, 
 				      str, c_new->ph[n].p_supp + i*str*dim, c_new->ph[n].p_w + i*str, 
 				      NULL, // x and lambda are implemented later
 				      NULL);
+	} else if (dim == 0) {
+	  val = d2_match_by_distmat(str, str, c_old->ph[n].dist_mat, c_old->ph[n].p_w + i*str,c_new->ph[n].p_w + i*str, NULL, NULL);
+	}
+
 	d += val;
       }
     d = sqrt(d);    
@@ -429,7 +450,7 @@ int d2_clustering(int num_of_clusters,
     } else {
       centroids->ph[i].col = 0;
     }
-  // d2_write(stdout, centroids); getchar();
+  //d2_write(NULL, centroids); getchar();
 
   // allocate initialize auxiliary variables
   d2_allocate_work(p_data, &var_work);
