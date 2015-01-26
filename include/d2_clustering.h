@@ -18,7 +18,8 @@ extern "C" {
     int *p_str;
     long *p_str_cum;
     SCALAR *p_supp;    
-    SCALAR *p_w;  
+    SCALAR *p_w;
+    SCALAR *dist_mat; /* for the case when distance mat can be precomputed (histogram) */ 
   } sph; 
 
 
@@ -56,8 +57,8 @@ extern "C" {
 		  const int *avg_strides,
 		  const int *dimension_of_phases);
 
-  int d2_read(void *fp, __OUT__ mph *p_data);
-  int d2_write(void *fp, mph *p_data);
+  int d2_read(const char* filename, __OUT__ mph *p_data);
+  int d2_write(const char* filename, mph *p_data);
   int d2_free(mph *p_data);
 
   // working variables that are visible in all algorithms

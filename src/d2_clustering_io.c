@@ -5,8 +5,9 @@
 #include "d2_math.h"
 
 /** Load Data Set: see specification of format at README.md */
-int d2_read(void *fp_void, mph *p_data) {
-  FILE *fp = (FILE *) fp_void;
+int d2_read(const char* filename, mph *p_data) {
+  FILE *fp = fopen(filename, "r+");
+  assert(fp);
 
   long i,j;
   int n;
@@ -23,7 +24,23 @@ int d2_read(void *fp_void, mph *p_data) {
     p_str[n]  = p_data->ph[n].p_str;
     p_supp[n] = p_data->ph[n].p_supp;
     p_w[n]    = p_data->ph[n].p_w;
+    p_data->ph[n].col = 0;
   }
+
+
+  for (n=0; n<s_ph; ++n) {
+    if (p_data->ph[n].dim == 0) {
+      char filename_extra[255];
+      FILE *fp_new; // local variable
+      int str, c;
+      sprintf(filename_extra, "%s.hist%d", filename, n);
+      fp_new = fopen(filename_extra, "r+"); assert(fp_new);
+      c=fscanf(fp_new, "%d", &str); assert(c>0 && str == p_data->ph[n].str);
+      for (i=0; i< str*str; ++i) fscanf(fp_new, SCALAR_STDIO_TYPE, &(p_data->ph[n].dist_mat[i]));
+      fclose(fp_new);
+    }
+  }
+
   
   for (i=0; i<size; ++i) {
     for (n=0; n<s_ph; ++n) {      
@@ -34,8 +51,7 @@ int d2_read(void *fp_void, mph *p_data) {
       if (c!=1) {
 	VPRINTF(("Warning: only read %ld d2!\n", i));
 	p_data->size = i;
-	free(p_w); free(p_supp); free(p_str); 
-	return 0;
+	size = i; break;
       }
       assert(dim == p_data->ph[n].dim);
       fscanf(fp, "%d", p_str[n]); 
@@ -47,7 +63,7 @@ int d2_read(void *fp_void, mph *p_data) {
 	p_data->ph[n].p_w = (double *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(double));
 	assert(p_data->ph[n].p_supp != NULL && p_data->ph[n].p_w != NULL);
 	p_data->ph[n].max_col *= 2;		// resize
-	p_supp[n] = p_data->ph[n].p_supp + p_data->ph[n].col * dim;
+	if (dim > 0) p_supp[n] = p_data->ph[n].p_supp + p_data->ph[n].col * dim;
 	p_w[n]    = p_data->ph[n].p_w + p_data->ph[n].col;
       }
 
@@ -66,11 +82,12 @@ int d2_read(void *fp_void, mph *p_data) {
       p_w[n] = p_w[n] + str;
 
       // read support vec
-      p_supp_sph = p_supp[n];strxdim = str*dim;
-      for (j=0; j<strxdim; ++j)
-	fscanf(fp, SCALAR_STDIO_TYPE, &p_supp_sph[j]); 
-      p_supp[n] = p_supp[n] + strxdim;
-
+      if (dim > 0) {
+	p_supp_sph = p_supp[n];strxdim = str*dim;
+	for (j=0; j<strxdim; ++j)
+	  fscanf(fp, SCALAR_STDIO_TYPE, &p_supp_sph[j]); 
+	p_supp[n] = p_supp[n] + strxdim;
+      }
       p_str[n] ++;
     }
   }
@@ -86,12 +103,13 @@ int d2_read(void *fp_void, mph *p_data) {
 
   // free the pointer space
   free(p_w); free(p_supp); free(p_str); 
-
+  fclose(fp);
   return 0;
 }
 
-int d2_write(void *fp_void, mph *p_data) {
-  FILE *fp = (FILE *) fp_void;
+int d2_write(const char* filename, mph *p_data) {
+  FILE *fp = filename? fopen(filename, "w+") : stdout;
+
   long i, j;
   int k, d, n;
   double **p_supp, **p_w;
@@ -123,5 +141,6 @@ int d2_write(void *fp_void, mph *p_data) {
   }
 
   free(p_supp); free(p_w);
+  fclose(fp);
   return 0;
 }
