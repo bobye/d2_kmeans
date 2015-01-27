@@ -118,7 +118,7 @@ int d2_free(mph *p_data) {
 /**
  * Allocate memory for working data
  */
-int d2_allocate_work(mph *p_data, var_mph *var_work) {
+int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
   int i;
   long size = p_data->size;
   int num_of_labels = p_data->num_of_labels;
@@ -155,12 +155,16 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
 
   var_work->label_switch = (char *) malloc(size * sizeof(char)); 
 
-  p_tr->l = _D2_MALLOC_SCALAR(size * num_of_labels);
-  p_tr->u = _D2_MALLOC_SCALAR(size);
-  p_tr->s = _D2_MALLOC_SCALAR(num_of_labels);
-  p_tr->c = _D2_MALLOC_SCALAR(num_of_labels * num_of_labels);
-  p_tr->r = (char *) calloc(size, sizeof(char));
+  if (use_triangle) {
+    p_tr->l = _D2_MALLOC_SCALAR(size * num_of_labels);
+    p_tr->u = _D2_MALLOC_SCALAR(size);
+    p_tr->s = _D2_MALLOC_SCALAR(num_of_labels);
+    p_tr->c = _D2_MALLOC_SCALAR(num_of_labels * num_of_labels);
+    p_tr->r = (char *) calloc(size, sizeof(char));
 
+    for (i=0; i<size * num_of_labels; ++i) p_tr->l[i] = 0;
+    for (i=0; i<size; ++i) {p_tr->u[i] = DBL_MAX; p_tr->r[i] = 1; }
+  }
   return 0;
 }
 
@@ -184,11 +188,11 @@ int d2_free_work(var_mph *var_work) {
   if (d2_alg_type == D2_CENTROID_BADMM) free(var_work->l_var_sphBregman);
   free(var_work->label_switch);
 
-  _D2_FREE(p_tr->l);
-  _D2_FREE(p_tr->u);
-  _D2_FREE(p_tr->s);
-  _D2_FREE(p_tr->c);
-  free(p_tr->r);
+  if (p_tr->l) _D2_FREE(p_tr->l);
+  if (p_tr->u) _D2_FREE(p_tr->u);
+  if (p_tr->s) _D2_FREE(p_tr->s);
+  if (p_tr->c) _D2_FREE(p_tr->c);
+  if (p_tr->r) free(p_tr->r);
   return 0;
 }
 
@@ -393,6 +397,52 @@ long d2_labeling_post(mph *p_data,
   return 0;
 }
 
+
+/** Compute the distance from each point to the all centroids.
+    This part can be parallelized.
+ */
+long d2_labeling(__IN_OUT__ mph *p_data,
+		mph *centroids,
+		var_mph * var_work,
+		int selected_phase) {
+  long i, count = 0;
+  int *label = p_data->label;
+  long size = p_data->size;
+
+  nclock_start();
+
+#pragma omp parallel for  
+  for (i=0; i<size; ++i) {
+    double min_distance = -1;	
+    int jj = label[i]>=0? label[i]: 0;
+    long j;
+
+    for (j=0; j<centroids->size; ++j) {
+      double d;
+      d = d2_compute_distance(p_data, i, centroids, j, selected_phase);
+      if (min_distance < 0 || d < min_distance) {
+	min_distance = d; jj = j;
+      }
+    }
+
+    if (p_data->label[i] == jj) {
+      if (d2_alg_type == 0) {
+	var_work->label_switch[i] = 0;
+      }
+    } else {
+      p_data->label[i] = jj;
+      if (d2_alg_type == 0) {
+	var_work->label_switch[i] = 1;
+      }
+      count ++;
+    }
+  }
+
+  VPRINTF(("\t %ld objects change their labels in %f s [done]\n", count, nclock_end()));
+  
+  return count;
+}
+
 /**
  * The main algorithm for d2 clustering 
  */
@@ -400,15 +450,16 @@ int d2_clustering(int num_of_clusters,
 		  int max_iter, 
 		  mph *p_data, 
 		  __OUT__ mph *centroids,
-		  int selected_phase){
+		  int selected_phase,
+		  char use_triangle){
   long i;
   int iter;
   int s_ph = p_data->s_ph;
   long size = p_data->size;
   int *label = p_data->label;
   long label_change_count;
-  var_mph var_work;
-  mph the_centroids_copy = (mph) {0, 0, NULL, 0, NULL};
+  var_mph var_work = {.tr = {NULL, NULL, NULL, NULL, NULL}};
+  mph the_centroids_copy = {0, 0, NULL, 0, NULL};
 
   assert(num_of_clusters>0 && max_iter > 0);
 
@@ -429,17 +480,17 @@ int d2_clustering(int num_of_clusters,
   //d2_write(NULL, centroids); getchar();
 
   // allocate initialize auxiliary variables
-  d2_allocate_work(p_data, &var_work);
-  for (i=0; i<size * num_of_clusters; ++i) var_work.tr.l[i] = 0;
-  for (i=0; i<size; ++i) {var_work.tr.u[i] = DBL_MAX; var_work.tr.r[i] = 1; }
+  d2_allocate_work(p_data, &var_work, use_triangle);
 
   // start centroid-based clustering here
   d2_solver_setup();  
   for (iter=0; iter<max_iter; ++iter) {
     VPRINTF(("Round %d ... \n", iter));
     VPRINTF(("\tRe-labeling all instances ... ")); VFLUSH;
-    label_change_count = d2_labeling_prep(p_data, centroids, &var_work, selected_phase);
-
+    if (use_triangle)
+      label_change_count = d2_labeling_prep(p_data, centroids, &var_work, selected_phase);
+    else 
+      label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
 
     /* termination criterion */
     if (label_change_count < 0.005 * size) {
@@ -465,7 +516,8 @@ int d2_clustering(int num_of_clusters,
       }
 
     /* post updates */
-    d2_labeling_post(p_data, &the_centroids_copy, centroids, &var_work, selected_phase);
+    if (use_triangle) 
+      d2_labeling_post(p_data, &the_centroids_copy, centroids, &var_work, selected_phase);
   }
   //d2_solver_release();
 
