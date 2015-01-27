@@ -16,9 +16,9 @@ extern "C" {
    */
   typedef struct {
     int dim, str;
-    long col, max_col;
+    size_t col, max_col;
     int *p_str;
-    long *p_str_cum;
+    size_t *p_str_cum;
     SCALAR *p_w;
 
     /* For data of D2 with Euclidean supports */
@@ -59,7 +59,7 @@ extern "C" {
    */
   typedef struct {
     int s_ph; /* size of phases */
-    long size; /* size of entries */
+    size_t size; /* size of entries */
     int *label;
     int num_of_labels;
     sph *ph;
@@ -72,12 +72,12 @@ extern "C" {
   int d2_allocate_sph(__OUT__ sph *p_data_sph,
 		      const int d,
 		      const int stride,
-		      const long num,
+		      const size_t num,
 		      const double semicol);
 
   int d2_allocate(__OUT__ mph *p_data,
 		  const int size_of_phases,
-		  const long size_of_samples,
+		  const size_t size_of_samples,
 		  const int *avg_strides,
 		  const int *dimension_of_phases);
 
@@ -140,7 +140,7 @@ extern "C" {
   /**
    * interface of Bregman ADMM
    */
-  int d2_allocate_work_sphBregman(sph *ph, long size,
+  int d2_allocate_work_sphBregman(sph *ph, size_t size,
 				  __OUT__ var_sphBregman * var_phwork);
   int d2_free_work_sphBregman(var_sphBregman * var_phwork);
   int d2_centroid_sphBregman(mph *p_data, // data
