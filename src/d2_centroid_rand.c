@@ -16,6 +16,7 @@ int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   // set stride
   for (i=0; i<num_of_labels; ++i) {
     c->p_str[i] = str;
+    c->p_str_cum[i] = i*str;
   }
   
   // set weight
@@ -117,6 +118,7 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   // set stride
   for (i=0; i<num_of_labels; ++i) {
     c->p_str[i] = str;
+    c->p_str_cum[i] = i*str;
   }
 
   // set column
