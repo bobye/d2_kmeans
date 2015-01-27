@@ -6,7 +6,6 @@
 extern "C" {
 #endif
 
-#include "global.h"
 #include "d2_clustering.h"
 
 
