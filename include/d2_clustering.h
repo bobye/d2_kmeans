@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "global.h"
+#include "common.h"
 
 #define __IN__
 #define __OUT__ 
