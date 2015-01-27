@@ -24,7 +24,6 @@ int main(int argc, char *argv[])
   int size_of_phases = 1;
   long size_of_samples;
   char *ss1_c_str = 0, *ss2_c_str = 0, *filename = 0, *ofilename = 0;
-  char histogram_mode = 0;
 
   /* default settings */
   int selected_phase = -1; 
@@ -42,12 +41,11 @@ int main(int argc, char *argv[])
     {"clusters", 1, 0, 'c'},
     {"max_iters", 1, 0, 'm'},
     {"centroid_method", 1, 0, 'M'},
-    {"use_histogram", 0, 0, 'H'},
     {NULL, 0, NULL, 0}
   };
   
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "Hp:n:d:s:i:t:c:m:M:", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
@@ -55,19 +53,19 @@ int main(int argc, char *argv[])
     case 'o': /* output filename */
       ofilename = optarg;
       break;
-    case 'p': /* D2 format (default) only */
+    case 'p': 
       size_of_phases = atoi(optarg);
       break;
     case 'n': /* size of samples expected to be loaded */
       size_of_samples = atol(optarg);
       break;
-    case 'd': /* D2 format (default) only */
+    case 'd': 
       ss1_c_str = optarg;
       break;
     case 's': 
       ss2_c_str = optarg;
       break;
-    case 't': /* D2 format (default) only */
+    case 't':
       selected_phase = atoi(optarg); assert(selected_phase >= 0);
       break;
     case 'c': 
@@ -79,9 +77,6 @@ int main(int argc, char *argv[])
     case 'M':
       d2_alg_type = atoi(optarg);
       assert(d2_alg_type == D2_CENTROID_BADMM || d2_alg_type == D2_CENTROID_GRADDEC || d2_alg_type == D2_CENTROID_ADMM);
-      break;
-    case 'H': /* force histogram mode */
-      histogram_mode = 1;
       break;
     default:
       printf ("?? getopt returned character code 0%o ??\n", ch);
@@ -99,21 +94,19 @@ int main(int argc, char *argv[])
 	 && size_of_phases == (int) ss2.size()
 	 && ss2_c_str);
 
+  cout << "Task: " << endl;
   for (int i=0; i<size_of_phases; ++i) {
     dimension_of_phases[i] = atoi(ss1[i].c_str());
     avg_strides[i] = atoi(ss2[i].c_str());
-  }    
-
-  if (histogram_mode) {
-    cout << "Data is of histogram format " << endl;
-  } else {
-    cout << "Data is of D2 format " << endl;
-  }
- 
+    if (dimension_of_phases[i] == 0) {
+      cout << "\t" << i << "-th phase is of histogram format" << endl;
+    } else if (dimension_of_phases[i] > 0) {
+      cout << "\t" << i << "-th phase is of discrete distribution format" << endl;
+    }
+    assert(dimension_of_phases[i] >= 0 && avg_strides[i] > 0);
+  }     
 
   mph data;
-
-  FILE *fp;
   
   int err = d2_allocate(&data, 
 			size_of_phases,
@@ -130,9 +123,16 @@ int main(int argc, char *argv[])
 
   mph c;
 
+  if (selected_phase >= 0 && size_of_phases > 1) {
+    cout << "Clustering upon " << selected_phase <<"-th phase" << endl;
+  } else if (selected_phase < 0 && size_of_phases == 1) {
+    cout << "Clustering upon all phases (more than one)" << endl;
+  }
+
   d2_clustering(number_of_clusters, max_iters, &data, &c, selected_phase);
 
   if (ofilename) {
+    cout << "Write computed centroids to " << ofilename << endl;
     d2_write(ofilename, &c);
   } else {
     d2_write(NULL, &c);
@@ -141,5 +141,6 @@ int main(int argc, char *argv[])
   d2_free(&data);
   d2_free(&c);
 
+  cout << "[Finish!]" <<endl;
   return 0;
 }
