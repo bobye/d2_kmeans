@@ -14,7 +14,7 @@ const BADMM_options badmm_cen_options = {2000, 1.0, 10};
 const BADMM_options *p_badmm_options = &badmm_clu_options;
 
 
-int d2_allocate_work_sphBregman(sph *ph, long size, var_sphBregman * var_phwork) {
+int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwork) {
   var_phwork->X = _D2_MALLOC_SCALAR (ph->str * ph->col);
   var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col);
   var_phwork->Xc= _D2_MALLOC_SCALAR (ph->col);
@@ -46,13 +46,13 @@ int d2_centroid_sphBregman(mph *p_data, // data
   int num_of_labels = p_data->num_of_labels;
   char *label_switch = var_work->label_switch;
   int dim = data_ph->dim;
-  long col = data_ph->col;
+  size_t col = data_ph->col;
   int str, strxdim;
-  long size = p_data->size;
+  size_t size = p_data->size;
   int *p_str = data_ph->p_str;
   SCALAR *p_supp = data_ph->p_supp;
   SCALAR *p_w = data_ph->p_w;
-  long *p_str_cum = data_ph->p_str_cum;
+  size_t *p_str_cum = data_ph->p_str_cum;
   SCALAR *C = var_work->g_var[idx_ph].C;
   SCALAR *X = var_work->l_var_sphBregman[idx_ph].X;
   SCALAR *Y = var_work->l_var_sphBregman[idx_ph].Y;
@@ -60,12 +60,12 @@ int d2_centroid_sphBregman(mph *p_data, // data
   SCALAR *Xc= var_work->l_var_sphBregman[idx_ph].Xc;
   SCALAR *Zr= var_work->l_var_sphBregman[idx_ph].Zr;
 
-  long i,j;
+  size_t i,j;
   int max_niter = p_badmm_options->maxIters, iter;
   SCALAR rho, obj, primres, dualres;
   SCALAR tmp, *Z0;
   //  SCALAR *p_scal, *p_scal2;
-  long *label_count;
+  size_t *label_count;
 
   /* Initialization */
   if (!c0) {
@@ -106,7 +106,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
       it could be possible that some clusters might not 
       have any instances
    */
-  label_count = _D2_CALLOC_LONG(num_of_labels);    
+  label_count = _D2_CALLOC_SIZE_T(num_of_labels);    
   for (i=0; i<size; ++i) ++label_count[label[i]];
   for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
 

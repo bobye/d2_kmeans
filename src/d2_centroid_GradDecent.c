@@ -18,22 +18,22 @@ int d2_centroid_sphGradDecent(mph *p_data,
 			      __OUT__ sph *c) {
   
 
-  long i,j;
+  size_t i,j;
   int iter, nIter = 200;
   double fval0, fval = DBL_MAX;
   int *label = p_data->label;
   int num_of_labels = p_data->num_of_labels;
   int str, strxdim;
-  long size = p_data->size;
+  size_t size = p_data->size;
   sph *data_ph = p_data->ph + idx_ph;
   int dim = data_ph->dim;
   int *p_str = data_ph->p_str;
   SCALAR *p_supp = data_ph->p_supp;
   SCALAR *p_w = data_ph->p_w;
-  long *p_str_cum = data_ph->p_str_cum;
+  size_t *p_str_cum = data_ph->p_str_cum;
   SCALAR *X = var_work->g_var[idx_ph].X;
   SCALAR *L = var_work->g_var[idx_ph].L;
-  long *label_count;
+  size_t *label_count;
   SCALAR *p_grad;
 
   assert(dim > 0); // current only support the D2 format
@@ -50,7 +50,7 @@ int d2_centroid_sphGradDecent(mph *p_data,
       it could be possible that some clusters might not 
       have any instances
    */
-  label_count = _D2_CALLOC_LONG(num_of_labels);    
+  label_count = _D2_CALLOC_SIZE_T(num_of_labels);    
   for (i=0; i<size; ++i) ++label_count[label[i]];
   for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
   

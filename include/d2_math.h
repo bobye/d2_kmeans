@@ -24,20 +24,20 @@ extern "C" {
 #include <Accelerate/Accelerate.h>
 #define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
 #define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
-#define _D2_MALLOC_LONG(x)       (long *) malloc( (x) *sizeof(long))
+#define _D2_MALLOC_SIZE_T(x)       (size_t *) malloc( (x) *sizeof(size_t))
 #define _D2_CALLOC_SCALAR(x)       (SCALAR *) calloc( (x) , sizeof(SCALAR)) 
 #define _D2_CALLOC_INT(x)       (int *) calloc( (x) , sizeof(int))
-#define _D2_CALLOC_LONG(x)       (long *) calloc( (x) , sizeof(long))
+#define _D2_CALLOC_SIZE_T(x)       (size_t *) calloc( (x) , sizeof(size_t))
 #define _D2_FREE(x)         free(x)
 
 #elif defined __USE_MKL__
 #include <mkl.h>
 #define _D2_MALLOC_SCALAR(x)       (SCALAR *) mkl_malloc( (x) *sizeof(SCALAR), 16) 
 #define _D2_MALLOC_INT(x)       (int *) mkl_malloc( (x) *sizeof(int), 16)
-#define _D2_MALLOC_LONG(x)       (long *) mkl_malloc( (x) *sizeof(long), 16)
+#define _D2_MALLOC_SIZE_T(x)       (size_t *) mkl_malloc( (x) *sizeof(size_t), 16)
 #define _D2_CALLOC_SCALAR(x)       (SCALAR *) mkl_calloc( (x) , sizeof(SCALAR), 16) 
 #define _D2_CALLOC_INT(x)       (int *) mkl_calloc( (x) , sizeof(int), 16)
-#define _D2_CALLOC_LONG(x)       (long *) mkl_calloc( (x) , sizeof(long), 16)
+#define _D2_CALLOC_SIZE_T(x)       (size_t *) mkl_calloc( (x) , sizeof(size_t), 16)
 #define _D2_FREE(x)         mkl_free(x)
 
 #elif defined __GNUC__
@@ -45,10 +45,10 @@ extern "C" {
 #include <lapacke.h>
 #define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
 #define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
-#define _D2_MALLOC_LONG(x)       (long *) malloc( (x) *sizeof(long))
+#define _D2_MALLOC_SIZE_T(x)       (size_t *) malloc( (x) *sizeof(size_t))
 #define _D2_CALLOC_SCALAR(x)       (SCALAR *) calloc( (x) , sizeof(SCALAR)) 
 #define _D2_CALLOC_INT(x)       (int *) calloc( (x) , sizeof(int))
-#define _D2_CALLOC_LONG(x)       (long *) calloc( (x) , sizeof(long))
+#define _D2_CALLOC_SIZE_T(x)       (size_t *) calloc( (x) , sizeof(size_t))
 #define _D2_FREE(x)         free(x)
 
 #endif

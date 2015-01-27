@@ -9,12 +9,12 @@ int d2_read(const char* filename, mph *p_data) {
   FILE *fp = fopen(filename, "r+");
   assert(fp);
 
-  long i,j;
+  size_t i,j;
   int n;
   int **p_str, str;
   double **p_supp, **p_w;
   int s_ph = p_data->s_ph;
-  long size = p_data->size;
+  size_t size = p_data->size;
 
   p_str  = (int **) malloc(s_ph * sizeof(int *));
   p_supp = (double **) malloc(s_ph * sizeof(double *));
@@ -93,7 +93,7 @@ int d2_read(const char* filename, mph *p_data) {
   }
 
   for (n=0; n<s_ph; ++n) {
-    long * p_str_cum = p_data->ph[n].p_str_cum;
+    size_t * p_str_cum = p_data->ph[n].p_str_cum;
     int * p_str = p_data->ph[n].p_str;
     p_str_cum[0] = 0;
     for (i=1; i<size; ++i) {
@@ -110,11 +110,11 @@ int d2_read(const char* filename, mph *p_data) {
 int d2_write(const char* filename, mph *p_data) {
   FILE *fp = filename? fopen(filename, "w+") : stdout;
 
-  long i, j;
+  size_t i, j;
   int k, d, n;
   double **p_supp, **p_w;
   int s_ph = p_data->s_ph;
-  long size = p_data->size;
+  size_t size = p_data->size;
 
   p_supp = (double **) malloc(s_ph * sizeof(double *));
   p_w    = (double **) malloc(s_ph * sizeof(double *));
