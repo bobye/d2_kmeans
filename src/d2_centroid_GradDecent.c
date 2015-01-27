@@ -36,6 +36,8 @@ int d2_centroid_sphGradDecent(mph *p_data,
   long *label_count;
   SCALAR *p_grad;
 
+  assert(dim > 0); // current only support the D2 format
+
   if (!c0) {
     d2_centroid_randn(p_data, idx_ph, c);// For profile purpose only
   } else {
