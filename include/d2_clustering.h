@@ -11,20 +11,40 @@ extern "C" {
 #define __OUT__ 
 #define __IN_OUT__
 
-  // data structure to store d2 of one phase
+  /**
+   * data structure to store d2 of one phase
+   */
   typedef struct {
     int dim, str;
     long col, max_col;
     int *p_str;
     long *p_str_cum;
-    SCALAR *p_supp;    
     SCALAR *p_w;
-    SCALAR *dist_mat; /* for the case when distance mat can be precomputed (histogram) */ 
+
+    /* For data of D2 with Euclidean supports */
+    SCALAR *p_supp; 
+    
+    /**
+       For data of D2 with symbolic supports, 
+       there is no universal data format specifications.
+       One has to write their own IO code for reading/writing such 
+       type of data. Here a support is a sequence of fixed length
+       @param(dim) and the distance between sequences of symbols
+       is defined as the average of their distances along all dimensions,
+       where the distance is specified in 2d array @param(dist_mat).
+       @param(p_supp_sym) gives the symbolic indices for each dimension. 
+
+       See folder data/dna_seq/ for an example. */
+    int *p_supp_sym; 
+
+    /* For data of histograms or D2 with symbolic supports */
+    SCALAR *dist_mat; 
   } sph; 
 
 
-  /* data structure for relabeling using triangle inequality:    
-     Using the Triangle Inequality to Accelerate k-means, Charles Elkan, ICML03
+  /**
+    data structure for relabeling using triangle inequality:    
+    Using the Triangle Inequality to Accelerate k-means, Charles Elkan, ICML03
    */
   typedef struct {
     SCALAR *l; /* lower bound of distance pair */
@@ -34,7 +54,9 @@ extern "C" {
     char *r;    
   } trieq;
 
-  // data structure to store d2 of multiple phases
+  /**
+   * data structure to store d2 of multiple phases
+   */
   typedef struct {
     int s_ph; /* size of phases */
     long size; /* size of entries */
@@ -44,7 +66,9 @@ extern "C" {
   } mph;
 
 
-  /* basic utilities */
+  /**
+   * basic utilities 
+   */
   int d2_allocate_sph(__OUT__ sph *p_data_sph,
 		      const int d,
 		      const int stride,
@@ -61,21 +85,34 @@ extern "C" {
   int d2_write(const char* filename, mph *p_data);
   int d2_free(mph *p_data);
 
-  // working variables that are visible in all algorithms
+  /* main algorithm */
+  int d2_clustering(int k, 
+		    int max_iter, 
+		    mph *p_data, 
+		    __OUT__ mph *centroids,
+		    int selected_phase);  
+
+  /**
+   * working variables that are visible in all algorithms
+   */
   typedef struct {
     SCALAR *C;
     SCALAR *X;
     SCALAR *L;
   } var_sph;
 
-  // working variables specific to Bregman ADMM
+  /**
+   * working variables specific to Bregman ADMM
+   */
   typedef struct {
     SCALAR *X, *Z;
     SCALAR *Y;
     SCALAR *Xc, *Zr;
   } var_sphBregman;
 
-  // union of working variables across multiple phases
+  /**
+   * union of working variables across multiple phases
+   */
   typedef struct {
     int s_ph;
     var_sph *g_var;
@@ -85,17 +122,23 @@ extern "C" {
   } var_mph; 
 
 
-  // interface of random centroids from multivariate normal samples
+  /**
+   * interface of random centroids from multivariate normal samples
+   */
   int d2_centroid_randn(mph *p_data, 
 			int idx_ph, 
 			__OUT__ sph *c);
 
-  // interface of random centroids from observations
+  /**
+   * interface of random centroids from observations
+   */
   int d2_centroid_rands(mph *p_data, 
 			int idx_ph, 
 			__OUT__ sph *c);
   
-  // interface of Bregman ADMM
+  /**
+   * interface of Bregman ADMM
+   */
   int d2_allocate_work_sphBregman(sph *ph, long size,
 				  __OUT__ var_sphBregman * var_phwork);
   int d2_free_work_sphBregman(var_sphBregman * var_phwork);
@@ -106,7 +149,9 @@ extern "C" {
 			     __OUT__ sph *c);
 
 
-  // interface of Gradient Decent
+  /**
+   * interfaces of Gradient Decent and ADMM (for experimental purpose only, deprecated)
+   */
   int d2_centroid_sphGradDecent(mph *p_data,
 				var_mph * var_work,
 				int idx_ph,
@@ -120,12 +165,6 @@ extern "C" {
 			  __OUT__ sph *c);
 
 
-  // interface to users
-  int d2_clustering(int k, 
-		    int max_iter, 
-		    mph *p_data, 
-		    __OUT__ mph *centroids,
-		    int selected_phase);  
 
 #ifdef __cplusplus
 }
