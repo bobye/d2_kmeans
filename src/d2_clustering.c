@@ -14,6 +14,12 @@
 
 extern int d2_alg_type;
 
+
+/**
+ * Allocate memory for a single phase: 
+ * @param(d): if (d == 0) then only allocate space for weights
+ * @param(semicol): auxiliary variable that request extra spaces, 0<=semicol<1
+ */
 int d2_allocate_sph(sph *p_data_sph,
 		    const int d,
 		    const int stride,
@@ -35,6 +41,7 @@ int d2_allocate_sph(sph *p_data_sph,
   p_data_sph->p_str_cum  = _D2_CALLOC_LONG(num);
   p_data_sph->p_w    = _D2_MALLOC_SCALAR(m);
 
+  // consider different data format
   if (d>0) 
     p_data_sph->p_supp = _D2_MALLOC_SCALAR(n);
   else if (d==0) 
@@ -44,21 +51,27 @@ int d2_allocate_sph(sph *p_data_sph,
   return 0;
 }
 
+/**
+ * Free the space of a single phase
+ */
 int d2_free_sph(sph *p_data_sph) {
   _D2_FREE(p_data_sph->p_str);
   _D2_FREE(p_data_sph->p_str_cum);
-  _D2_FREE(p_data_sph->p_supp);
+  if (p_data_sph->dim > 0) _D2_FREE(p_data_sph->p_supp);
+  else if (p_data_sph->dim == 0) _D2_FREE(p_data_sph->dist_mat);
   _D2_FREE(p_data_sph->p_w);
   return 0;
 }
 
-/** Allocate memory for data, it is possible that the pre-allocated memory is
-    insufficient when loading data. In that case, memory will be reallocated. 
+/**
+ * Allocate memory for data, it is possible that the pre-allocated memory is
+ * insufficient when loading data. In that case, memory will be reallocated. 
  */
 int d2_allocate(mph *p_data,
 		const int size_of_phases,
 		const long size_of_samples,
-		const int *avg_strides, /* It is very important to make sure 
+		const int *avg_strides, /**
+					   It is very important to make sure 
 					   that avg_strides are specified correctly.
 					   It articulates how sparse the centroid could be. 
 					   By default, it should be the average number
@@ -89,6 +102,9 @@ int d2_allocate(mph *p_data,
   return success;
 }
 
+/**
+ * Free the space of entire data
+ */
 int d2_free(mph *p_data) {
   int i;
   for (i=0; i<p_data->s_ph; ++i) {
@@ -99,6 +115,9 @@ int d2_free(mph *p_data) {
   return 0;
 }
 
+/**
+ * Allocate memory for working data
+ */
 int d2_allocate_work(mph *p_data, var_mph *var_work) {
   int i;
   long size = p_data->size;
@@ -145,6 +164,9 @@ int d2_allocate_work(mph *p_data, var_mph *var_work) {
   return 0;
 }
 
+/**
+ * Free space for working data
+ */
 int d2_free_work(var_mph *var_work) {
   int i;
   trieq *p_tr = &var_work->tr;
@@ -170,68 +192,75 @@ int d2_free_work(var_mph *var_work) {
   return 0;
 }
 
-/** Compute the distance from each point to the all centroids.
-    This part can be parallelized.
+
+/**
+ * Compute the distance between i-th d2 in a and j-th d2 in b 
+ * Return square root of the undergoing cost as distance
+ */
+double d2_compute_distance(mph *a, int i, mph *b, int j, int selected_phase) {
+  int n;
+  double d = 0.0, val; assert(a->s_ph == b->s_ph);
+  for (n=0; n<a->s_ph; ++n) 
+    if (selected_phase < 0 || n == selected_phase) {
+      sph *a_sph = a->ph + n, *b_sph = b->ph + n;
+      int dim = a->ph[n].dim; assert(dim == b_sph->dim);
+      if (dim > 0) {
+	val = d2_match_by_coordinates(dim, 
+				      a_sph->p_str[i], 
+				      a_sph->p_supp + a_sph->p_str_cum[i]*dim, 
+				      a_sph->p_w + a_sph->p_str_cum[i], 
+				      b_sph->p_str[j], 
+				      b_sph->p_supp + b_sph->p_str_cum[j]*dim, 
+				      b_sph->p_w + b_sph->p_str_cum[j], 
+				      NULL, // x and lambda are implemented later
+				      NULL);
+      } else if (dim == 0) {
+	val = d2_match_by_distmat(a_sph->p_str[i], 
+				  b_sph->p_str[j], 
+				  a_sph->dist_mat, 
+				  a_sph->p_w + a_sph->p_str_cum[i], 
+				  b_sph->p_w + b_sph->p_str_cum[j], 
+				  NULL, NULL);
+      }
+      d += val;
+    }
+  return sqrt(d);
+}
+
+
+
+/**
+ * See the paper for detailed algorithm description: 
+ * Using the Triangle Inequality to Accelerate k-Means, Charles Elkan, ICML 2003 
+ */
+
+/**
+ * Compute the distance from each point to the all centroids.
+ * This part can be parallelized.
  */
 long d2_labeling_prep(__IN_OUT__ mph *p_data,
 		      mph *centroids,
 		      var_mph * var_work,
 		      int selected_phase) {
   long i, count = 0, dist_count = 0;
-  int **p_str;
-  double **p_supp, **p_w;
-  long **p_str_cum;
   const long size = p_data->size;
   const int num_of_labels = centroids->size;
   int *label = p_data->label;
   trieq *p_tr = &var_work->tr;
 
   nclock_start();
-
-  {
-  int n;
-  int s_ph = p_data->s_ph;
-
-  p_str  = (int **) malloc(s_ph * sizeof(int *));
-  p_supp = (double **) malloc(s_ph * sizeof(double *));
-  p_w    = (double **) malloc(s_ph * sizeof(double *));
-  p_str_cum = (long **) malloc(s_ph * sizeof(long *));
-
-  for (n=0; n<s_ph; ++n) {
-    p_str[n]  = p_data->ph[n].p_str;
-    p_supp[n] = p_data->ph[n].p_supp;
-    p_w[n]    = p_data->ph[n].p_w;
-    p_str_cum[n] = p_data->ph[n].p_str_cum;
-  }
-  }
-
   /* step 1 */
   for (i=0; i<num_of_labels; ++i) p_tr->s[i] = DBL_MAX;
+  /* pre-compute pairwise distance between centroids */
 #pragma omp parallel for reduction(+:dist_count)
   for (i=0; i<num_of_labels; ++i) {
-    int n;
     long j;
     p_tr->c[i*num_of_labels + i] = 0; // d(c_i, c_i)
 
     for (j=i+1; j<num_of_labels; ++j) {
-      double d = 0.0, val;
-      for (n=0; n<p_data->s_ph; ++n) 
-	if (selected_phase < 0 || n == selected_phase) {
-	  int str = centroids->ph[n].str;
-	  int dim = p_data->ph[n].dim;
-	  assert(dim == centroids->ph[n].dim);
-	  if (dim > 0) {
-	  val = d2_match_by_coordinates(dim, 
-					str, centroids->ph[n].p_supp + i*str*dim, centroids->ph[n].p_w + i*str, 
-					str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
-					NULL, // x and lambda are implemented later
-					NULL);
-	  } else if (dim == 0) {
-	    val = d2_match_by_distmat(str, str, centroids->ph[n].dist_mat, centroids->ph[n].p_w + i*str, centroids->ph[n].p_w + j*str, NULL, NULL);
-	  }
-	  d += val;
-	}
-      d = sqrt(d); dist_count +=1;
+      double d;
+      d = d2_compute_distance(centroids, i, centroids, j, selected_phase); 
+      dist_count +=1;
 
       p_tr->c[i*num_of_labels + j] = d; 
       p_tr->c[i + j*num_of_labels] = d;
@@ -242,10 +271,10 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
   }
 
 
+  /* initialization */
   for (i=0; i<size; ++i) 
-    if (d2_alg_type == 0) {
-      var_work->label_switch[i] = 0;
-    }
+    if (d2_alg_type == 0)
+      { var_work->label_switch[i] = 0; }
 
 #pragma omp parallel for reduction(+:dist_count,count)
   for (i=0; i<size; ++i) {
@@ -253,7 +282,6 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
   if (p_tr->u[i] > p_tr->s[label[i]]) {
     int init_label = label[i];
     int jj = init_label>=0? init_label: 0;
-    int n;
     long j;
     SCALAR min_distance;
     SCALAR *U = p_tr->u + i;
@@ -266,25 +294,9 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
 	/* 3a. */
 	if (p_tr->r[i] == 1) {
 	  /* compute distance */
-	  double d = 0.0, val;
-	  for (n=0; n<p_data->s_ph; ++n) 
-	    if (selected_phase < 0 || n == selected_phase) {
-	      int str = centroids->ph[n].str;
-	      int dim = p_data->ph[n].dim;
-	      assert(dim == centroids->ph[n].dim);
-	      if (dim > 0) {
-	      val = d2_match_by_coordinates(dim, 
-					    p_str[n][i], p_supp[n] + p_str_cum[n][i]*dim, p_w[n] + p_str_cum[n][i],
-					    str, centroids->ph[n].p_supp + jj*str*dim, centroids->ph[n].p_w + jj*str, 
-					    NULL, // x and lambda are implemented later
-					    NULL);
-	      } else if (dim == 0) {
-		val = d2_match_by_distmat(p_str[n][i], str, centroids->ph[n].dist_mat, p_w[n] + p_str_cum[n][i], centroids->ph[n].p_w + jj*str, NULL, NULL);
-	      }
-
-	      d += val;
-	    }
-	  d = sqrt(d); dist_count +=1;
+	  double d;
+	  d = d2_compute_distance(p_data, i, centroids, jj, selected_phase);
+	  dist_count +=1;
 	  L[jj] = d;
 	  *U = d;
 	  min_distance = d;
@@ -296,25 +308,9 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
 	/* 3b. */
 	if ((min_distance > L[j] || min_distance > p_tr->c[j*num_of_labels + jj] / 2.) && j!=jj) {
 	  /* compute distance */
-	  double d = 0.0, val;
-	  for (n=0; n<p_data->s_ph; ++n) 
-	    if (selected_phase < 0 || n == selected_phase) {
-	      int str = centroids->ph[n].str;
-	      int dim = p_data->ph[n].dim;
-	      assert(dim == centroids->ph[n].dim);
-	      if (dim > 0) {
-	      val = d2_match_by_coordinates(dim, 
-					    p_str[n][i], p_supp[n] + p_str_cum[n][i]*dim, p_w[n] + p_str_cum[n][i],
-					    str, centroids->ph[n].p_supp + j*str*dim, centroids->ph[n].p_w + j*str, 
-					    NULL, // x and lambda are implemented later
-					    NULL);
-	      } else if (dim == 0) {
-		val = d2_match_by_distmat(p_str[n][i], str, centroids->ph[n].dist_mat, p_w[n] + p_str_cum[n][i], centroids->ph[n].p_w + j*str, NULL, NULL);
-	      }
-
-	      d += val;
-	    }
-	  d = sqrt(d); dist_count +=1;
+	  double d;
+	  d = d2_compute_distance(p_data, i, centroids, j, selected_phase);
+	  dist_count +=1;
 	  L[j] = d;
 	  if (d < min_distance) {jj = j; min_distance = d; *U = d;}
 	}
@@ -322,22 +318,22 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
     
     if (jj != init_label) {
       label[i] = jj;
-      if (d2_alg_type == 0) {
-	var_work->label_switch[i] = 1;
-      }
+      if (d2_alg_type == 0) 
+	{ var_work->label_switch[i] = 1;}
       count += 1;
     }
   }
   }
 
-  free(p_str); free(p_supp); free(p_w); free(p_str_cum);
   VPRINTF(("\n\t\t\t\t %ld objects change their labels\n\t\t\t\t %ld distance pairs computed\n\t\t\t\t seconds: %f\n", count, dist_count, nclock_end()));
   
   return count;
 }
 
 
-/** copy a to b */
+/**
+ * Copy mph data from a to b 
+ */
 int d2_copy(mph* a, mph *b) {
   int n;
   bool new_init_tag = false;
@@ -369,10 +365,6 @@ int d2_copy(mph* a, mph *b) {
   return 0;
 }
 
-/** Compute the distance from each point to the all centroids.
-    This part can be parallelized.
- */
-
 #define max(X,Y) (((X) > (Y)) ? (X) : (Y))
 long d2_labeling_post(mph *p_data,
 		      mph *c_old,
@@ -385,26 +377,8 @@ long d2_labeling_post(mph *p_data,
   int *label = p_data->label;
 
   for (i=0; i<num_of_labels; ++i) {
-    double d = 0, val;
-    int n;
-    for (n=0; n<c_old->s_ph; ++n) 
-      if (selected_phase < 0 || n == selected_phase) {
-	int str = c_old->ph[n].str;
-	int dim = c_old->ph[n].dim;
-	assert(dim == c_new->ph[n].dim);
-	if (dim > 0) {
-	val = d2_match_by_coordinates(dim, 
-				      str, c_old->ph[n].p_supp + i*str*dim, c_old->ph[n].p_w + i*str, 
-				      str, c_new->ph[n].p_supp + i*str*dim, c_new->ph[n].p_w + i*str, 
-				      NULL, // x and lambda are implemented later
-				      NULL);
-	} else if (dim == 0) {
-	  val = d2_match_by_distmat(str, str, c_old->ph[n].dist_mat, c_old->ph[n].p_w + i*str,c_new->ph[n].p_w + i*str, NULL, NULL);
-	}
-
-	d += val;
-      }
-    d = sqrt(d);    
+    double d;
+    d = d2_compute_distance(c_old, i, c_new, i, selected_phase);
     d_changes[i] = d;
   }
 
@@ -419,7 +393,9 @@ long d2_labeling_post(mph *p_data,
   return 0;
 }
 
-/** the main algorithm for d2 clustering */
+/**
+ * The main algorithm for d2 clustering 
+ */
 int d2_clustering(int num_of_clusters, 
 		  int max_iter, 
 		  mph *p_data, 
