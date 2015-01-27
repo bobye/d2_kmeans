@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
   int size_of_phases = 1;
   long size_of_samples;
   char *ss1_c_str = 0, *ss2_c_str = 0, *filename = 0, *ofilename = 0;
-
+  char use_triangle = true;
   /* default settings */
   int selected_phase = -1; 
   int number_of_clusters = 3; 
@@ -41,11 +41,12 @@ int main(int argc, char *argv[])
     {"clusters", 1, 0, 'c'},
     {"max_iters", 1, 0, 'm'},
     {"centroid_method", 1, 0, 'M'},
+    {"non_triangle", 0, 0, 'T'},
     {NULL, 0, NULL, 0}
   };
   
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:T", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
@@ -77,6 +78,9 @@ int main(int argc, char *argv[])
     case 'M':
       d2_alg_type = atoi(optarg);
       assert(d2_alg_type == D2_CENTROID_BADMM || d2_alg_type == D2_CENTROID_GRADDEC || d2_alg_type == D2_CENTROID_ADMM);
+      break;
+    case 'T':
+      use_triangle = false;
       break;
     default:
       printf ("?? getopt returned character code 0%o ??\n", ch);
@@ -129,7 +133,12 @@ int main(int argc, char *argv[])
     cout << "Clustering upon all phases (more than one)" << endl;
   }
 
-  d2_clustering(number_of_clusters, max_iters, &data, &c, selected_phase);
+  d2_clustering(number_of_clusters, 
+		max_iters, 
+		&data, 
+		&c, 
+		selected_phase,
+		use_triangle);
 
   if (ofilename) {
     cout << "Write computed centroids to " << ofilename << endl;

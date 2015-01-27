@@ -90,7 +90,8 @@ extern "C" {
 		    int max_iter, 
 		    mph *p_data, 
 		    __OUT__ mph *centroids,
-		    int selected_phase);  
+		    int selected_phase,
+		    char use_triangle);  
 
   /**
    * working variables that are visible in all algorithms
