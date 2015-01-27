@@ -23,7 +23,7 @@ extern int d2_alg_type;
 int d2_allocate_sph(sph *p_data_sph,
 		    const int d,
 		    const int stride,
-		    const long num,
+		    const size_t num,
 		    double semicol) {
 
   int n, m;
@@ -38,7 +38,7 @@ int d2_allocate_sph(sph *p_data_sph,
 
 
   p_data_sph->p_str  = _D2_CALLOC_INT(num);
-  p_data_sph->p_str_cum  = _D2_CALLOC_LONG(num);
+  p_data_sph->p_str_cum  = _D2_CALLOC_SIZE_T(num);
   p_data_sph->p_w    = _D2_MALLOC_SCALAR(m);
 
   // consider different data format
@@ -69,7 +69,7 @@ int d2_free_sph(sph *p_data_sph) {
  */
 int d2_allocate(mph *p_data,
 		const int size_of_phases,
-		const long size_of_samples,
+		const size_t size_of_samples,
 		const int *avg_strides, /**
 					   It is very important to make sure 
 					   that avg_strides are specified correctly.
@@ -120,7 +120,7 @@ int d2_free(mph *p_data) {
  */
 int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
   int i;
-  long size = p_data->size;
+  size_t size = p_data->size;
   int num_of_labels = p_data->num_of_labels;
   trieq *p_tr = &var_work->tr;
   var_work->s_ph = p_data->s_ph;
@@ -156,14 +156,15 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
   var_work->label_switch = (char *) malloc(size * sizeof(char)); 
 
   if (use_triangle) {
+    size_t j;
     p_tr->l = _D2_MALLOC_SCALAR(size * num_of_labels);
     p_tr->u = _D2_MALLOC_SCALAR(size);
     p_tr->s = _D2_MALLOC_SCALAR(num_of_labels);
     p_tr->c = _D2_MALLOC_SCALAR(num_of_labels * num_of_labels);
     p_tr->r = (char *) calloc(size, sizeof(char));
 
-    for (i=0; i<size * num_of_labels; ++i) p_tr->l[i] = 0;
-    for (i=0; i<size; ++i) {p_tr->u[i] = DBL_MAX; p_tr->r[i] = 1; }
+    for (j=0; j<size * num_of_labels; ++j) p_tr->l[j] = 0;
+    for (j=0; j<size; ++j) {p_tr->u[j] = DBL_MAX; p_tr->r[j] = 1; }
   }
   return 0;
 }
@@ -242,12 +243,12 @@ double d2_compute_distance(mph *a, int i, mph *b, int j, int selected_phase) {
  * Compute the distance from each point to the all centroids.
  * This part can be parallelized.
  */
-long d2_labeling_prep(__IN_OUT__ mph *p_data,
+size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
 		      mph *centroids,
 		      var_mph * var_work,
 		      int selected_phase) {
-  long i, count = 0, dist_count = 0;
-  const long size = p_data->size;
+  size_t i, count = 0, dist_count = 0;
+  const size_t size = p_data->size;
   const int num_of_labels = centroids->size;
   int *label = p_data->label;
   trieq *p_tr = &var_work->tr;
@@ -258,7 +259,7 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
   /* pre-compute pairwise distance between centroids */
 #pragma omp parallel for reduction(+:dist_count)
   for (i=0; i<num_of_labels; ++i) {
-    long j;
+    size_t j;
     p_tr->c[i*num_of_labels + i] = 0; // d(c_i, c_i)
 
     for (j=i+1; j<num_of_labels; ++j) {
@@ -286,7 +287,7 @@ long d2_labeling_prep(__IN_OUT__ mph *p_data,
   if (p_tr->u[i] > p_tr->s[label[i]]) {
     int init_label = label[i];
     int jj = init_label>=0? init_label: 0;
-    long j;
+    size_t j;
     SCALAR min_distance;
     SCALAR *U = p_tr->u + i;
     SCALAR *L = p_tr->l + i*num_of_labels;
@@ -356,7 +357,7 @@ int d2_copy(mph* a, mph *b) {
 	b->ph[n].col = a->ph[n].col;
       }
       memcpy(b->ph[n].p_str, a->ph[n].p_str, a->size * sizeof(int));
-      memcpy(b->ph[n].p_str_cum, a->ph[n].p_str_cum, a->size * sizeof(long));
+      memcpy(b->ph[n].p_str_cum, a->ph[n].p_str_cum, a->size * sizeof(size_t));
       memcpy(b->ph[n].p_w, a->ph[n].p_w, a->ph[n].col * sizeof(SCALAR));
       if (a->ph[n].dim > 0) 
 	memcpy(b->ph[n].p_supp, a->ph[n].p_supp, a->ph[n].col * a->ph[n].dim * sizeof(SCALAR));
@@ -370,13 +371,13 @@ int d2_copy(mph* a, mph *b) {
 }
 
 #define max(X,Y) (((X) > (Y)) ? (X) : (Y))
-long d2_labeling_post(mph *p_data,
+size_t d2_labeling_post(mph *p_data,
 		      mph *c_old,
 		      mph *c_new,
 		      var_mph * var_work,
 		      int selected_phase) {
   int i, num_of_labels = c_old->size;
-  long j, size = p_data->size;
+  size_t j, size = p_data->size;
   SCALAR *d_changes = _D2_MALLOC_SCALAR(num_of_labels);
   int *label = p_data->label;
 
@@ -401,13 +402,13 @@ long d2_labeling_post(mph *p_data,
 /** Compute the distance from each point to the all centroids.
     This part can be parallelized.
  */
-long d2_labeling(__IN_OUT__ mph *p_data,
+size_t d2_labeling(__IN_OUT__ mph *p_data,
 		mph *centroids,
 		var_mph * var_work,
 		int selected_phase) {
-  long i, count = 0;
+  size_t i, count = 0;
   int *label = p_data->label;
-  long size = p_data->size;
+  size_t size = p_data->size;
 
   nclock_start();
 
@@ -415,7 +416,7 @@ long d2_labeling(__IN_OUT__ mph *p_data,
   for (i=0; i<size; ++i) {
     double min_distance = -1;	
     int jj = label[i]>=0? label[i]: 0;
-    long j;
+    size_t j;
 
     for (j=0; j<centroids->size; ++j) {
       double d;
@@ -452,12 +453,12 @@ int d2_clustering(int num_of_clusters,
 		  __OUT__ mph *centroids,
 		  int selected_phase,
 		  char use_triangle){
-  long i;
+  size_t i;
   int iter;
   int s_ph = p_data->s_ph;
-  long size = p_data->size;
+  size_t size = p_data->size;
   int *label = p_data->label;
-  long label_change_count;
+  size_t label_change_count;
   var_mph var_work = {.tr = {NULL, NULL, NULL, NULL, NULL}};
   mph the_centroids_copy = {0, 0, NULL, 0, NULL};
 
