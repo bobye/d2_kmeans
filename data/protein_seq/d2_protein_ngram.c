@@ -233,13 +233,14 @@ int d2_write_protein(const char* filename, mph *p_data) {
 }
 
 
+/* $ ./protein <selected_phase> <num_of_clusters> */
 int main(int argc, char *argv[]) {
   int avg_strides[3] = {20, 20, 20};
   int dimension_of_phases[3] = {1, 2, 3};
   int size_of_phases = 3;
   size_t size_of_samples = 10742;
-  int number_of_clusters = 1;
-  int selected_phase = 0;
+  int number_of_clusters = atoi(argv[2]);
+  int selected_phase = atoi(argv[1]);
   char use_triangle = false;
   int i;
 
@@ -267,7 +268,6 @@ int main(int argc, char *argv[]) {
       c.ph[i].col = 0;
     }
   }
-  //d2_write_protein(NULL, &c);
 
   d2_clustering(number_of_clusters, 
 		100, 
@@ -275,6 +275,11 @@ int main(int argc, char *argv[]) {
 		&c, 
 		selected_phase,
 		use_triangle);
-  
+
+  d2_write_protein(NULL, &c); // output centroids
+
+  d2_free(&data);
+  d2_free(&c);
+
   return 0;
 }
