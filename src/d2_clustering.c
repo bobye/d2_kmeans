@@ -314,7 +314,7 @@ int d2_clustering(int num_of_clusters,
   // label all objects as invalid numbers
   p_data->num_of_labels = num_of_clusters;
 
-  if (centroids->ph == NULL) {
+  if (!centroids->ph) {
   // initialize centroids from random
   VPRINTF(("Initializing centroids ... ")); VFLUSH;
   centroids->s_ph = s_ph;
@@ -322,7 +322,10 @@ int d2_clustering(int num_of_clusters,
   centroids->ph = (sph *) malloc(s_ph * sizeof(sph));
   for (i=0; i<s_ph; ++i) 
     if (selected_phase < 0 || i == selected_phase) {
-      d2_centroid_rands(p_data, i, centroids->ph + i);
+      /* allocate mem for centroids */
+      d2_allocate_sph(&centroids->ph[i],  p_data->ph[i].dim, p_data->ph[i].str, p_data->num_of_labels, 0.);
+      /* initialize centroids from random samples */
+      d2_centroid_rands(p_data, i, &centroids->ph[i]);
     } else {
       centroids->ph[i].col = 0;
     }

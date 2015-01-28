@@ -22,9 +22,14 @@
 #include "d2_param.h"
 int d2_alg_type = D2_CENTROID_BADMM;
 
-int key[255]; // map ASCII to index
 
-int d2_allocate_sph_dna(sph *p_data_sph,
+#define PROTEIN_VOCAB_SIZE (20)
+
+int key[255]; // map ASCII to index
+char reverseKey[PROTEIN_VOCAB_SIZE]; // map index to ASCII
+
+
+int d2_allocate_sph_protein(sph *p_data_sph,
 		    const int d,
 		    const int stride,
 		    const size_t num,
@@ -49,16 +54,17 @@ int d2_allocate_sph_dna(sph *p_data_sph,
 
   p_data_sph->p_supp_sym = _D2_MALLOC_INT(n);
 
-  p_data_sph->vocab_size = 20; // 20 types of amino acids
+  p_data_sph->vocab_size = PROTEIN_VOCAB_SIZE; // 20 types of amino acids
   p_data_sph->dist_mat = _D2_MALLOC_SCALAR( p_data_sph->vocab_size * p_data_sph->vocab_size);
 
+  p_data_sph->metric_type = D2_N_GRAM;
 
   return 0;
 }
 
 
 
-int d2_read_sph_dna(const char* filename, sph *p_data_sph, mph *p_data) {
+int d2_read_sph_protein(const char* filename, sph *p_data_sph, mph *p_data) {
   FILE *fp;
 
   size_t i,j, count_w, count_supp;
@@ -75,7 +81,7 @@ int d2_read_sph_dna(const char* filename, sph *p_data_sph, mph *p_data) {
   fp_new = fopen("PAM250_distmat.dat", "r+"); assert(fp_new);
   
   n = 0; while ((c=fscanf(fp_new, "%c", &symbol)) > 0 && symbol !='\n') { 
-    if (symbol >= 'A' && symbol <= 'Z') {key[symbol] = n; ++n;}
+    if (symbol >= 'A' && symbol <= 'Z') {key[symbol] = n; reverseKey[n] = symbol; ++n;}
   }
   assert(n==p_data_sph->vocab_size);
 
@@ -93,7 +99,7 @@ int d2_read_sph_dna(const char* filename, sph *p_data_sph, mph *p_data) {
   count_w = 0; count_supp = 0;
   for (i=0; i<size; ++i) {
     int dim, str;
-    SCALAR tmp_val;
+    SCALAR tmp_val, w_sum;
     c = fscanf(fp, "%s %d", name, &n); assert(c==2);
     c = fscanf(fp, "%d %d", &dim, &str); assert(c==2 && dim == p_data_sph->dim && str > 0);
 
@@ -107,12 +113,12 @@ int d2_read_sph_dna(const char* filename, sph *p_data_sph, mph *p_data) {
 
     p_data_sph->p_str_cum[i] = count_w;
 
-
+    w_sum = 0.f;
     for (n=0; n<str; ++n) {
       c=fscanf(fp, SCALAR_STDIO_TYPE, &tmp_val); 
+      w_sum += tmp_val;
       p_data_sph->p_w[count_w++] = tmp_val;
     }
-
 
     for (n=0; n<str; ++n) {
       int m;
@@ -128,12 +134,15 @@ int d2_read_sph_dna(const char* filename, sph *p_data_sph, mph *p_data) {
       count_supp++;
     }
     
-    str = str - count_supp + count_w;
+    str = str - (count_supp - count_w);
     count_supp = count_w;
 
-    p_data_sph->p_str[i] = str;
+    p_data_sph->p_str[i] = str; 
     p_data_sph->col += str;
 
+    for (n=0; n<str; ++n) { // re-normalize
+      p_data_sph->p_w[p_data_sph->p_str_cum[i] + n] /= w_sum;
+    }
   }
 
   // free the pointer space
@@ -145,7 +154,7 @@ int d2_read_sph_dna(const char* filename, sph *p_data_sph, mph *p_data) {
 
 
 
-int d2_read_dna(mph *p_data,
+int d2_read_protein(mph *p_data,
 		const int size_of_phases,
 		const size_t size_of_samples,
 		const int *avg_strides, /**
@@ -166,23 +175,62 @@ int d2_read_dna(mph *p_data,
 
   // initialize to all labels to invalid -1
   p_data->label = _D2_MALLOC_INT(size_of_samples); 
-  //for (i=0; i<p_data->size; ++i)  p_data->label[i] = -1;
+  for (i=0; i<p_data->size; ++i)  p_data->label[i] = -1;
 
   for (i=0; i<p_data->s_ph; ++i) {
     char filename[255];
     sprintf(filename, "protein_%dgram.dat", i+1);
     printf("Load %s ...\n", filename);
-    d2_allocate_sph_dna(p_data->ph + i, 
+    d2_allocate_sph_protein(p_data->ph + i, 
 			dimension_of_phases[i], 
 			avg_strides[i], 
 			size_of_samples, 
 			0.6);
-    d2_read_sph_dna(filename, p_data->ph + i, p_data);
+    d2_read_sph_protein(filename, p_data->ph + i, p_data);
   }
 
   return success;
 }
 
+
+int d2_write_protein(const char* filename, mph *p_data) {
+  FILE *fp = filename? fopen(filename, "w+") : stdout;
+
+  size_t i, j;
+  int k, d, n;
+  int **p_supp; double **p_w; 
+  int s_ph = p_data->s_ph;
+  size_t size = p_data->size;
+
+  p_supp = (int **) malloc(s_ph * sizeof(int *));
+  p_w    = (double **) malloc(s_ph * sizeof(double *));
+  
+  for (n=0; n<s_ph; ++n) {
+    p_supp[n] = p_data->ph[n].p_supp_sym;
+    p_w[n]    = p_data->ph[n].p_w;
+  }
+
+  for (i=0; i<size; ++i) {
+    for (j=0; j<s_ph; ++j) 
+      if (p_data->ph[j].p_str != NULL) {
+	int dim = p_data->ph[j].dim;
+	int str = p_data->ph[j].p_str[i];
+	fprintf(fp, "%d\n", dim);
+	fprintf(fp, "%d\n", str);
+	for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[j][k]);
+	fprintf(fp, "\n"); p_w[j] += str;
+	for (k=0; k<str; ++k) {
+	  for (d=0; d<dim; ++d) fprintf(fp, "%c", reverseKey[p_supp[j][d]]);
+	  fprintf(fp, " "); p_supp[j] += dim;
+	}
+	fprintf(fp, "\n");
+      }
+  }
+
+  free(p_supp); free(p_w);
+  fclose(fp);
+  return 0;
+}
 
 
 int main(int argc, char *argv[]) {
@@ -191,19 +239,35 @@ int main(int argc, char *argv[]) {
   int size_of_phases = 3;
   size_t size_of_samples = 10742;
   int number_of_clusters = 1;
-  int selected_phase = -1;
+  int selected_phase = 0;
   char use_triangle = false;
+  int i;
 
   mph data;
   mph c;
 
-  int err = d2_read_dna(&data, 
-			size_of_phases,
-			size_of_samples,
-			&avg_strides[0],
-			&dimension_of_phases[0]);
+  d2_read_protein(&data, 
+		  size_of_phases,
+		  size_of_samples,
+		  &avg_strides[0],
+		  &dimension_of_phases[0]);
 
-  
+  c.s_ph = size_of_phases;
+  c.size = number_of_clusters;
+  c.ph = (sph *) malloc (c.s_ph * sizeof(sph));
+  data.num_of_labels = number_of_clusters;
+
+  for (i=0; i<c.s_ph; ++i) {
+    if (selected_phase < 0 || i == selected_phase) {
+      /* allocate mem for centroids */
+      d2_allocate_sph_protein(&c.ph[i],  data.ph[i].dim, data.ph[i].str, number_of_clusters, 0.);
+      /* initialization */
+      d2_centroid_rands(&data, i, &c.ph[i]);
+    } else {
+      c.ph[i].col = 0;
+    }
+  }
+  //d2_write_protein(NULL, &c);
 
   d2_clustering(number_of_clusters, 
 		100, 
@@ -211,6 +275,6 @@ int main(int argc, char *argv[]) {
 		&c, 
 		selected_phase,
 		use_triangle);
-    
+  
   return 0;
 }
