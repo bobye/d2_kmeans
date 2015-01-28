@@ -7,19 +7,28 @@
 
 /* choose options */
 
-const BADMM_options badmm_clu_options = {100, 2.0, 10};
-const BADMM_options badmm_cen_options = {2000, 1.0, 10};
+const BADMM_options badmm_clu_options = {100, 10.f, 10};
+const BADMM_options badmm_cen_options = {2000, 5.f, 10};
 
 
 const BADMM_options *p_badmm_options = &badmm_clu_options;
 
 
 int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwork) {
+  size_t i; int j;
+  SCALAR tmp;
   var_phwork->X = _D2_MALLOC_SCALAR (ph->str * ph->col);
   var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col);
   var_phwork->Xc= _D2_MALLOC_SCALAR (ph->col);
   var_phwork->Zr= _D2_MALLOC_SCALAR (ph->str * size);
   var_phwork->Y = _D2_CALLOC_SCALAR (ph->str * ph->col); // initialized
+
+  for (i=0; i<size; ++i) {
+    SCALAR *p_scal = var_phwork->Z + ph->str*ph->p_str_cum[i];
+    tmp = 1./(ph->str * ph->p_str[i]);
+    for (j=0; j<ph->str*ph->p_str[i]; ++j, ++p_scal) *p_scal = tmp;
+  }
+
   return 0;
 }
 
@@ -32,6 +41,9 @@ int d2_free_work_sphBregman(var_sphBregman *var_phwork) {
   return 0;
 }
 
+
+void accumulate_symbolic(int d, int m, int n, const int *supp, const double *xx, double *z, int vocab_size);
+void minimize_symbolic(int d, int n, int *supp, const double *z, const int vocab_size, const double *dist_mat, double* z_buffer);
 
 /* See matlab/centroid_sphBregman.m 
  * for a prototype implementation in Matlab. 
@@ -53,6 +65,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
   SCALAR *p_supp = data_ph->p_supp;
   SCALAR *p_w = data_ph->p_w;
   size_t *p_str_cum = data_ph->p_str_cum;
+  int *p_supp_sym = data_ph->p_supp_sym;
   SCALAR *C = var_work->g_var[idx_ph].C;
   SCALAR *X = var_work->l_var_sphBregman[idx_ph].X;
   SCALAR *Y = var_work->l_var_sphBregman[idx_ph].Y;
@@ -69,7 +82,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
 
   /* Initialization */
   if (!c0) {
-    d2_centroid_randn(p_data, idx_ph, c);// For profile purpose only
+    d2_centroid_rands(p_data, idx_ph, c);// For profile purpose only
   } else {
     *c = *c0; // warm start (for clustering purpose)
   }  
@@ -80,27 +93,34 @@ int d2_centroid_sphBregman(mph *p_data, // data
   switch (data_ph->metric_type) {
   case D2_EUCLIDEAN_L2 :
     for (i=0;i < size;  ++i) 
-      _D2_FUNC(pdist2)(dim, str, p_str[i], &c->p_supp[label[i]*strxdim], p_supp + dim*p_str_cum[i], C + str*p_str_cum[i]);
+      _D2_FUNC(pdist2)(dim, str, p_str[i], c->p_supp + label[i]*strxdim, p_supp + dim*p_str_cum[i], C + str*p_str_cum[i]);
     break;
 
   case D2_HISTOGRAM : 
     for (i=0; i< size; ++i) 
       _D2_CBLAS_FUNC(copy)(str*p_str[i], data_ph->dist_mat, 1, C + str*p_str_cum[i], 1);
     break;
+
+  case D2_N_GRAM :
+    for (i=0;i < size; ++i)
+      _D2_FUNC(pdist_symbolic)(dim, str, p_str[i], c->p_supp_sym + label[i]*strxdim, p_supp_sym + dim*p_str_cum[i], C + str*p_str_cum[i], data_ph->vocab_size, data_ph->dist_mat);
+    break;
   }
 
   /* rho is an important hyper-parameter */
   rho = p_badmm_options->rhoCoeff * _D2_CBLAS_FUNC(asum)(str*col, C, 1) / (str*col);
 
+  if (dim > 0) { // for histogram, no re-init needed
   /* 
    * Indeed, we may only need to reinitialize for entries 
    * whose label are changed  
    */
-  for (i=0; i<size; ++i) {
-    if (label_switch[i] == 1) {
-      SCALAR *p_scal = Z + str*p_str_cum[i];
-      tmp = 1./(str * p_str[i]);
-      for (j=0; j<str*p_str[i]; ++j, ++p_scal) *p_scal = tmp;
+    for (i=0; i<size; ++i) {
+      if (label_switch[i] == 1) {
+	SCALAR *p_scal = Z + str*p_str_cum[i];
+	tmp = 1./(str * p_str[i]);
+	for (j=0; j<str*p_str[i]; ++j, ++p_scal) *p_scal = tmp;
+      }
     }
   }
   // allocate buffer of Z
@@ -160,27 +180,50 @@ int d2_centroid_sphBregman(mph *p_data, // data
     
 
     // step 5: update c->p_supp (optional)
-    if (iter % p_badmm_options->updatePerLoops == 0 && data_ph->metric_type == D2_EUCLIDEAN_L2) {
-    for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
-    for (i=0; i<str*num_of_labels; ++i) Zr[i] = 0; //reset Zr to temporarily storage
+    if (iter % p_badmm_options->updatePerLoops == 0) {
+      switch (data_ph->metric_type) {
+      case D2_EUCLIDEAN_L2 :
+	for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
+	for (i=0; i<str*num_of_labels; ++i) Zr[i] = 0; //reset Zr to temporarily storage
 
-    for (i=0;i < size;  ++i) {
-      _D2_CBLAS_FUNC(gemm)(CblasColMajor, CblasNoTrans, CblasTrans, 
-			   dim, str, p_str[i], 1, p_supp + dim*p_str_cum[i], dim, X + str*p_str_cum[i], str, 1, 
-			   c->p_supp + label[i]*strxdim, dim);
-      _D2_FUNC(rsum2)(str, p_str[i], X + str*p_str_cum[i], Zr + label[i]*str);
-    }
-    for (i=0; i<num_of_labels; ++i) {
-      _D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, Zr + i*str);
-    }
+	for (i=0;i < size;  ++i) {
+	  _D2_CBLAS_FUNC(gemm)(CblasColMajor, CblasNoTrans, CblasTrans, 
+			       dim, str, p_str[i], 1, p_supp + dim*p_str_cum[i], dim, X + str*p_str_cum[i], str, 1, 
+			       c->p_supp + label[i]*strxdim, dim);
+	  _D2_FUNC(rsum2)(str, p_str[i], X + str*p_str_cum[i], Zr + label[i]*str);
+	}
+	for (i=0; i<num_of_labels; ++i) {
+	  _D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, Zr + i*str);
+	}
 
 
-    // re-calculate C
-    for (i=0;i < size;  ++i) {
-      _D2_FUNC(pdist2)(dim, str, p_str[i], &c->p_supp[label[i]*strxdim], p_supp + dim*p_str_cum[i], C + str*p_str_cum[i]);
-    }
-    }
-    
+	// re-calculate C
+	for (i=0;i < size;  ++i) {
+	  _D2_FUNC(pdist2)(dim, str, p_str[i], &c->p_supp[label[i]*strxdim], p_supp + dim*p_str_cum[i], C + str*p_str_cum[i]);
+	}
+	break;
+
+      case D2_HISTOGRAM :
+	break;
+
+      case D2_N_GRAM :
+	assert(num_of_labels * (strxdim * data_ph->vocab_size + 1) <= size);
+
+	for (i=0; i<num_of_labels*strxdim*data_ph->vocab_size; ++i) Zr[i] = 0; //reset Zr to temporarily storage
+	for (i=0; i<size; ++i) {
+	  accumulate_symbolic(dim, str, p_str[i], 
+			      p_supp_sym + dim*p_str_cum[i], 
+			      X + str*p_str_cum[i], 
+			      Zr + label[i]*strxdim*data_ph->vocab_size,
+			      data_ph->vocab_size);	  
+	}
+	for (i=0; i<num_of_labels; ++i) {
+	  minimize_symbolic(dim, str, c->p_supp_sym + i*strxdim, Zr + i*strxdim*data_ph->vocab_size, data_ph->vocab_size, data_ph->dist_mat, Zr + num_of_labels*strxdim*data_ph->vocab_size);
+	}
+
+	break;
+      }
+    }    
     // step 6: check residuals
     obj = _D2_CBLAS_FUNC(dot)(str*col, C, 1, X, 1) / size;
     if (iter%100 == 0 || (iter < 100 && iter%20 == 0) ) {
@@ -196,4 +239,30 @@ int d2_centroid_sphBregman(mph *p_data, // data
   _D2_FREE(label_count);
 
   return 0;
+}
+
+
+void accumulate_symbolic(int d, int m, int n, const int *supp /* d x n*/, const double *xx /* m x n*/, double *z /* vocab_size x d x m  */, int vocab_size) {
+  int i,j,k; double val;
+  for (i=0; i<n; ++i)
+    for (j=0; j<m; ++j) 
+      if ((val = xx[i*m + j]) > 1E-10) {
+	for (k=0; k<d; ++k)
+	  z[vocab_size*(d*j + k) + supp[i*d + k]] += val;      
+      }
+}
+
+void minimize_symbolic(int d, int m, int *supp, const double *z, const int vocab_size, const double *dist_mat, double *z_buffer) {
+  int i,j, min_idx;
+  double min ;
+  _D2_CBLAS_FUNC(gemm)(CblasColMajor, CblasNoTrans, CblasNoTrans, 
+		       vocab_size, d * m, vocab_size, 1, dist_mat, vocab_size, z, vocab_size, 0, 
+		       z_buffer, vocab_size);
+  
+  for (i=0; i<d*m; ++i, z_buffer += vocab_size) {
+    min = DBL_MAX; 
+    for (j=0; j<vocab_size; ++j) 
+      if (z_buffer[j] < min) {min = z_buffer[j]; min_idx = j;}
+    supp[i] = min_idx;
+  }
 }

@@ -309,7 +309,7 @@ int d2_clustering(int num_of_clusters,
   var_mph var_work = {.tr = {NULL, NULL, NULL, NULL, NULL}};
   mph the_centroids_copy = {0, 0, NULL, 0, NULL};
 
-  assert(num_of_clusters>0 && max_iter > 0);
+  assert(num_of_clusters>0 && max_iter > 0 && selected_phase < s_ph);
 
   // label all objects as invalid numbers
   p_data->num_of_labels = num_of_clusters;
@@ -352,7 +352,7 @@ int d2_clustering(int num_of_clusters,
     }
 
     /* make copies of centroids */
-    d2_copy(centroids, &the_centroids_copy);
+    if (use_triangle) d2_copy(centroids, &the_centroids_copy);
 
     VPRINTF(("\tUpdate centroids ... \n"));
     /* update centroids */
