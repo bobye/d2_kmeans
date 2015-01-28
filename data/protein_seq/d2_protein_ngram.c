@@ -22,6 +22,7 @@
 #include "d2_param.h"
 int d2_alg_type = D2_CENTROID_BADMM;
 
+extern BADMM_options *p_badmm_options;
 
 #define PROTEIN_VOCAB_SIZE (20)
 
@@ -267,8 +268,11 @@ int main(int argc, char *argv[]) {
     } else {
       c.ph[i].col = 0;
     }
-  }
+  }  
 
+  BADMM_options ad_hoc_op = {.maxIters = 100, .rhoCoeff = 20.f, .updatePerLoops = 10};
+  p_badmm_options = &ad_hoc_op;
+  
   d2_clustering(number_of_clusters, 
 		100, 
 		&data, 
