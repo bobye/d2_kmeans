@@ -1,5 +1,7 @@
 #include "d2_clustering.h"
 #include "d2_math.h"
+#include "d2_param.h"
+#include <float.h>
 #include <assert.h>
 /* initialize with multivariate normal */
 int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
@@ -9,10 +11,7 @@ int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   int dim = data_ph->dim;
   int str = data_ph->str;
   SCALAR *means, *covs;
-  
-  // initialization 
-  d2_allocate_sph(c, dim, str, num_of_labels, 0.);
-  
+    
   // set stride
   for (i=0; i<num_of_labels; ++i) {
     c->p_str[i] = str;
@@ -46,8 +45,60 @@ int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   return 0;
 }
 
+void merge_symbolic(const int dim,
+		    const int * m_supp, const SCALAR * m_w, const int m,
+		    int * c_supp, SCALAR * c_w, const int n,
+		    const int vocab_size, 
+		    const SCALAR* dist_mat) {
+  SCALAR * D, *w;
+  int *supp;
+  int i, j, k, mm = m;
 
-void merge(const int dim, const SCALAR * m_supp, const SCALAR * m_w, const int m, SCALAR * c_supp, SCALAR * c_w, const int n) {
+  assert(m>n);
+  D = _D2_MALLOC_SCALAR(m*m);
+  supp = _D2_MALLOC_INT(dim*m);
+  w = _D2_MALLOC_SCALAR(m);
+
+  for (i=0; i<dim*m; ++i) supp[i] = m_supp[i];
+  for (i=0; i<m; ++i) w[i] = m_w[i];
+
+  _D2_FUNC(pdist_symbolic)(dim, m, m, supp, supp, D, vocab_size, dist_mat);
+  while (mm > n) {
+    SCALAR min = DBL_MAX;
+    int min_idx = -1;
+    for (i=0; i<m; ++i)
+      for (j=i+1; j<m; ++j)
+	if (w[i] > 0 && w[j] > 0 && min > D[i*m+j]) {
+	  min = D[i*m + j];
+	  min_idx = i*m + j;
+	}
+    i = min_idx / m;
+    j = min_idx % m;
+
+    //merge (i,j)
+    for (k=0; k<dim; ++k)
+      supp[i*dim + k] = w[i] > w[j]? supp[i*dim + k]:supp[j*dim + k];
+
+    w[i] = w[i] + w[j];
+    w[j] = 0;
+    
+    mm-- ;
+  }
+
+  for (i=0, j=0; i<m; ++i) 
+    if (w[i] > 0) {
+      for (k=0; k<dim; ++k) c_supp[j*dim+k] = supp[i*dim+k];
+      c_w[j] = w[i];
+      j++;
+    }
+  assert(j==n);
+
+  _D2_FREE(D); _D2_FREE(supp); _D2_FREE(w);
+}
+
+void merge         (const int dim, 
+		    const SCALAR * m_supp, const SCALAR * m_w, const int m, 
+		    SCALAR * c_supp, SCALAR * c_w, const int n) {
   SCALAR * D, *supp, *w;
   int i, j, k, mm = m;
 
@@ -63,7 +114,7 @@ void merge(const int dim, const SCALAR * m_supp, const SCALAR * m_w, const int m
   _D2_FUNC(pdist2)(dim, m, m, supp, supp, D);
 
   while (mm > n) {
-    SCALAR min = 1E10; // a very large number
+    SCALAR min = DBL_MAX; // a very large number
     int min_idx = -1;
     for (i=0; i<m; ++i) 
       for (j=i+1; j<m; ++j) 
@@ -109,11 +160,9 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   int str = data_ph->str;
   long size = p_data->size;
   int strxdim = str*dim;
-  SCALAR *p_supp = data_ph->p_supp, *p_w = data_ph->p_w;
-  SCALAR *m_supp, *m_w;
 
-  // initialization 
-  d2_allocate_sph(c, dim, str, num_of_labels, 0.);
+  SCALAR *m_supp, *m_w;
+  int *m_supp_sym;
 
   // set stride
   for (i=0; i<num_of_labels; ++i) {
@@ -124,9 +173,10 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   // set column
   c->col = str * num_of_labels;
 
-  // set dist_mat
-  if (dim == 0) {
+  // set vocab_size and dist_mat
+  if (data_ph->metric_type == D2_HISTOGRAM || data_ph->metric_type == D2_N_GRAM) {
     for (i=0; i<str * str; ++i) c->dist_mat[i] = data_ph->dist_mat[i];
+    c->vocab_size = data_ph->vocab_size;
   }
   
   // generate index array
@@ -138,17 +188,38 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   while (i<size && j<num_of_labels) {
     while (i<size && data_ph->p_str[array[i]] < str)  { ++i; }
     if (i == size) break;
+    switch (data_ph->metric_type) {
+    case D2_EUCLIDEAN_L2:
+    case D2_HISTOGRAM:
+      m_supp = data_ph->p_supp + data_ph->p_str_cum[array[i]]*dim; 
+      m_w = data_ph->p_w + data_ph->p_str_cum[array[i]];
 
-    m_supp = p_supp + data_ph->p_str_cum[array[i]]*dim; 
-    m_w = p_w + data_ph->p_str_cum[array[i]];
-
-    if (data_ph->p_str[array[i]] == str) {
-      _D2_CBLAS_FUNC(copy)(strxdim, m_supp, 1, c->p_supp + j*strxdim , 1);
-      _D2_CBLAS_FUNC(copy)(str, m_w, 1, c->p_w + j*str , 1);
-    } else {
-      merge(dim, m_supp, m_w, data_ph->p_str[array[i]], c->p_supp + j*strxdim, c->p_w + j*str, str);
+      if (data_ph->p_str[array[i]] == str) {
+	_D2_CBLAS_FUNC(copy)(strxdim, m_supp, 1, c->p_supp + j*strxdim , 1);
+	_D2_CBLAS_FUNC(copy)(str, m_w, 1, c->p_w + j*str , 1);
+      } else {
+	merge(dim, 
+	      m_supp, m_w, data_ph->p_str[array[i]], 
+	      c->p_supp + j*strxdim, c->p_w + j*str, str);
+      }
+      break;
+    case D2_N_GRAM: 
+      m_supp_sym = data_ph->p_supp_sym + data_ph->p_str_cum[array[i]]*dim;
+      m_w = data_ph->p_w + data_ph->p_str_cum[array[i]];
+      if (data_ph->p_str[array[i]] == str) {
+	for (k=0; k<strxdim; ++k) c->p_supp_sym[j*strxdim + k] = m_supp_sym[k];
+	for (k=0; k<str; ++k) c->p_w[j*str + k] = m_w[k];
+      } else {
+	merge_symbolic(dim, 
+		       m_supp_sym, m_w, data_ph->p_str[array[i]], 
+		       c->p_supp_sym + j*strxdim, c->p_w + j*str, str,
+		       c->vocab_size, c->dist_mat);
+      }
+      break;
+    default:
+      fprintf(stderr, "Unknown type of data!");
+      assert(false);
     }
-
     ++i; ++j;
   }
 
