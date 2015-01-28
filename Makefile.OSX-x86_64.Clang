@@ -2,7 +2,7 @@ CC=gcc -std=c99
 CXX=g++
 
 MOSEK=$(HOME)/mosek/7/tools/platform/osx64x86
-MOSEK_VERSION=7.1
+MOSEK_VERSION=7.0
 
 ARCH_FLAGS=
 CFLAGS=-Wextra -Wall -pedantic-errors -O3 $(ARCH_FLAGS)
@@ -44,7 +44,7 @@ ALL_OBJECTS=\
 DEPENDENCY_FILES=\
 	$(patsubst %.o, %.d, $(ALL_OBJECTS))
 
-all: d2
+all: d2 protein
 
 %.o: %.c Makefile
 	@# Make dependecy file
@@ -69,11 +69,11 @@ transportation_test: src/transportation_test.c src/d2_solver_mosek.o src/blas_li
 	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 	./$@
 
-data/dna_seq/dna: data/dna_seq/d2_dna_ngram.c $(C_SOURCE_OBJECTS)
+data/protein_seq/protein: data/protein_seq/d2_protein_ngram.c $(C_SOURCE_OBJECTS)
 	$(CC) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
 	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 
-DNA: data/dna_seq/dna
+protein: data/protein_seq/protein
 
 test: transportation_test
 	cd test; ./test_script.sh; cd ..

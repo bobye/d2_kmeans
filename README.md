@@ -9,6 +9,19 @@ computation of instance re-labeling, and uses Bregman ADMM[2] to accelerate
 and scale-up the computation of cluster centroids.
 Please see [3] for technical details. 
 
+## Discrete Distributions
+There are three data types of discrete distribution that have been covered
+in this project:
+ - discrete distribution over vector space endowed with Euclidean distance
+ - normalized histograms with bin-to-bin distance
+ - discrete distribution over [n-gram](http://en.wikipedia.org/wiki/N-gram)
+
+An object/instance can be represented as the joint of multiple discrete
+distributions (of any aforementioned type). For example, an image can be
+represented as color distribution and texture distribution; a protein
+sequence can be represented in three phases 1-gram,2-gram,3-gram over
+amino acid. The clustering is then performed jointly over those phases.
+
 ## How to compile
 
 ### Linux + Intel Compiler
