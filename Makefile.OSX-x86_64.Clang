@@ -15,6 +15,7 @@ LIBRARIES=-framework Accelerate -L$(MOSEK)/bin -lmosek64 -lpthread
 C_SOURCE_FILES=\
 	src/d2_clustering.c\
 	src/d2_clustering_io.c\
+	src/d2_clustering_util.c\
 	src/d2_math.c\
 	src/blas_like.c\
 	src/d2_centroid_rand.c\
@@ -29,12 +30,15 @@ CPP_SOURCE_FILES=\
 SOURCE_FILES_WITH_MAIN=\
 	src/main.cc
 
-SOURCE_OBJECTS=\
-	$(patsubst %.c, %.o, $(C_SOURCE_FILES))\
+C_SOURCE_OBJECTS=\
+	$(patsubst %.c, %.o, $(C_SOURCE_FILES))
+
+CPP_SOURCE_OBJECTS=\
 	$(patsubst %.cc, %.o, $(CPP_SOURCE_FILES))
 
 ALL_OBJECTS=\
-	$(SOURCE_OBJECTS)\
+	$(C_SOURCE_OBJECTS)\
+	$(CPP_SOURCE_OBJECTS)\
 	$(patsubst %.cc, %.o, $(SOURCE_FILES_WITH_MAIN))
 
 DEPENDENCY_FILES=\
@@ -64,6 +68,12 @@ transportation_test: src/transportation_test.c src/d2_solver_mosek.o src/blas_li
 	$(CC) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
 	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 	./$@
+
+data/dna_seq/dna: data/dna_seq/d2_dna_ngram.c $(C_SOURCE_OBJECTS)
+	$(CC) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $@
+
+DNA: data/dna_seq/dna
 
 test: transportation_test
 	cd test; ./test_script.sh; cd ..
