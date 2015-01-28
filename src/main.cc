@@ -44,7 +44,8 @@ int main(int argc, char *argv[])
     {"non_triangle", 0, 0, 'T'},
     {NULL, 0, NULL, 0}
   };
-  
+
+  /* [BEGIN] Parsing program arguments */
   int option_index = 0;
   while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:T", long_options, &option_index)) != -1) {
     switch (ch) {
@@ -109,7 +110,13 @@ int main(int argc, char *argv[])
     }
     assert(dimension_of_phases[i] >= 0 && avg_strides[i] > 0);
   }     
+  /* [END] Parsing program arguments */
 
+
+  /**********************************************************************************/
+  /* [BEGIN] Start main program */
+
+  /* data structure storing all information about multi-phase discrete distributions */
   mph data;
   
   int err = d2_allocate(&data, 
@@ -124,8 +131,10 @@ int main(int argc, char *argv[])
   } else {
     cerr << "Allocation Failed!" << endl;
   }
-
-  mph c;
+  
+  /* data structure storing information about centroids of clusters */
+  mph c; 
+  c.ph = NULL; // make sure c is (re-)initialized 
 
   if (selected_phase >= 0 && size_of_phases > 1) {
     cout << "Clustering upon " << selected_phase <<"-th phase" << endl;
