@@ -329,7 +329,7 @@ int d2_clustering(int num_of_clusters,
     } else {
       centroids->ph[i].col = 0;
     }
-  //d2_write(NULL, centroids); getchar();
+  //  d2_write(NULL, centroids); 
   VPRINTF(("[done]\n"));
   }
   // allocate initialize auxiliary variables

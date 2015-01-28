@@ -7,11 +7,11 @@
 
 /* choose options */
 
-const BADMM_options badmm_clu_options = {100, 10.f, 10};
-const BADMM_options badmm_cen_options = {2000, 5.f, 10};
+static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = 2.f, .updatePerLoops = 10};
+static BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .updatePerLoops = 10};
 
 
-const BADMM_options *p_badmm_options = &badmm_clu_options;
+BADMM_options *p_badmm_options;
 
 
 int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwork) {
@@ -28,7 +28,7 @@ int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwor
     tmp = 1./(ph->str * ph->p_str[i]);
     for (j=0; j<ph->str*ph->p_str[i]; ++j, ++p_scal) *p_scal = tmp;
   }
-
+  if (!p_badmm_options) p_badmm_options =  &badmm_clu_options;
   return 0;
 }
 

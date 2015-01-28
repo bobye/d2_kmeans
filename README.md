@@ -19,8 +19,9 @@ in this project:
 An object/instance can be represented as the joint of multiple discrete
 distributions (of any aforementioned type). For example, an image can be
 represented as color distribution and texture distribution; a protein
-sequence can be represented in three phases 1-gram,2-gram,3-gram over
-amino acid. The clustering is then performed jointly over those phases.
+sequence can be represented as distributions in three phases, aka,
+1-gram,2-gram,3-gram of amino acid.
+The clustering is then performed jointly over those phases.
 
 ## How to compile
 
