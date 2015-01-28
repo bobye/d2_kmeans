@@ -41,6 +41,8 @@ extern "C" {
    * n, m: number of data entry
    */
   void _dpdist2(int d, int n, int m, double * A, double * B, double *C);
+  void _dpdist_symbolic(int d, int n, int m, int * A, int * B, double *C, 
+			int vocab_size, double* dist_mat);
   
 
 #ifdef __cplusplus

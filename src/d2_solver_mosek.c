@@ -242,6 +242,22 @@ double d2_match_by_coordinates(int d, int n, double *X, double *wX, int m, doubl
   return fval;
 }
 
+double d2_match_by_symbols(int d, int n, int *X, double *wX, int m, int *Y,  double*wY,
+			   int vocab_size, double *dist_mat,
+			   /** OUT **/ double *x, /** OUT **/ double *lambda) {
+  double *C, fval;
+  C = _D2_MALLOC_SCALAR(n*m);
+  _dpdist_symbolic(d, n, m, X, Y, C, vocab_size, dist_mat);
+  fval = d2_match_by_distmat(n, m, C, wX, wY, x, lambda);
+  _D2_FREE(C);
+  return fval;
+}
+
+
+
+/**
+ * Main codes ends and extra codes begins.
+ */
 
 double d2_match_by_distmat_qp(int n, int m, 
 			      double *C, double *L, double rho, 

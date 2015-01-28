@@ -77,12 +77,16 @@ int d2_centroid_sphBregman(mph *p_data, // data
   strxdim = str * dim;
 
   /* compute C */  
-  if (dim>0) {
+  switch (data_ph->metric_type) {
+  case D2_EUCLIDEAN_L2 :
     for (i=0;i < size;  ++i) 
       _D2_FUNC(pdist2)(dim, str, p_str[i], &c->p_supp[label[i]*strxdim], p_supp + dim*p_str_cum[i], C + str*p_str_cum[i]);
-  } else if (dim == 0) {
+    break;
+
+  case D2_HISTOGRAM : 
     for (i=0; i< size; ++i) 
       _D2_CBLAS_FUNC(copy)(str*p_str[i], data_ph->dist_mat, 1, C + str*p_str_cum[i], 1);
+    break;
   }
 
   /* rho is an important hyper-parameter */
@@ -156,7 +160,7 @@ int d2_centroid_sphBregman(mph *p_data, // data
     
 
     // step 5: update c->p_supp (optional)
-    if (iter % p_badmm_options->updatePerLoops == 0 && dim > 0) {
+    if (iter % p_badmm_options->updatePerLoops == 0 && data_ph->metric_type == D2_EUCLIDEAN_L2) {
     for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
     for (i=0; i<str*num_of_labels; ++i) Zr[i] = 0; //reset Zr to temporarily storage
 
