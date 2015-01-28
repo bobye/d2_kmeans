@@ -141,6 +141,6 @@ int d2_write(const char* filename, mph *p_data) {
   }
 
   free(p_supp); free(p_w);
-  fclose(fp);
+  if (filename) fclose(fp);
   return 0;
 }
