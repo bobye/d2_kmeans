@@ -292,7 +292,12 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 int d2_clustering(int num_of_clusters, 
 		  int max_iter, 
 		  mph *p_data, 
-		  __OUT__ mph *centroids,
+		  __OUT__ mph *centroids, /**
+					     if centroids->ph is not NULL, 
+					     then it assumes the centroids are
+					     already initialized, otherwise an 
+					     initialization will start before 
+					     iterations. */
 		  int selected_phase,
 		  char use_triangle){
   size_t i;
@@ -309,8 +314,9 @@ int d2_clustering(int num_of_clusters,
   // label all objects as invalid numbers
   p_data->num_of_labels = num_of_clusters;
 
+  if (centroids->ph == NULL) {
   // initialize centroids from random
-  VPRINTF(("Initializing centroids ... "));
+  VPRINTF(("Initializing centroids ... ")); VFLUSH;
   centroids->s_ph = s_ph;
   centroids->size = num_of_clusters;
   centroids->ph = (sph *) malloc(s_ph * sizeof(sph));
@@ -322,7 +328,7 @@ int d2_clustering(int num_of_clusters,
     }
   //d2_write(NULL, centroids); getchar();
   VPRINTF(("[done]\n"));
-
+  }
   // allocate initialize auxiliary variables
   d2_allocate_work(p_data, &var_work, use_triangle);
 
