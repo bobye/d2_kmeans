@@ -21,7 +21,7 @@ distributions (of any aforementioned type). For example, an image can be
 represented as color distribution and texture distribution; a protein
 sequence can be represented as distributions in three phases, aka,
 1-gram,2-gram,3-gram of amino acid.
-The clustering is then performed jointly over those phases.
+The clustering is then performed jointly over differernt phases.
 
 ## How to compile
 
@@ -30,18 +30,17 @@ Parallel version is based on Linux and Intel Compiler with dependencies
 
  - MKL
  - openMP support
- - Mosek 7.0+
+ - [Mosek](https://mosek.com) 7.0+
 
 ### Mac OSX 10.10 + Clang
 Besides, a serial version is available for Mac OSX whose dependencies include
 
  - Accelerate Framework
  - no OpenMP support
- - Mosek 7.0+
+ - [Mosek](https://mosek.com) 7.0+
 
-## Interfaces
+## Port to Interfaces
  - Matlab [to appear]
-
 
 ## Reference
 1. Elkan, Charles. "Using the triangle inequality to accelerate k-means." ICML. Vol. 3. 2003.
