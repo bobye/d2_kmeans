@@ -21,6 +21,18 @@ extern "C" {
     size_t *p_str_cum;
     SCALAR *p_w;
 
+    /**
+     * what: metric space of supports 
+     * @param(metric_type)
+     * D2_EUCLIDEAN_L2 : Euclidean space at @param(p_supp,p_w)
+     * D2_CITYBLOCK_L1 : cityblock metric space @param(p_supp,p_w) => to be implemented
+     * D2_HISTOGRAM    : Histogram space at @param(p_w,dist_mat)
+     * D2_N_GRAM       : N-gram space at @param(p_supp_sym,dist_mat,vocab_size) 
+     *                   and dist_mat is the pairwise distance matrix of vocab
+     */
+    int metric_type;     
+    
+
     /* For data of D2 with Euclidean supports */
     SCALAR *p_supp; 
     
@@ -39,6 +51,9 @@ extern "C" {
 
     /* For data of histograms or D2 with symbolic supports */
     SCALAR *dist_mat; 
+
+    /* For data with symbolic supports */
+    int vocab_size;
   } sph; 
 
 

@@ -233,6 +233,20 @@ void _dpdist2(int d, int n, int m, double * A, double * B, double *C) {
   _D2_FREE(sB);
 }
 
+void _dpdist_symbolic(int d, int n, int m, int * A, int * B, double *C, 
+		      int vocab_size, double* dist_mat) {
+  double *val;
+  int *xx, *yy;
+  int i,j,k;
+
+  for (i=0; i<m*n; ++i) C[i] = 0;
+  for (i=0; i<m; ++i)
+    for (j=0; j<n; ++j) 
+      for (k=0; k<d; ++k) {
+	C[i*n+j] += dist_mat[A[j*d + k]*vocab_size + B[i*d + k]];
+      }
+}
+
 // inplace a -> exp(a)
 void _dexp(int n, double *a) {
   int i;
