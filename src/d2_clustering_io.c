@@ -108,25 +108,28 @@ int d2_read(const char* filename, mph *p_data) {
 }
 
 int d2_write(const char* filename, mph *p_data) {
-  FILE *fp = filename? fopen(filename, "w+") : stdout;
+  FILE *fp = NULL;
+  size_t i;
+  const int s_ph = p_data->s_ph;
+  const size_t size = p_data->size;
 
-  size_t i, j;
-  int k, d, n;
-  int s_ph = p_data->s_ph;
-  size_t size = p_data->size;
+  fp = filename? fopen(filename, "w+") : stdout;
+  assert(fp);
 
   for (i=0; i<size; ++i) {
+    int j;
     for (j=0; j<s_ph; ++j) 
-      if (p_data->ph[j].p_str != NULL) {
+      if (p_data->ph[j].col > 0) {
+	int k, d;
 	int dim = p_data->ph[j].dim;
 	int str = p_data->ph[j].p_str[i];
 	size_t pos = p_data->ph[j].p_str_cum[i];
 	fprintf(fp, "%d\n", dim);
 	fprintf(fp, "%d\n", str);
-	for (k=0; k<str; ++k) fprintf(fp, "%f ", p_data->ph[j].p_w[pos + k]);
+	for (k=0; k<str; ++k) fprintf(fp, "%lf ", p_data->ph[j].p_w[pos + k]);
 	fprintf(fp, "\n");
 	for (k=0; k<str; ++k) {
-	  for (d=0; d<dim; ++d) fprintf(fp, "%f ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
+	  for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
 	  fprintf(fp, "\n"); 
 	}
       }
