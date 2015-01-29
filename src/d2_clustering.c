@@ -315,6 +315,7 @@ int d2_clustering(int num_of_clusters,
   p_data->num_of_labels = num_of_clusters;
 
   if (!centroids->ph) {
+  // MPI note: to be done only on one node
   // initialize centroids from random
   VPRINTF(("Initializing centroids ... ")); VFLUSH;
   centroids->s_ph = s_ph;
@@ -331,6 +332,10 @@ int d2_clustering(int num_of_clusters,
     }
   //  d2_write(NULL, centroids); 
   VPRINTF(("[done]\n"));
+
+#ifdef __USE_MPI__
+  /* initialize centroids from one node, and broadcast to other nodes */
+#endif
   }
   // allocate initialize auxiliary variables
   d2_allocate_work(p_data, &var_work, use_triangle);
