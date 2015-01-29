@@ -2,6 +2,7 @@
 #include "d2_math.h"
 #include "stdio.h"
 #include "d2_param.h"
+#include <float.h>
 #include <assert.h>
 //#include <omp.h>
 
