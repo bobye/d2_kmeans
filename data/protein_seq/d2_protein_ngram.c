@@ -236,7 +236,7 @@ int d2_write_protein(const char* filename, mph *p_data) {
 
 /* $ ./protein <selected_phase> <num_of_clusters> */
 int main(int argc, char *argv[]) {
-  int avg_strides[3] = {20, 20, 20};
+  int avg_strides[3] = {20, 26, 32};
   int dimension_of_phases[3] = {1, 2, 3};
   int size_of_phases = 3;
   size_t size_of_samples = 10742;
@@ -277,6 +277,8 @@ int main(int argc, char *argv[]) {
     }
   }  
   }
+  
+  printf("Centroid initialization done; start clustering ... \n");
 
   BADMM_options ad_hoc_op = {.maxIters = 100, .rhoCoeff = 20.f, .updatePerLoops = 10};
   p_badmm_options = &ad_hoc_op;
