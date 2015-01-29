@@ -254,6 +254,9 @@ int main(int argc, char *argv[]) {
 		  &avg_strides[0],
 		  &dimension_of_phases[0]);
 
+
+  {
+  // MPI note: to be done only on one node
   c.s_ph = size_of_phases;
   c.size = number_of_clusters;
   c.ph = (sph *) malloc (c.s_ph * sizeof(sph));
@@ -265,10 +268,15 @@ int main(int argc, char *argv[]) {
       d2_allocate_sph_protein(&c.ph[i],  data.ph[i].dim, data.ph[i].str, number_of_clusters, 0.);
       /* initialization */
       d2_centroid_rands(&data, i, &c.ph[i]);
+
+#ifdef __USE_MPI__
+      /* initialize c.ph[i] from one node, and broadcast to other nodes */
+#endif
     } else {
       c.ph[i].col = 0;
     }
   }  
+  }
 
   BADMM_options ad_hoc_op = {.maxIters = 100, .rhoCoeff = 20.f, .updatePerLoops = 10};
   p_badmm_options = &ad_hoc_op;
@@ -280,6 +288,8 @@ int main(int argc, char *argv[]) {
 		selected_phase,
 		use_triangle);
 
+
+  // MPI note: to be done only on one node
   d2_write_protein(NULL, &c); // output centroids
 
   d2_free(&data);

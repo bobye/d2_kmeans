@@ -15,6 +15,17 @@ extern "C" {
    * data structure to store d2 of one phase
    */
   typedef struct {
+    /**
+     * This part of data blocks are universal to any data types. 
+     * In particular, array @param(p_str, p_str_cum) don't changes after read
+     * and @param(p_w) should be kept synchronized.
+     *
+     * @param(metric_type)
+     * D2_EUCLIDEAN_L2 : @param(dim) is the dimension of vector space
+     * D2_CITYBLOCK_L1 : same above
+     * D2_HISTOGRAM    : @param(dim=0)
+     * D2_N_GRAM       : @param(dim) is the size of grams.
+     */
     int dim, str;
     size_t col, max_col;
     int *p_str;
@@ -22,6 +33,12 @@ extern "C" {
     SCALAR *p_w;
 
     /**
+     * Normally, only parts of data blocks are allocated, which is marked as follows. 
+     * In MPI implementation, when broadcast data to other nodes, it should firstly
+     * check when specific data blocks has been allocated before copying data. 
+     * @param(p_supp,p_supp_sym) should be kept synchronized if they are allocated.
+     * @param(dist_mat, vocab_size) don't changes after read.
+     *
      * what: metric space of supports 
      * @param(metric_type)
      * D2_EUCLIDEAN_L2 : Euclidean space at @param(p_supp,p_w)
@@ -33,7 +50,8 @@ extern "C" {
     int metric_type;     
     
 
-    /* For data of D2 with Euclidean supports */
+    /**
+     * For data of D2 with Euclidean supports */
     SCALAR *p_supp; 
     
     /**
@@ -49,10 +67,12 @@ extern "C" {
        See folder data/dna_seq/ for an example. */
     int *p_supp_sym; 
 
-    /* For data of histograms or D2 with symbolic supports */
+    /**
+     * For data of histograms or D2 with symbolic supports */
     SCALAR *dist_mat; 
 
-    /* For data with symbolic supports */
+    /**
+     * For data with symbolic supports */
     int vocab_size;
   } sph; 
 
