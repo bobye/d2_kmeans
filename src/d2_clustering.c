@@ -254,7 +254,7 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 
   nclock_start();
 
-#pragma omp parallel for  
+#pragma omp parallel for reduction(+:count)
   for (i=0; i<size; ++i) {
     double min_distance = -1;	
     int jj = label[i]>=0? label[i]: 0;
