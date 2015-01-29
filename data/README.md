@@ -1,5 +1,7 @@
 ## Dataset and Format
-We provides two kinds of input formats
+We provides two kinds of input formats for programs to read and write d2 data.
+No generic IO is supported for n-gram data, but examples of protein n-gram can
+be found at directory protein_seq/ .
 
 1. We implement multi-phases D2, which means each object can be represented
    by multiple D2. For example, an image can be represented by a D2 in color
