@@ -112,35 +112,26 @@ int d2_write(const char* filename, mph *p_data) {
 
   size_t i, j;
   int k, d, n;
-  double **p_supp, **p_w;
   int s_ph = p_data->s_ph;
   size_t size = p_data->size;
-
-  p_supp = (double **) malloc(s_ph * sizeof(double *));
-  p_w    = (double **) malloc(s_ph * sizeof(double *));
-  
-  for (n=0; n<s_ph; ++n) {
-    p_supp[n] = p_data->ph[n].p_supp;
-    p_w[n]    = p_data->ph[n].p_w;
-  }
 
   for (i=0; i<size; ++i) {
     for (j=0; j<s_ph; ++j) 
       if (p_data->ph[j].p_str != NULL) {
 	int dim = p_data->ph[j].dim;
 	int str = p_data->ph[j].p_str[i];
+	size_t pos = p_data->ph[j].p_str_cum[i];
 	fprintf(fp, "%d\n", dim);
 	fprintf(fp, "%d\n", str);
-	for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[j][k]);
-	fprintf(fp, "\n"); p_w[j] += str;
+	for (k=0; k<str; ++k) fprintf(fp, "%f ", p_data->ph[j].p_w[pos + k]);
+	fprintf(fp, "\n");
 	for (k=0; k<str; ++k) {
-	  for (d=0; d<dim; ++d) fprintf(fp, "%f ", p_supp[j][d]);
-	  fprintf(fp, "\n"); p_supp[j] += dim;
+	  for (d=0; d<dim; ++d) fprintf(fp, "%f ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
+	  fprintf(fp, "\n"); 
 	}
       }
   }
 
-  free(p_supp); free(p_w);
   if (filename) fclose(fp);
   return 0;
 }
