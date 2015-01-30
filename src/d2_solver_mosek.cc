@@ -77,7 +77,7 @@ void d2_solver_release() {
   for (i=0; i<task_seq_size; ++i) 
     if (task_seq[i] != NULL) MSK_deletetask(&task_seq [i]);
   */
-  for (auto it=task_mapper.begin(); it!=task_mapper.end(); ++it) MSK_deletetask(&(it->second));
+  for (map< pair<int, int>, MSKtask_t >::iterator it=task_mapper.begin(); it!=task_mapper.end(); ++it) MSK_deletetask(&(it->second));
   MSK_deleteenv(&env);
 }
 
