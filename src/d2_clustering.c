@@ -407,7 +407,7 @@ int d2_clustering(int num_of_clusters,
     if (use_triangle) 
       d2_labeling_post(p_data, &the_centroids_copy, centroids, &var_work, selected_phase);
   }
-  //d2_solver_release();
+  d2_solver_release();
 
   d2_free_work(&var_work);
   d2_free(&the_centroids_copy);

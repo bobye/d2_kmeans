@@ -27,6 +27,8 @@
 #endif
 
 static MSKenv_t   env = NULL;
+static MSKtask_t *task_seq = NULL;
+static size_t task_seq_size = 0;
 /* This function prints log output from MOSEK to the terminal. */
 static void MSKAPI printstr(void *handle,
                             MSKCONST char str[])
@@ -37,7 +39,7 @@ static void MSKAPI printstr(void *handle,
 
 void d2_solver_setup(size_t num) {
   MSKrescodee r;
-
+  size_t i;
   /* Create the mosek environment. */
   r = MSK_makeenv(&env, NULL);
 
@@ -52,26 +54,39 @@ void d2_solver_setup(size_t num) {
                        desc);
       printf("Error %s - '%s'\n",symname,desc);
   }
+
+  task_seq = (MSKtask_t*) malloc (num * sizeof(MSKtask_t));
+  for (i=0; i<num; ++i) task_seq[i] = NULL;
+  task_seq_size = num;
   return;
 }
 
 void d2_solver_release() {
+  size_t i;
+  for (i=0; i<task_seq_size; ++i) MSK_deletetask(task_seq + i);
   MSK_unlinkfuncfromenvstream(&env, MSK_STREAM_LOG);
   MSK_deleteenv(&env);
 }
 
 
 double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
-			   /** OUT **/ double *x, /** OUT **/ double *lambda, size_t num) {
+			   /** OUT **/ double *x, /** OUT **/ double *lambda, size_t index) {
   
   const MSKint32t numvar = n * m,
                   numcon = n + m;
-  MSKtask_t    task = NULL;
-  MSKrescodee r;
+  MSKtask_t    *p_task;
+  MSKrescodee r = MSK_RES_OK;
   MSKint32t    i,j;
-  double ones[] = {1.0, 1.0}, fval = 0.0;
-  MSKint32t *asub = (MSKint32t *) malloc(2*m*n* sizeof(MSKint32t));
+  double fval = 0.0;
 
+  /* check if it is in the mode of multiple phase or single phase */
+  index = (index < task_seq_size)? index : (index / task_seq_size);
+  p_task = &task_seq[index];
+
+  if (*p_task == NULL) {
+  MSKint32t *asub;
+  double ones[2] = {1.0, 1.0};
+  asub = (MSKint32t *) malloc(2*m*n* sizeof(MSKint32t));
   for (j=0; j<m; ++j) {
     for (i=0; i<n; ++i) {
       asub[2*(i +j*n)] = i;
@@ -80,57 +95,65 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
   }
 
   /* Create the optimization task. */
-  r = MSK_maketask(env,numcon,numvar,&task); 
+  r = MSK_maketask(env,numcon,numvar,p_task); 
   if ( r==MSK_RES_OK ) {
-    // r = MSK_linkfunctotaskstream(task,MSK_STREAM_LOG,NULL,printstr);
+    //r = MSK_linkfunctotaskstream(*p_task,MSK_STREAM_LOG,NULL,printstr);
   }
 
-  r = MSK_appendcons(task,numcon);
-  r = MSK_appendvars(task,numvar); 
+  r = MSK_appendcons(*p_task,numcon);
+  r = MSK_appendvars(*p_task,numvar); 
 
   for (j=0; j<numvar && r == MSK_RES_OK; ++j) {
-    r = MSK_putcj(task,j,C[j]);
-    r = MSK_putvarbound(task, 
+    r = MSK_putvarbound(*p_task, 
 			j,           /* Index of variable.*/
 			MSK_BK_LO,      /* Bound key.*/
 			0.0,      /* Numerical value of lower bound.*/
                         +MSK_INFINITY);     /* Numerical value of upper bound.*/
 
-    r = MSK_putacol(task, 
+    r = MSK_putacol(*p_task, 
 		    j,           /* Index of variable.*/
 		    2,           /* Number of non-zeros in column j.*/
 		    asub+j*2,
 		    ones);
   }
+  free(asub);
+
+  if (r == MSK_RES_OK) {
+    r = MSK_putobjsense(*p_task, MSK_OBJECTIVE_SENSE_MINIMIZE);
+  }
+  /* Disable presolve: may lead to minor improvement */
+  // r = MSK_putintparam(task, MSK_IPAR_PRESOLVE_USE, MSK_PRESOLVE_MODE_OFF);
+  /* set network flow problem */
+  r = MSK_putintparam(*p_task, MSK_IPAR_OPTIMIZER,  MSK_OPTIMIZER_NETWORK_PRIMAL_SIMPLEX);
+  /* disable multi-threads */
+  r = MSK_putintparam(*p_task, MSK_IPAR_NUM_THREADS, 1);
+
+  }
+
+  /* modify an existing task and re-optimize */
+  for (j=0; j<numvar && r == MSK_RES_OK; ++j) {
+    r = MSK_putcj(*p_task,j,C[j]);
+  }
 
   for (i=0; i<n && r==MSK_RES_OK; ++i)
-    r = MSK_putconbound(task,
+    r = MSK_putconbound(*p_task,
 			i,
 			MSK_BK_FX,
 			wX[i],
 			wX[i]);
   for (i=0; i<m && r==MSK_RES_OK; ++i)
-    r = MSK_putconbound(task,
+    r = MSK_putconbound(*p_task,
 			i+n,
 			MSK_BK_FX,
 			wY[i],
 			wY[i]);
 
-  if (r == MSK_RES_OK) {
-    r = MSK_putobjsense(task, MSK_OBJECTIVE_SENSE_MINIMIZE);
-  }
 
   if ( r==MSK_RES_OK )
     {
       MSKrescodee trmcode;
-      /* Disable presolve: may lead to minor improvement */
-      // r = MSK_putintparam(task, MSK_IPAR_PRESOLVE_USE, MSK_PRESOLVE_MODE_OFF);
-      /* set network flow problem */
-      r = MSK_putintparam(task, MSK_IPAR_OPTIMIZER,  MSK_OPTIMIZER_NETWORK_PRIMAL_SIMPLEX);
-      /* disable multi-threads */
-      r = MSK_putintparam(task, MSK_IPAR_NUM_THREADS, 1);
       /* Run optimizer */
-      r = MSK_optimizetrm(task,&trmcode);      
+      r = MSK_optimizetrm(*p_task,&trmcode);      
 
       /* Print a summary containing information
          about the solution for debugging purposes. */
@@ -138,7 +161,7 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
       if ( r==MSK_RES_OK ) {
 	MSKsolstae solsta;
 	if ( r==MSK_RES_OK )
-          r = MSK_getsolsta (task,
+          r = MSK_getsolsta (*p_task,
                              MSK_SOL_BAS,
                              &solsta);
 	switch(solsta)
@@ -147,10 +170,10 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
           case MSK_SOL_STA_NEAR_OPTIMAL:
           {
             //double *xx = (double*) calloc(numvar,sizeof(double));
-	    MSK_getprimalobj(task, MSK_SOL_BAS, &fval);
+	    MSK_getprimalobj(*p_task, MSK_SOL_BAS, &fval);
             if ( x )
             {
-              MSK_getxx(task,
+              MSK_getxx(*p_task,
                         MSK_SOL_BAS,    /* Request the basic solution. */
                         x);        
               //printf("Optimal primal solution\n");
@@ -161,7 +184,7 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
 
 	    if (lambda) 
 	    {
-	      MSK_gety (task,
+	      MSK_gety (*p_task,
                         MSK_SOL_BAS,    /* Request the dual solution: be careful about exact +- of variables */
                         lambda);
 	    }	    
@@ -199,8 +222,7 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
       }
     }
 
-  MSK_deletetask(&task);
-  free(asub);
+  //  MSK_deletetask(&task);
 
   return fval;
 }
