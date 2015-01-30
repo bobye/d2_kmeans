@@ -18,8 +18,8 @@ int d2_centroid_sphGradDecent(mph *p_data,
 			      __OUT__ sph *c) {
   
 
-  size_t i,j;
-  int iter, nIter = 200;
+  size_t i;
+  int iter, nIter = 5;
   double fval0, fval = DBL_MAX;
   int *label = p_data->label;
   int num_of_labels = p_data->num_of_labels;
@@ -33,8 +33,9 @@ int d2_centroid_sphGradDecent(mph *p_data,
   size_t *p_str_cum = data_ph->p_str_cum;
   SCALAR *X = var_work->g_var[idx_ph].X;
   SCALAR *L = var_work->g_var[idx_ph].L;
+  SCALAR *C = var_work->g_var[idx_ph].C;
   size_t *label_count;
-  SCALAR *p_grad;
+  SCALAR *p_grad, buffer;
 
   assert(dim > 0); // current only support the D2 format
 
@@ -59,24 +60,30 @@ int d2_centroid_sphGradDecent(mph *p_data,
   p_grad = _D2_MALLOC_SCALAR(num_of_labels * str);
 
   nclock_start();  
-  for (iter = 0; iter < nIter; ++iter) {
+  for (iter = 0; iter <= nIter; ++iter) {
 
     fval0 = fval;
     fval = 0;
 
     /* compute exact distances */
-#pragma omp parallel for reduction(+:fval)
     for (i=0; i<size; ++i) {
-      fval += d2_match_by_coordinates(dim,
-				      str, c->p_supp + label[i]*strxdim, c->p_w + label[i]*str,
-				      p_str[i], p_supp + p_str_cum[i]*dim, p_w + p_str_cum[i],
-				      X + p_str_cum[i]*str,
-				      L + i*str);
+      _D2_FUNC(pdist2)(dim, 
+		       str, 
+		       p_str[i],  
+		       c->p_supp + label[i]*strxdim, 
+		       p_supp + p_str_cum[i]*dim, 
+		       C + str*p_str_cum[i]); 
+      fval += d2_match_by_distmat(str, p_str[i],
+				  C + str*p_str_cum[i],
+				  c->p_w + label[i]*str, p_w + p_str_cum[i],
+				  X + p_str_cum[i]*str,
+				  L + i*str,
+				  i*p_data->s_ph + idx_ph);      
     }
     fval /= size;
 
     printf("\t%d\t%f\t%f\n", iter, fval, nclock_end());    
-    if (fabs(fval - fval0) < 1E-4 * fval) break;
+    if (fabs(fval - fval0) < 1E-4 * fval || iter == nIter) break;
 
     /* compute p_grad */
     _D2_FUNC(ccenter)(str, size, L, NULL);
@@ -98,7 +105,7 @@ int d2_centroid_sphGradDecent(mph *p_data,
     }
     
     /* update c->p_w */
-    for (i=0; i<num_of_labels*str; ++i) c->p_w[i] *= exp(-8E-3 * p_grad[i]);
+    for (i=0; i<num_of_labels*str; ++i) c->p_w[i] *= exp(-1E-3 * p_grad[i]);
     _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, NULL);
 
   }
