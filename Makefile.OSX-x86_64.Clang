@@ -1,5 +1,5 @@
-CC=gcc -std=c99
-CXX=g++
+CC=clang -std=c99
+CXX=clang++ -std=c++11
 
 MOSEK=$(HOME)/mosek/7/tools/platform/osx64x86
 MOSEK_VERSION=7.0
@@ -22,19 +22,23 @@ C_SOURCE_FILES=\
 	src/d2_centroid_Bregman.c\
 	src/d2_centroid_GradDecent.c\
 	src/d2_centroid_ADMM.c\
-	src/d2_solver_mosek.c
 
 CPP_SOURCE_FILES=\
+	src/d2_solver_mosek.cc\
 	src/util.cc
 
 SOURCE_FILES_WITH_MAIN=\
 	src/main.cc
 
 C_SOURCE_OBJECTS=\
-	$(patsubst %.c, %.o, $(C_SOURCE_FILES))
+	$(patsubst %.c, %.o, $(C_SOURCE_FILES))\
 
 CPP_SOURCE_OBJECTS=\
 	$(patsubst %.cc, %.o, $(CPP_SOURCE_FILES))
+
+LIB_SOURCE_OBJECTS=\
+	$(C_SOURCE_OBJECTS)\
+	src/d2_solver_mosek.o # use mosek solver as the driver
 
 ALL_OBJECTS=\
 	$(C_SOURCE_OBJECTS)\
@@ -69,8 +73,8 @@ transportation_test: src/transportation_test.c src/d2_solver_mosek.o src/blas_li
 	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 	./$@
 
-data/protein_seq/protein: data/protein_seq/d2_protein_ngram.c $(C_SOURCE_OBJECTS)
-	$(CC) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+data/protein_seq/protein: data/protein_seq/d2_protein_ngram.cc $(LIB_SOURCE_OBJECTS)
+	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
 	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 
 protein: data/protein_seq/protein
