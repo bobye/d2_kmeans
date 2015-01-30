@@ -153,6 +153,9 @@ extern "C" {
     trieq tr; /* data structure for relabeling */
   } var_mph; 
 
+  int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle);
+  int d2_free_work(var_mph *var_work);
+  
 
   /**
    * interface of random centroids from multivariate normal samples

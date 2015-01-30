@@ -103,7 +103,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
 		      int selected_phase) {
   size_t i, count = 0, dist_count = 0;
   const size_t size = p_data->size;
-  const int num_of_labels = centroids->size;
+  const size_t num_of_labels = centroids->size;
   int *label = p_data->label;
   trieq *p_tr = &var_work->tr;
 
@@ -141,7 +141,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
   if (p_tr->u[i] > p_tr->s[label[i]]) {
     int init_label = label[i];
     int jj = init_label>=0? init_label: 0;
-    size_t j;
+    int j;
     SCALAR min_distance;
     SCALAR *U = p_tr->u + i;
     SCALAR *L = p_tr->l + i*num_of_labels;
@@ -321,11 +321,11 @@ int d2_clustering(int num_of_clusters,
 					     iterations. */
 		  int selected_phase,
 		  char use_triangle){
-  size_t i;
+  int i;
   int iter;
   int s_ph = p_data->s_ph;
   size_t size = p_data->size;
-  int *label = p_data->label;
+  // int *label = p_data->label;
   size_t label_change_count;
   var_mph var_work = {.tr = {NULL, NULL, NULL, NULL, NULL}};
   mph the_centroids_copy = {0, 0, NULL, 0, NULL};
@@ -393,7 +393,7 @@ int d2_clustering(int num_of_clusters,
     /* update centroids */
     for (i=0; i<s_ph; ++i) 
       if (selected_phase < 0 || i == selected_phase) {
-	VPRINTF(("\t phase %ld: \n", i));            
+	VPRINTF(("\t phase %d: \n", i));            
       
 	if (d2_alg_type == D2_CENTROID_BADMM) 
 	  d2_centroid_sphBregman(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);

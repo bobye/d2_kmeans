@@ -9,7 +9,7 @@ int d2_read(const char* filename, mph *p_data) {
   FILE *fp = fopen(filename, "r+");
   assert(fp);
 
-  size_t i,j;
+  size_t i;
   int n;
   int **p_str, str;
   double **p_supp, **p_w;
@@ -32,7 +32,7 @@ int d2_read(const char* filename, mph *p_data) {
     if (p_data->ph[n].dim == 0) {
       char filename_extra[255];
       FILE *fp_new; // local variable
-      int str, c;
+      int str, c, i;
       sprintf(filename_extra, "%s.hist%d", filename, n);
       fp_new = fopen(filename_extra, "r+"); assert(fp_new);
       c=fscanf(fp_new, "%d", &str); assert(c>0 && str == p_data->ph[n].str);
@@ -45,7 +45,7 @@ int d2_read(const char* filename, mph *p_data) {
   for (i=0; i<size; ++i) {
     for (n=0; n<s_ph; ++n) {      
       double *p_supp_sph, *p_w_sph, w_sum;
-      int dim, strxdim, c;
+      int dim, strxdim, c, j;
       // read dimension and stride    
       c=fscanf(fp, "%d", &dim); 
       if (c!=1) {

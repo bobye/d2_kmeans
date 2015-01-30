@@ -22,7 +22,7 @@ int d2_centroid_sphGradDecent(mph *p_data,
   int iter, nIter = 5;
   double fval0, fval = DBL_MAX;
   int *label = p_data->label;
-  int num_of_labels = p_data->num_of_labels;
+  size_t num_of_labels = p_data->num_of_labels;
   int str, strxdim;
   size_t size = p_data->size;
   sph *data_ph = p_data->ph + idx_ph;
@@ -35,7 +35,7 @@ int d2_centroid_sphGradDecent(mph *p_data,
   SCALAR *L = var_work->g_var[idx_ph].L;
   SCALAR *C = var_work->g_var[idx_ph].C;
   size_t *label_count;
-  SCALAR *p_grad, buffer;
+  SCALAR *p_grad;
 
   assert(dim > 0); // current only support the D2 format
 
