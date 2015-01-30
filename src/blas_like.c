@@ -75,6 +75,7 @@ void _dgrms(int m, int n, double *a, double *b) {
 void _dicms(int m, int n, double *a, double *b) {
   int i,j;
   double *pa, *pb;
+  for (j=0; j<m; ++j) assert(b[j] > 0);
   for (i=0,pa=a; i<n; ++i)
     for (j=0,pb=b; j<m; ++j, ++pa, ++pb)
       *pa /= *pb;
@@ -84,9 +85,11 @@ void _dicms(int m, int n, double *a, double *b) {
 void _dirms(int m, int n, double *a, double *b) {
   int i,j;
   double *pa, *pb;
-  for (i=0,pa=a,pb=b; i<n; ++i,++pb)
+  for (i=0; i<n; ++i) assert(b[i] > 0);
+  for (i=0,pa=a,pb=b; i<n; ++i,++pb) {
     for (j=0; j<m; ++j, ++pa)
       *pa /= *pb;
+  }
 }
 
 // b(*) = sum(a(:,*))
@@ -207,30 +210,15 @@ void _dvmul(int n, double *a, double *b, double *c) {
 }
 
 void _dpdist2(int d, int n, int m, double * A, double * B, double *C) {
-  double *AA, *BB, *sA, *sB;
-  //assert(d>0 && n>0 && m>0);
-
-  AA = _D2_MALLOC_SCALAR(d*n);
-  BB = _D2_MALLOC_SCALAR(d*m);
-  sA = _D2_MALLOC_SCALAR(n);
-  sB = _D2_MALLOC_SCALAR(m);
-
-  _dvmul(d*n, A, A, AA);
-  _dvmul(d*m, B, B, BB);
-
-  _dcsum(d, n, AA, sA);
-  _dcsum(d, m, BB, sB);
-
+  int i, j, k;
+  assert(d>0 && n>0 && m>0);
   cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, n, m, d, -2, 
 	      A, d, B, d, 0, C, n);
-  
-  _dgcmv(n, m, C, sA);
-  _dgrmv(n, m, C, sB);
-  
-  _D2_FREE(AA);
-  _D2_FREE(BB);
-  _D2_FREE(sA);
-  _D2_FREE(sB);
+
+  for (i=0; i<m; ++i)
+    for (j=0; j<n; ++j)
+      for (k=0; k<d; ++k)
+	C[i*n + j] += A[j*d + k] * A[j*d + k] + B[i*d + k] * B[i*d + k];
 }
 
 void _dpdist_symbolic(int d, int n, int m, int * A, int * B, double *C, 
@@ -238,7 +226,8 @@ void _dpdist_symbolic(int d, int n, int m, int * A, int * B, double *C,
   double *val;
   int *xx, *yy;
   int i,j,k;
-
+  assert(d>0 && n>0 && m>0);
+ 
   for (i=0; i<m*n; ++i) C[i] = 0;
   for (i=0; i<m; ++i)
     for (j=0; j<n; ++j) 

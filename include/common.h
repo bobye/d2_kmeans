@@ -5,6 +5,10 @@
 extern "C" {
 #endif
 
+#define __IN__
+#define __OUT__ 
+#define __IN_OUT__
+
 
 #define _D2_DOUBLE
 #define _VERBOSE_OUTPUT
@@ -20,6 +24,7 @@ extern "C" {
 #ifdef _VERBOSE_OUTPUT
 #define VPRINTF(x) printf x
 #define VFLUSH fflush(stdout)
+#define ARR_PRINTF(x,n) {int i; for(i=0; i<(n); ++i) printf("%lf ", *((x) + i));} printf("\n")
 #else
 #define VPRINTF(x) 
 #define VFLUSH 
