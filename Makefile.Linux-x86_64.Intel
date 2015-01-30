@@ -1,5 +1,5 @@
 CC=icc
-CXX=icpc -std=c++11
+CXX=icpc
 
 MKL_DIR=/gpfs/home/jxy198/work/software/intel/composerxe/mkl
 MOSEK=/gpfs/home/jxy198/work/software/mosek/7/tools/platform/linux64x86
@@ -25,7 +25,7 @@ C_SOURCE_FILES=\
 	src/d2_centroid_ADMM.c
 
 CPP_SOURCE_FILES=\
-	src/d2_solver_mosek.cc
+	src/d2_solver_mosek.cc\
 	src/util.cc
 
 SOURCE_FILES_WITH_MAIN=\
