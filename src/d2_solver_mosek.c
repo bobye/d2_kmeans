@@ -35,7 +35,7 @@ static void MSKAPI printstr(void *handle,
 } /* printstr */
 
 
-void d2_solver_setup() {
+void d2_solver_setup(size_t num) {
   MSKrescodee r;
 
   /* Create the mosek environment. */
@@ -55,42 +55,14 @@ void d2_solver_setup() {
   return;
 }
 
-void d2_solver_debug() {
-  int i,j;
-  double X[] = {83.718147, 0.355520, 2.771609, 47.223366, 32.704613, 24.236309, 44.592049, -23.987589, -70.987701, 51.051491, -0.224495, -6.329401, 83.664337, 10.054308, 25.707617, 66.965271, -31.481861, -46.937881, 71.953934, -12.366786, -18.309299, 69.359741, 16.177128, 25.328596};
-  double Y[] = {80.360435, -12.656796, -23.847801, 14.429349, 10.828419, -4.769543, 27.646425, -7.103071, -2.075422, 52.567692, -27.300863, -27.065271};
-  double wX[] = {0.210949, 0.017211, 0.045296, 0.085237, 0.192448, 0.151259, 0.123296, 0.174304};
-  double wY[] = {0.546734, 0.062044, 0.076032, 0.315190};
-
-  double x[32], lambda[12];
-
-  d2_match_by_coordinates(3, 8, X, wX, 4, Y, wY, x, lambda);
-  //for (i=0; i<12; ++i) printf("%f ", lambda[i]);
-}
-
 void d2_solver_release() {
   MSK_unlinkfuncfromenvstream(&env, MSK_STREAM_LOG);
   MSK_deleteenv(&env);
 }
 
-double d2_match_by_sample(int d, int n, double *X, int m, double *Y, 
-			  /** OUT **/ double *x, /** OUT **/ double *lambda) {
-  int i;
-  double *wX, *wY, fval;
-  wX = _D2_MALLOC_SCALAR(n);
-  wY = _D2_MALLOC_SCALAR(m);
-  for (i=0; i<n; ++i) wX[i] = 1./n;
-  for (i=0; i<m; ++i) wY[i] = 1./m;
-
-  fval = d2_match_by_coordinates(d, n, X, wX, m, Y, wY, x, lambda);
-  _D2_FREE(wX);
-  _D2_FREE(wY);
-
-  return fval;
-}
 
 double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
-			   /** OUT **/ double *x, /** OUT **/ double *lambda) {
+			   /** OUT **/ double *x, /** OUT **/ double *lambda, size_t num) {
   
   const MSKint32t numvar = n * m,
                   numcon = n + m;
@@ -108,7 +80,7 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
   }
 
   /* Create the optimization task. */
-  r = MSK_maketask(env,numcon,numvar,&task);
+  r = MSK_maketask(env,numcon,numvar,&task); 
   if ( r==MSK_RES_OK ) {
     // r = MSK_linkfunctotaskstream(task,MSK_STREAM_LOG,NULL,printstr);
   }
@@ -234,8 +206,9 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
 }
 
 
+/*
 double d2_match_by_coordinates(int d, int n, double *X, double *wX, int m, double *Y,  double*wY,
-			       /** OUT **/ double *x, /** OUT **/ double *lambda) {
+			       __OUT__ double *x, __OUT__ double *lambda) {
   double *C, fval;
   C = _D2_MALLOC_SCALAR(n*m);
   _dpdist2(d, n, m, X, Y, C);
@@ -246,7 +219,7 @@ double d2_match_by_coordinates(int d, int n, double *X, double *wX, int m, doubl
 
 double d2_match_by_symbols(int d, int n, int *X, double *wX, int m, int *Y,  double*wY,
 			   int vocab_size, double *dist_mat,
-			   /** OUT **/ double *x, /** OUT **/ double *lambda) {
+			   __OUT__ double *x, __OUT__ double *lambda) {
   double *C, fval;
   C = _D2_MALLOC_SCALAR(n*m);
   _dpdist_symbolic(d, n, m, X, Y, C, vocab_size, dist_mat);
@@ -254,7 +227,7 @@ double d2_match_by_symbols(int d, int n, int *X, double *wX, int m, int *Y,  dou
   _D2_FREE(C);
   return fval;
 }
-
+*/
 
 
 /**
@@ -490,3 +463,35 @@ double d2_qpsimple(int n, int count, double *c, /** OUT **/ double *w) {
 
   return fval;
 }
+
+/*
+double d2_match_by_sample(int d, int n, double *X, int m, double *Y, 
+			  __OUT__ double *x, __OUT__ double *lambda) {
+  int i;
+  double *wX, *wY, fval;
+  wX = _D2_MALLOC_SCALAR(n);
+  wY = _D2_MALLOC_SCALAR(m);
+  for (i=0; i<n; ++i) wX[i] = 1./n;
+  for (i=0; i<m; ++i) wY[i] = 1./m;
+
+  fval = d2_match_by_coordinates(d, n, X, wX, m, Y, wY, x, lambda);
+  _D2_FREE(wX);
+  _D2_FREE(wY);
+
+  return fval;
+}
+*/
+/*
+void d2_solver_debug() {
+  int i,j;
+  double X[] = {83.718147, 0.355520, 2.771609, 47.223366, 32.704613, 24.236309, 44.592049, -23.987589, -70.987701, 51.051491, -0.224495, -6.329401, 83.664337, 10.054308, 25.707617, 66.965271, -31.481861, -46.937881, 71.953934, -12.366786, -18.309299, 69.359741, 16.177128, 25.328596};
+  double Y[] = {80.360435, -12.656796, -23.847801, 14.429349, 10.828419, -4.769543, 27.646425, -7.103071, -2.075422, 52.567692, -27.300863, -27.065271};
+  double wX[] = {0.210949, 0.017211, 0.045296, 0.085237, 0.192448, 0.151259, 0.123296, 0.174304};
+  double wY[] = {0.546734, 0.062044, 0.076032, 0.315190};
+
+  double x[32], lambda[12];
+
+  d2_match_by_coordinates(3, 8, X, wX, 4, Y, wY, x, lambda);
+  //for (i=0; i<12; ++i) printf("%f ", lambda[i]);
+}
+*/
