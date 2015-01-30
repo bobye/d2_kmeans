@@ -16,8 +16,8 @@ int d2_centroid_sphADMM(mph *p_data,
 			int idx_ph,
 			sph *c0,
 			__OUT__ sph *c) {
-  size_t i,j;
-  int iter, nIter = 50, admm, admmIter = 5;
+  size_t i; int j;
+  int iter, nIter = 5, admm, admmIter = 5;
   double fval0, fval = DBL_MAX;
   int *label = p_data->label;
   int num_of_labels = p_data->num_of_labels;
@@ -52,6 +52,7 @@ int d2_centroid_sphADMM(mph *p_data,
    */
   label_count = _D2_CALLOC_SIZE_T(num_of_labels);    
   for (i=0; i<size; ++i) ++label_count[label[i]];
+  for (i=0; i<num_of_labels; ++i) {printf("%zd ", label_count[i]);} printf("\n");
   for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
 
   // allocate q for update of c->p_w
@@ -59,25 +60,37 @@ int d2_centroid_sphADMM(mph *p_data,
 
   /* start iterations */
   nclock_start();
-  for (iter = 0; iter < nIter; ++iter) {
+  for (iter = 0; iter <= nIter; ++iter) {
     fval0 = fval;
     fval = 0;
 
     /* compute exact distances */
-#pragma omp parallel for reduction(+:fval)
     for (i=0; i<size; ++i) {
-      fval += d2_match_by_coordinates(dim,
-				      str, c->p_supp + label[i]*strxdim, c->p_w + label[i]*str,
-				      p_str[i], p_supp + p_str_cum[i]*dim, p_w + p_str_cum[i],
-				      X + p_str_cum[i]*str,
-				      L + i*str);
+      double val;
+      _D2_FUNC(pdist2)(dim, 
+		       str, 
+		       p_str[i],  
+		       c->p_supp + label[i]*strxdim, 
+		       p_supp + p_str_cum[i]*dim, 
+		       C + str*p_str_cum[i]); 
+      val   = d2_match_by_distmat(str, p_str[i],
+				  C + str*p_str_cum[i],
+				  c->p_w + label[i]*str, p_w + p_str_cum[i],
+				  X + p_str_cum[i]*str,
+				  L + i*str,
+				  i*p_data->s_ph + idx_ph);           
+      if(val <= 0) {	
+	ARR_PRINTF(C + str*p_str_cum[i], str*p_str[i]);
+	printf("%lf\n", val); 
+	assert(val > 0);
+      };
+      fval += val;
     }
     fval /= size;
     
 
     printf("\t%d\t%f\t%f\n", iter, fval, nclock_end());        
-    if (fabs(fval - fval0) < 1E-3 * fval) break;
-
+    if (fval - fval0 > 1E-3*fval0 || iter == nIter) break;
 
     /* update c->p_supp */
     for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
@@ -85,32 +98,21 @@ int d2_centroid_sphADMM(mph *p_data,
 
     for (i=0;i < size;  ++i) {
       _D2_CBLAS_FUNC(gemm)(CblasColMajor, CblasNoTrans, CblasTrans, 
-			   dim, str, p_str[i], 1, p_supp + dim*p_str_cum[i], dim, X + str*p_str_cum[i], str, 1, 
+			   dim, str, p_str[i], 
+			   1, 
+			   p_supp + dim*p_str_cum[i], dim, 
+			   X + str*p_str_cum[i], str, 
+			   1, 
 			   c->p_supp + label[i]*strxdim, dim);
       _D2_FUNC(rsum2)(str, p_str[i], X + str*p_str_cum[i], q + label[i]*str);
     }
+    for (j=0; j<num_of_labels*str; ++j) q[j] = (q[j] + c->p_w[j]*label_count[j/str]) / 2.f;
     for (i=0; i<num_of_labels; ++i) {
       _D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, q + i*str);
     }
 
-    /*
-    fval0 = fval;
-    fval = 0;
-
-#pragma omp parallel for reduction(+:fval)
-    for (i=0; i<size; ++i) {
-      fval += d2_match_by_coordinates(dim,
-				      str, c->p_supp + label[i]*strxdim, c->p_w + label[i]*str,
-				      p_str[i], p_supp + p_str_cum[i]*dim, p_w + p_str_cum[i],
-				      X + p_str_cum[i]*str,
-				      L + i*str);
-    }
-    fval /= size;   
-    printf("\t%d\t%f\t%f\n", iter, fval, nclock_end());        
-    */
-
     /** start ADMM **/
-    rho = 50 * fval; // empirical parameters
+    rho = 1.f * fval; // empirical parameters
 
     /* compute C */    
     for (i=0;i < size;  ++i) {
@@ -124,7 +126,6 @@ int d2_centroid_sphADMM(mph *p_data,
 
 #pragma omp parallel for 
       for (i=0; i < size; ++i) {
-	//printf("%ld\n", i);
 	d2_match_by_distmat_qp(str, p_str[i], 
 			       C + p_str_cum[i]*str, 
 			       L + i*str,
@@ -133,17 +134,6 @@ int d2_centroid_sphADMM(mph *p_data,
 			       p_w + p_str_cum[i], 
 			       X + p_str_cum[i]*str, 
 			       X + p_str_cum[i]*str);
-	/*
-	for (j=0; j<p_str[i]; ++j) printf("%lf ", p_w[j]);
-	printf("\n");
-	
-	for (j=0; j<str; ++j) {
-	  int k;
-	  for (k=0; k<p_str[i]; ++k) 
-	    printf("%lf ", X[j + k*str]); 
-	  printf("\n");
-	} exit(0);
-	*/
       }
 
       /* step 2, update c->p_w */

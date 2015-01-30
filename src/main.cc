@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
       break;
     default:
       printf ("?? getopt returned character code 0%o ??\n", ch);
+      exit(0);
     }
   }
   

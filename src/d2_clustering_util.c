@@ -143,19 +143,22 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
     var_work->g_var[i].X = NULL;
     var_work->g_var[i].L = NULL;
 
-    if (d2_alg_type == D2_CENTROID_BADMM || d2_alg_type == D2_CENTROID_ADMM) {
-      var_work->g_var[i].C = _D2_MALLOC_SCALAR(str * col);
-    }
+    var_work->g_var[i].C = _D2_MALLOC_SCALAR(str * (col + num_of_labels*str)); // space for transportation cost
+    assert(var_work->g_var[i].C);
+
     if (d2_alg_type == D2_CENTROID_BADMM) {
       d2_allocate_work_sphBregman(p_data->ph +i, p_data->size, 
 				  var_work->l_var_sphBregman+i);
     }
     if (d2_alg_type == D2_CENTROID_ADMM) {
       var_work->g_var[i].X = _D2_MALLOC_SCALAR(str * col);
+      assert(var_work->g_var[i].X);
     }
     if (d2_alg_type == D2_CENTROID_GRADDEC || d2_alg_type == D2_CENTROID_ADMM) {
-      var_work->g_var[i].X = _D2_MALLOC_SCALAR(str * col);
-      var_work->g_var[i].L = _D2_MALLOC_SCALAR(str * size);
+      var_work->g_var[i].X = _D2_MALLOC_SCALAR(str * (col + num_of_labels * str));
+      var_work->g_var[i].L = _D2_MALLOC_SCALAR(str * (size + num_of_labels));
+      assert(var_work->g_var[i].X);
+      assert(var_work->g_var[i].L);
     }
   }
 
