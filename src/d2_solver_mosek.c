@@ -160,10 +160,9 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
       //MSK_solutionsummary (task,MSK_STREAM_LOG);      
       if ( r==MSK_RES_OK ) {
 	MSKsolstae solsta;
-	if ( r==MSK_RES_OK )
-          r = MSK_getsolsta (*p_task,
-                             MSK_SOL_BAS,
-                             &solsta);
+	r = MSK_getsolsta (*p_task,
+			   MSK_SOL_BAS,
+			   &solsta);
 	switch(solsta)
 	{
           case MSK_SOL_STA_OPTIMAL:   
@@ -401,7 +400,7 @@ double d2_qpsimple(int n, int count, double *c, /** OUT **/ double *w) {
   const MSKint32t numvar = n, numcon = 1;
   MSKtask_t task = NULL;
   MSKrescodee r;
-  MSKint32t i, j;
+  MSKint32t j;
   MSKint32t zeroInt = 0;
   double one = 1, fval = 0.0;
 

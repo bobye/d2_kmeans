@@ -16,11 +16,11 @@ int d2_centroid_sphADMM(mph *p_data,
 			int idx_ph,
 			sph *c0,
 			__OUT__ sph *c) {
-  size_t i; int j;
+  size_t i, j;
   int iter, nIter = 5, admm, admmIter = 5;
   double fval0, fval = DBL_MAX;
   int *label = p_data->label;
-  int num_of_labels = p_data->num_of_labels;
+  size_t num_of_labels = p_data->num_of_labels;
   int str, strxdim;
   size_t size = p_data->size;
   sph *data_ph = p_data->ph + idx_ph;

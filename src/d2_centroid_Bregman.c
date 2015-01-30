@@ -61,7 +61,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 			   ) {
   sph *data_ph = p_data->ph + idx_ph;
   int *label = p_data->label;
-  int num_of_labels = p_data->num_of_labels;
+  size_t num_of_labels = p_data->num_of_labels;
   char *label_switch = var_work->label_switch;
   int dim = data_ph->dim;
   size_t col = data_ph->col;
@@ -88,7 +88,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   
 
 
-  size_t i,j;
+  size_t i; int j;
   int max_niter = p_badmm_options->maxIters, iter;
   SCALAR rho, obj, primres, dualres;
   SCALAR tmp, *Z0;

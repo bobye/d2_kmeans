@@ -223,8 +223,6 @@ void _dpdist2(int d, int n, int m, double * A, double * B, double *C) {
 
 void _dpdist_symbolic(int d, int n, int m, int * A, int * B, double *C, 
 		      const int vocab_size, const double* dist_mat) {
-  double *val;
-  int *xx, *yy;
   int i,j,k;
   assert(d>0 && n>0 && m>0);
  
