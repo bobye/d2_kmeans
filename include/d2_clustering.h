@@ -7,10 +7,6 @@ extern "C" {
 
 #include "common.h"
 
-#define __IN__
-#define __OUT__ 
-#define __IN_OUT__
-
   /**
    * data structure to store d2 of one phase
    */
