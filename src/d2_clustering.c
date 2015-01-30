@@ -8,10 +8,6 @@
 #include "d2_solver.h"
 #include "d2_param.h"
 
-#ifndef __APPLE__
-#include <omp.h>
-#endif 
-
 extern int d2_alg_type;
 
 
@@ -111,7 +107,6 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
   /* step 1 */
   for (i=0; i<num_of_labels; ++i) p_tr->s[i] = DBL_MAX;
   /* pre-compute pairwise distance between centroids */
-#pragma omp parallel for reduction(+:dist_count)
   for (i=0; i<num_of_labels; ++i) {
     size_t j;
     p_tr->c[i*num_of_labels + i] = 0; // d(c_i, c_i)
@@ -135,7 +130,6 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
     if (d2_alg_type == D2_CENTROID_BADMM)
       { var_work->label_switch[i] = 0; }
 
-#pragma omp parallel for reduction(+:dist_count,count)
   for (i=0; i<size; ++i) {
   /* step 2 */
   if (p_tr->u[i] > p_tr->s[label[i]]) {
@@ -275,7 +269,6 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 
   nclock_start();
 
-#pragma omp parallel for reduction(+:count)
   for (i=0; i<size; ++i) {
     double min_distance = -1;	
     int jj = label[i]>=0? label[i]: 0;
