@@ -63,8 +63,8 @@ void d2_solver_setup(size_t num) {
 
 void d2_solver_release() {
   size_t i;
-  for (i=0; i<task_seq_size; ++i) MSK_deletetask(task_seq + i);
-  MSK_unlinkfuncfromenvstream(&env, MSK_STREAM_LOG);
+  for (i=0; i<task_seq_size; ++i) 
+    if (task_seq[i] != NULL) MSK_deletetask(&task_seq [i]);
   MSK_deleteenv(&env);
 }
 
@@ -80,7 +80,6 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
   double fval = 0.0;
 
   /* check if it is in the mode of multiple phase or single phase */
-  index = (index < task_seq_size)? index : (index / task_seq_size);
   p_task = &task_seq[index];
 
   if (*p_task == NULL) {
@@ -128,6 +127,7 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
   /* disable multi-threads */
   r = MSK_putintparam(*p_task, MSK_IPAR_NUM_THREADS, 1);
 
+  } else {
   }
 
   /* modify an existing task and re-optimize */
