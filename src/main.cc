@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
       number_of_clusters = atoi(optarg); assert(number_of_clusters > 0);
       break;
     case 'm':
-      max_iters = max(atoi(optarg), max_iters);
+      max_iters = atoi(optarg); //max(atoi(optarg), max_iters);
       break;
     case 'M':
       d2_alg_type = atoi(optarg);
