@@ -13,9 +13,10 @@ Please see [3] for technical details.
 There are three data types of discrete distribution that have been covered
 in this project:
  - discrete distribution over vector space endowed with Euclidean distance
- - normalized histograms with bin-to-bin distance
+ - normalized (dense) histograms with bin-to-bin distance
  - discrete distribution over [n-gram](http://en.wikipedia.org/wiki/N-gram)
-   with item-to-item similarity/distance
+   with item-to-item similarity/distance (sparse histograms are represented
+   as 1-gram)
 
 An object/instance can be represented as the joint of multiple discrete
 distributions (of any aforementioned type). For example, an image can be
