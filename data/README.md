@@ -3,7 +3,8 @@ We provides two kinds of input formats for programs to read and write d2 data.
 No generic IO is supported for n-gram data, but examples of protein n-gram can
 be found at directory protein_seq/ .
 
-1. We implement multi-phases D2, which means each object can be represented
+1. [Discrete Distributions Over Vector Space].
+   We implement multi-phases D2, which means each object can be represented
    by multiple D2. For example, an image can be represented by a D2 in color
    space and a D2 in texture space. The format of .d2 data is as follows:
    ```emacs-lisp
@@ -35,7 +36,8 @@ be found at directory protein_seq/ .
    ```bash
    $ time ./d2 -i data/mountaindat.d2 -p 2 -n 1000 -d 3,3 -s 6,11
    ```
-2. In some cases, it would be useful to work with histograms (where the sum
+2. [Dense Histograms].
+   In some cases, it would be useful to work with histograms (where the sum
    of bins is equal to one). For example, a histogram representation of two
    phases can be as follows:
 
