@@ -4,14 +4,13 @@
 #include "d2_param.h"
 #include <float.h>
 #include <assert.h>
-//#include <omp.h>
 
 // #define __USE_MPI__ /* macro for the use of MPI */
 
 
 /* choose options */
 
-static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = 2.f, .updatePerLoops = 10};
+static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = 5.f, .updatePerLoops = 10};
 static BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .updatePerLoops = 10};
 
 

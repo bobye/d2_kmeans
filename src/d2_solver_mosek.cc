@@ -26,9 +26,18 @@
 
 #endif
 
+
 static MSKenv_t   env = NULL;
-static MSKtask_t *task_seq = NULL;
-static size_t task_seq_size = 0;
+//static MSKtask_t *task_seq = NULL;
+//static size_t task_seq_size = 0;
+
+#include <utility>  
+#include <map>
+using std::pair;
+using std::make_pair;
+using std::map;
+static map< pair<int, int>, MSKtask_t > task_mapper;
+
 /* This function prints log output from MOSEK to the terminal. */
 static void MSKAPI printstr(void *handle,
                             MSKCONST char str[])
@@ -54,17 +63,21 @@ void d2_solver_setup(size_t num) {
                        desc);
       printf("Error %s - '%s'\n",symname,desc);
   }
-
+  /*
   task_seq = (MSKtask_t*) malloc (num * sizeof(MSKtask_t));
   for (i=0; i<num; ++i) task_seq[i] = NULL;
   task_seq_size = num;
+  */
   return;
 }
 
 void d2_solver_release() {
+  /*
   size_t i;
   for (i=0; i<task_seq_size; ++i) 
     if (task_seq[i] != NULL) MSK_deletetask(&task_seq [i]);
+  */
+  for (auto it=task_mapper.begin(); it!=task_mapper.end(); ++it) MSK_deletetask(&(it->second));
   MSK_deleteenv(&env);
 }
 
@@ -80,7 +93,12 @@ double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
   double fval = 0.0;
 
   /* check if it is in the mode of multiple phase or single phase */
-  p_task = &task_seq[index];
+  //  p_task = &task_seq[index];
+
+  if (task_mapper.find(make_pair (n, m)) == task_mapper.end()) {
+    task_mapper[make_pair (n, m)] = NULL;
+  }
+  p_task = &task_mapper[make_pair (n, m)];
 
   if (*p_task == NULL) {
   MSKint32t *asub;
