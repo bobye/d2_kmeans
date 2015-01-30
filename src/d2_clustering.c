@@ -18,46 +18,67 @@ extern int d2_alg_type;
 /**
  * Compute the distance between i-th d2 in a and j-th d2 in b 
  * Return square root of the undergoing cost as distance
+ * @param(i) the cached space indicator
  */
-double d2_compute_distance(mph *a, int i, mph *b, int j, int selected_phase) {
+double d2_compute_distance(mph *a, size_t i, 
+			   mph *b, size_t j, 
+			   int selected_phase, 
+			   var_mph *var_work, size_t index_task) {
   int n;
   double d = 0.0, val; assert(a->s_ph == b->s_ph);
   for (n=0; n<a->s_ph; ++n) 
     if (selected_phase < 0 || n == selected_phase) {
       sph *a_sph = a->ph + n, *b_sph = b->ph + n;
-      int dim = a->ph[n].dim; assert(dim == b_sph->dim);
+      int dim = a->ph[n].dim; assert(dim == b_sph->dim);      
+      size_t index = (selected_phase < 0 ? (index_task * a->s_ph + n) : index_task);
+      size_t idx = b_sph->p_str[j] * a_sph->p_str_cum[i];
       switch (a_sph->metric_type) {
       case D2_EUCLIDEAN_L2 :
-	val = d2_match_by_coordinates(dim, 
-				      a_sph->p_str[i], 
-				      a_sph->p_supp + a_sph->p_str_cum[i]*dim, 
-				      a_sph->p_w + a_sph->p_str_cum[i], 
-				      b_sph->p_str[j], 
-				      b_sph->p_supp + b_sph->p_str_cum[j]*dim, 
-				      b_sph->p_w + b_sph->p_str_cum[j], 
-				      NULL, // x and lambda are implemented later
-				      NULL);
+	_D2_FUNC(pdist2)(dim, 
+			 b_sph->p_str[j], 
+			 a_sph->p_str[i], 
+			 b_sph->p_supp + b_sph->p_str_cum[j]*dim, 
+			 a_sph->p_supp + a_sph->p_str_cum[i]*dim, 
+			 var_work->g_var[n].C + idx);
+
+	val = d2_match_by_distmat(b_sph->p_str[j], 
+				  a_sph->p_str[i], 				  
+				  var_work->g_var[n].C + idx,
+				  b_sph->p_w + b_sph->p_str_cum[j], 
+				  a_sph->p_w + a_sph->p_str_cum[i], 
+				  NULL, // x and lambda are implemented later
+				  NULL,
+				  index);
 	break;
       case D2_HISTOGRAM :
-	val = d2_match_by_distmat(a_sph->p_str[i], 
-				  b_sph->p_str[j], 
+	val = d2_match_by_distmat(b_sph->p_str[j],
+				  a_sph->p_str[i], 				   
 				  a_sph->dist_mat, 
-				  a_sph->p_w + a_sph->p_str_cum[i], 
 				  b_sph->p_w + b_sph->p_str_cum[j], 
-				  NULL, NULL);
+				  a_sph->p_w + a_sph->p_str_cum[i], 
+				  NULL, NULL,
+				  index);
 	break;	
       case D2_N_GRAM : 
-	val = d2_match_by_symbols(dim,
-				  a_sph->p_str[i],
-				  a_sph->p_supp_sym + a_sph->p_str_cum[i]*dim,
-				  a_sph->p_w + a_sph->p_str_cum[i],
-				  b_sph->p_str[j],
-				  b_sph->p_supp_sym + b_sph->p_str_cum[j]*dim,
-				  b_sph->p_w + b_sph->p_str_cum[j],
-				  a_sph->vocab_size,
-				  a_sph->dist_mat,
+	_D2_FUNC(pdist_symbolic)(dim, 
+				 b_sph->p_str[j], 
+				 a_sph->p_str[i], 
+				 b_sph->p_supp_sym + b_sph->p_str_cum[j]*dim, 
+				 a_sph->p_supp_sym + a_sph->p_str_cum[i]*dim, 
+				 var_work->g_var[n].C + idx,
+				 a_sph->vocab_size,
+				 a_sph->dist_mat);
+
+	val = d2_match_by_distmat(b_sph->p_str[j], 
+				  a_sph->p_str[i], 
+				  var_work->g_var[n].C + idx,
+				  b_sph->p_w + b_sph->p_str_cum[j], 
+				  a_sph->p_w + a_sph->p_str_cum[i], 
+				  NULL, // x and lambda are implemented later
 				  NULL,
-				  NULL);
+				  index);
+
+
 	break;
       }
       d += val;
@@ -97,7 +118,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
 
     for (j=i+1; j<num_of_labels; ++j) {
       double d;
-      d = d2_compute_distance(centroids, i, centroids, j, selected_phase); 
+      d = d2_compute_distance(centroids, i, centroids, j, selected_phase, var_work, p_data->size + i); 
       dist_count +=1;
 
       p_tr->c[i*num_of_labels + j] = d; 
@@ -133,7 +154,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
 	if (p_tr->r[i] == 1) {
 	  /* compute distance */
 	  double d;
-	  d = d2_compute_distance(p_data, i, centroids, jj, selected_phase);
+	  d = d2_compute_distance(p_data, i, centroids, jj, selected_phase, var_work, i);
 	  dist_count +=1;
 	  L[jj] = d;
 	  *U = d;
@@ -147,7 +168,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
 	if ((min_distance > L[j] || min_distance > p_tr->c[j*num_of_labels + jj] / 2.) && j!=jj) {
 	  /* compute distance */
 	  double d;
-	  d = d2_compute_distance(p_data, i, centroids, j, selected_phase);
+	  d = d2_compute_distance(p_data, i, centroids, j, selected_phase, var_work, i);
 	  dist_count +=1;
 	  L[j] = d;
 	  if (d < min_distance) {jj = j; min_distance = d; *U = d;}
@@ -225,7 +246,7 @@ size_t d2_labeling_post(mph *p_data,
 
   for (i=0; i<num_of_labels; ++i) {
     double d;
-    d = d2_compute_distance(c_old, i, c_new, i, selected_phase);
+    d = d2_compute_distance(c_old, i, c_new, i, selected_phase, var_work, p_data->size + i);
     d_changes[i] = d;
   }
 
@@ -262,7 +283,7 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 
     for (j=0; j<centroids->size; ++j) {
       double d;
-      d = d2_compute_distance(p_data, i, centroids, j, selected_phase);
+      d = d2_compute_distance(p_data, i, centroids, j, selected_phase, var_work, i);
       if (min_distance < 0 || d < min_distance) {
 	min_distance = d; jj = j;
       }
@@ -337,11 +358,20 @@ int d2_clustering(int num_of_clusters,
   /* initialize centroids from one node, and broadcast to other nodes */
 #endif
   }
+
+
   // allocate initialize auxiliary variables
   d2_allocate_work(p_data, &var_work, use_triangle);
 
+
+
+
   // start centroid-based clustering here
-  d2_solver_setup();  
+  if (selected_phase < 0) 
+    d2_solver_setup((size + num_of_clusters)*s_ph);  
+  else 
+    d2_solver_setup(size + num_of_clusters);
+
   for (iter=0; iter<max_iter; ++iter) {
     VPRINTF(("Round %d ... \n", iter));
     VPRINTF(("\tRe-labeling all instances ... ")); VFLUSH;
