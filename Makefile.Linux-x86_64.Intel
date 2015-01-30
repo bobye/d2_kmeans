@@ -1,5 +1,5 @@
 CC=icc
-CXX=icpc
+CXX=icpc -std=c++11
 
 MKL_DIR=/gpfs/home/jxy198/work/software/intel/composerxe/mkl
 MOSEK=/gpfs/home/jxy198/work/software/mosek/7/tools/platform/linux64x86
@@ -22,10 +22,10 @@ C_SOURCE_FILES=\
 	src/d2_centroid_rand.c\
 	src/d2_centroid_Bregman.c\
 	src/d2_centroid_GradDecent.c\
-	src/d2_centroid_ADMM.c\
-	src/d2_solver_mosek.c
+	src/d2_centroid_ADMM.c
 
 CPP_SOURCE_FILES=\
+	src/d2_solver_mosek.cc
 	src/util.cc
 
 SOURCE_FILES_WITH_MAIN=\
@@ -36,6 +36,10 @@ C_SOURCE_OBJECTS=\
 
 CPP_SOURCE_OBJECTS=\
 	$(patsubst %.cc, %.o, $(CPP_SOURCE_FILES))
+
+LIB_SOURCE_OBJECTS=\
+	$(C_SOURCE_OBJECTS)\
+	src/d2_solver_mosek.o # use mosek solver as the driver
 
 ALL_OBJECTS=\
 	$(C_SOURCE_OBJECTS)\
@@ -65,8 +69,8 @@ d2: $(ALL_OBJECTS)
 	$(CXX) $(LDFLAGS) $(DEFINES) -o $@ $(ALL_OBJECTS) $(LIBRARIES)
 
 
-data/protein_seq/protein: data/protein_seq/d2_protein_ngram.c $(C_SOURCE_OBJECTS)
-	$(CC) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+data/protein_seq/protein: data/protein_seq/d2_protein_ngram.cc $(LIB_SOURCE_OBJECTS)
+	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
 
 protein: data/protein_seq/protein
 

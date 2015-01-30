@@ -30,14 +30,12 @@ The clustering is then performed jointly over differernt phases.
 Parallel version is based on Linux and Intel Compiler with dependencies
 
  - MKL
- - openMP support (to be replaced by MPI)
  - [Mosek](https://mosek.com) 7.0+
  
 ### Mac OSX 10.10 + Clang
 Besides, a serial version is available for Mac OSX whose dependencies include
 
  - Accelerate Framework
- - no OpenMP support
  - [Mosek](https://mosek.com) 7.0+
 
 ## Port to Interfaces
