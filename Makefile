@@ -1,7 +1,12 @@
-CC=mpicc -std=gnu99
-CXX=mpic++ -std=c++11
-
 include make.inc
+
+ifeq ($(MPI),1)
+CC=$(MPICC)
+CXX=$(MPICXX)
+else
+CC=$(TCC)
+CXX=$(TCXX)
+endif
 
 OS=$(shell uname)
 
