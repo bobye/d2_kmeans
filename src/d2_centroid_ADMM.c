@@ -6,10 +6,6 @@
 #include <float.h>
 #include <assert.h>
 
-#ifndef __APPLE__
-#include <omp.h>
-#endif 
-
 
 int d2_centroid_sphADMM(mph *p_data,
 			var_mph *var_work,
@@ -124,7 +120,6 @@ int d2_centroid_sphADMM(mph *p_data,
     for (admm = 0; admm < admmIter; ++admm) {
       /* step 1, update X */
 
-#pragma omp parallel for 
       for (i=0; i < size; ++i) {
 	d2_match_by_distmat_qp(str, p_str[i], 
 			       C + p_str_cum[i]*str, 

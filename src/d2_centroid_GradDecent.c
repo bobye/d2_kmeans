@@ -7,10 +7,6 @@
 #include <assert.h>
 #include "d2_centroid_util.h"
 
-#ifndef __APPLE__
-#include <omp.h>
-#endif 
-
 static GRADDEC_options graddec_default_options = {.maxIters = 5, .stepSize = 1E-3};
 
 GRADDEC_options *p_graddec_options = &graddec_default_options;

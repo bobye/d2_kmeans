@@ -1,17 +1,20 @@
-CC=icc
-CXX=icpc
+CC=gcc -std=c99
+CXX=g++ -std=c++11
 
-MKL_DIR=/gpfs/home/jxy198/work/software/intel/composerxe/mkl
-MOSEK=/gpfs/home/jxy198/work/software/mosek/7/tools/platform/linux64x86
+MOSEK=$(HOME)/mosek/7/tools/platform/osx64x86
+MOSEK_VERSION=7.0
+
+BLAS=/usr/local/opt/openblas
+
+OS=$(shell uname)
 
 ARCH_FLAGS=-m64
 CFLAGS=-Wextra -Wall -pedantic-errors -O3 $(ARCH_FLAGS)
 LDFLAGS=$(ARCH_FLAGS)
-DEFINES=-D __USE_MKL__ -openmp
-INCLUDES=-Iinclude/ -I$(MKL_DIR)/include -I$(MOSEK)/h
-LIBRARIES=-L$(MKL_DIR)/lib/intel64 -Wl,-R$(MKL_DIR)/lib/intel64\
-	-Wl,--start-group -lmkl_intel_ilp64 -lmkl_core -lmkl_sequential -lpthread -lm -Wl,--end-group\
-	-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread -lrt
+DEFINES=-D __BLAS_LEGACY__
+INCLUDES=-Iinclude/ -I$(MOSEK)/h -I$(BLAS)/include
+LIBRARIES=-L$(MOSEK)/bin -lmosek64 -lpthread -L$(BLAS)/lib -lblas -lm
+
 
 C_SOURCE_FILES=\
 	src/d2_clustering.c\
@@ -23,7 +26,7 @@ C_SOURCE_FILES=\
 	src/d2_centroid_rand.c\
 	src/d2_centroid_Bregman.c\
 	src/d2_centroid_GradDecent.c\
-	src/d2_centroid_ADMM.c
+	src/d2_centroid_ADMM.c\
 
 CPP_SOURCE_FILES=\
 	src/d2_solver_mosek.cc\
@@ -33,7 +36,7 @@ SOURCE_FILES_WITH_MAIN=\
 	src/main.cc
 
 C_SOURCE_OBJECTS=\
-	$(patsubst %.c, %.o, $(C_SOURCE_FILES))
+	$(patsubst %.c, %.o, $(C_SOURCE_FILES))\
 
 CPP_SOURCE_OBJECTS=\
 	$(patsubst %.cc, %.o, $(CPP_SOURCE_FILES))
@@ -66,18 +69,28 @@ all: d2 protein
 
 -include $(DEPENDENCY_FILES)
 
+ifeq ($(OS), Darwin)
 d2: $(ALL_OBJECTS)
 	$(CXX) $(LDFLAGS) $(DEFINES) -o $@ $(ALL_OBJECTS) $(LIBRARIES)
-
+	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $@
 
 data/protein_seq/protein: data/protein_seq/d2_protein_ngram.cc $(LIB_SOURCE_OBJECTS)
 	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $@
+
+else 
+d2: $(ALL_OBJECTS)
+	$(CXX) $(LDFLAGS) $(DEFINES) -o $@ $(ALL_OBJECTS) $(LIBRARIES)
+data/protein_seq/protein: data/protein_seq/d2_protein_ngram.cc $(LIB_SOURCE_OBJECTS)
+	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+endif
+
 
 protein: data/protein_seq/protein
 
 .PHONY: clean
 clean:
-	@rm -f d2
+	@rm -f *_test d2
 	@for pattern in '*.o' '*.d'; do \
 		find . -name "$$pattern" | xargs rm; \
 	done
