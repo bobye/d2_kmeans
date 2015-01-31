@@ -1,10 +1,7 @@
-CC=gcc -std=c99
+CC=gcc -std=gnu99
 CXX=g++ -std=c++11
 
-MOSEK=$(HOME)/mosek/7/tools/platform/osx64x86
-MOSEK_VERSION=7.0
-
-BLAS=/usr/local/opt/openblas
+include make.inc
 
 OS=$(shell uname)
 
@@ -12,8 +9,8 @@ ARCH_FLAGS=-m64
 CFLAGS=-Wextra -Wall -pedantic-errors -O3 $(ARCH_FLAGS)
 LDFLAGS=$(ARCH_FLAGS)
 DEFINES=-D __BLAS_LEGACY__
-INCLUDES=-Iinclude/ -I$(MOSEK)/h -I$(BLAS)/include
-LIBRARIES=-L$(MOSEK)/bin -lmosek64 -lpthread -L$(BLAS)/lib -lblas -lm
+INCLUDES=-Iinclude/ -I$(MOSEK)/h
+LIBRARIES=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread $(BLAS_LIB) $(OTHER_LIB)
 
 
 C_SOURCE_FILES=\
