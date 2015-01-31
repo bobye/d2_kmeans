@@ -21,6 +21,7 @@
  */
 #include "d2_param.h"
 int d2_alg_type; //  = D2_CENTROID_BADMM;
+int world_rank;
 
 extern BADMM_options *p_badmm_options;
 extern GRADDEC_options *p_graddec_options;

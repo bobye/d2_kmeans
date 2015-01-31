@@ -21,14 +21,30 @@ extern "C" {
 #define SCALAR_STDIO_TYPE ("%f ")
 #endif
 
+  extern int world_rank; // rank of processor
+
 #ifdef _VERBOSE_OUTPUT
-#define VPRINTF(x) printf x
-#define VFLUSH fflush(stdout)
-#define ARR_PRINTF(x,n) {int i; for(i=0; i<(n); ++i) printf("%lf ", *((x) + i));} printf("\n")
-#else
-#define VPRINTF(x) 
-#define VFLUSH 
+#include <stdarg.h>
+#include <stdio.h>
+  static inline void VPRINTF(const char *format, ...) {
+    va_list args;
+#ifdef __USE_MPI__
+    if (world_rank == 0) {
 #endif
+      va_start(args, format);
+      vprintf(format, args);
+      va_end(args);
+#ifdef __USE_MPI__
+    }
+#endif
+  }
+
+  static inline void VFLUSH() {fflush(stdout);}
+#else
+  static inline void VPRINTF(const char *format, ...) {}
+  static inline void VFLUSH() {}
+#endif
+
 
 #ifdef  _D2_DOUBLE
 #define _D2_SCALAR          double

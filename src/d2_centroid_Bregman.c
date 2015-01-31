@@ -136,8 +136,8 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
 
   // main loop
-  printf("\titer\tobj\t\tprimres\t\tdualres\t\tseconds\n");
-  printf("\t----------------------------------------------------------------\n");
+  VPRINTF("\titer\tobj\t\tprimres\t\tdualres\t\tseconds\n");
+  VPRINTF("\t----------------------------------------------------------------\n");
   nclock_start();
   for (iter=0; iter <= max_niter; ++iter) {
     /*************************************************************************/
@@ -261,7 +261,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 #ifdef __USE_MPI__
       /* ALLREDUCE by MEAN operator: primres, dualres */
 #endif
-      printf("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end());
+      VPRINTF("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end());
     }
   }
 

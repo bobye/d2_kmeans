@@ -49,7 +49,7 @@ int d2_read(const char* filename, mph *p_data) {
       // read dimension and stride    
       c=fscanf(fp, "%d", &dim); 
       if (c!=1) {
-	VPRINTF(("Warning: only read %ld d2!\n", i));
+	VPRINTF("Warning: only read %ld d2!\n", i);
 	p_data->size = i;
 	size = i; break;
       }
@@ -58,7 +58,7 @@ int d2_read(const char* filename, mph *p_data) {
       str = *(p_str[n]); assert(str > 0);
 
       if (p_data->ph[n].col + str >= p_data->ph[n].max_col) {
-	VPRINTF(("Warning: preallocated memory for phase %d is insufficient! Reallocated.\n", n));
+	VPRINTF("Warning: preallocated memory for phase %d is insufficient! Reallocated.\n", n);
 	p_data->ph[n].p_supp = (double *) realloc(p_data->ph[n].p_supp, 2 * dim * p_data->ph[n].max_col * sizeof(double));
 	p_data->ph[n].p_w = (double *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(double));
 	assert(p_data->ph[n].p_supp != NULL && p_data->ph[n].p_w != NULL);
