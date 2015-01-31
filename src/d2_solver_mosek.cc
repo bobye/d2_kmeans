@@ -1,31 +1,9 @@
 #include "d2_solver.h"
 #include "mosek.h"
 #include <stdio.h>
+#include "blas_util.h"
 
 #define SCALAR double
-
-#ifdef __APPLE__
-
-#include <Accelerate/Accelerate.h>
-#define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
-#define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
-#define _D2_FREE(x)         free(x)
-
-#elif defined __USE_MKL__
-#include <mkl.h>
-#define _D2_MALLOC_SCALAR(x)       (SCALAR *) mkl_malloc( (x) *sizeof(SCALAR), 16) 
-#define _D2_MALLOC_INT(x)       (int *) mkl_malloc( (x) *sizeof(int), 16)
-#define _D2_FREE(x)         mkl_free(x)
-
-#elif defined __GNUC__
-#include <cblas.h>
-#include <lapacke.h>
-#define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
-#define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
-#define _D2_FREE(x)         free(x)
-
-#endif
-
 
 static MSKenv_t   env = NULL;
 //static MSKtask_t *task_seq = NULL;
