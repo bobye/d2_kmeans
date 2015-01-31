@@ -1,0 +1,7 @@
+# Linux at cyberstar
+
+MOSEK=/gpfs/home/jxy198/work/software/mosek/7/tools/platform/linux64x86
+MOSEK_VERSION=7.0
+
+BLAS_LIB=/usr/global/CBLAS/3.5.0/lib/cblas_LINUX.a /usr/global/BLAS/3.5.0/libblas.a -lgfortran
+
