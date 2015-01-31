@@ -27,10 +27,15 @@ The clustering is then performed jointly over differernt phases.
 
 ## How to compile
 
+dependencies:
  - MPI
  - CBLAS: OpenBLAS or MKL or Accelerate(Mac)
  - [Mosek](https://mosek.com) 7.0+
  
+```
+ $ make # build sequential version, or
+ $ make MPI=1 # build MPI version
+```
 
 ## Port to Interfaces
  - Matlab [to appear]
