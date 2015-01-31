@@ -10,7 +10,7 @@ CFLAGS=-Wextra -Wall -pedantic-errors -O3 $(ARCH_FLAGS)
 LDFLAGS=$(ARCH_FLAGS)
 DEFINES=-D __BLAS_LEGACY__
 INCLUDES=-Iinclude/ -I$(MOSEK)/h
-LIBRARIES=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread $(BLAS_LIB) -lrt
+LIBRARIES=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread $(BLAS_LIB) $(OTHER_LIB)
 
 
 C_SOURCE_FILES=\
