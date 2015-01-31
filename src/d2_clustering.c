@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <float.h>
+#include <string.h>
 #include "d2_clustering.h"
 #include "d2_math.h"
 #include "d2_solver.h"
