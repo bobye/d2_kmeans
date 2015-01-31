@@ -2,6 +2,8 @@
 #define _D2_CENTROID_UTIL_H_
 
 
+#include <float.h>
+
 /**
  * inline functions
  */
