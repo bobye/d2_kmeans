@@ -32,12 +32,13 @@ double randn () {
 }
 
 
-/* Arrange the N elements of ARRAY in random order.
+/* Arrange the N elements of ARRAY in random order (no seeds).
    Only effective if N is much smaller than RAND_MAX;
    if this may not be the case, use a better random
    number generator. */
 void shuffle(long *array, size_t n)
 {
+  // srand (time(NULL));
     if (n > 1) 
     {
         size_t i;

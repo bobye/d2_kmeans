@@ -21,17 +21,18 @@ time ./d2 -i data/icip14_data/total.d2 -p 2 -n 5000 -d 3,3 -s 8,8  --clusters 10
 cd data/protein_seq/
 
 ## run 1-gram on protein data with 3 clusters
-time ./protein 0 3
+time ./protein 0 3 0
 
 ## run 2-gram on protein data with 3 clusters
-time ./protein 1 3
+time ./protein 1 3 0
 
 ## run 3-gram on protein data with 3 clusters
-time ./protein 2 3
+time ./protein 2 3 0
 
 
 ## run 1,2,3-gram on protein data with 2 clusters
-time ./protein -1 2
+time ./protein -1 2 0
+
 
 
 
