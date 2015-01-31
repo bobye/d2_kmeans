@@ -2,6 +2,7 @@
 #include "d2_math.h"
 #include "stdio.h"
 #include "d2_param.h"
+#include "d2_centroid_util.h"
 #include <float.h>
 #include <assert.h>
 
@@ -14,9 +15,8 @@ static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = 5.f, .upd
 static BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .updatePerLoops = 10};
 
 
-BADMM_options *p_badmm_options;
-
-
+BADMM_options *p_badmm_options = &badmm_clu_options;
+ 
 int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwork) {
   size_t i; int j;
   SCALAR tmp;
@@ -31,7 +31,6 @@ int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwor
     tmp = 1./(ph->str * ph->p_str[i]);
     for (j=0; j<ph->str*ph->p_str[i]; ++j, ++p_scal) *p_scal = tmp;
   }
-  if (!p_badmm_options) p_badmm_options =  &badmm_clu_options;
   return 0;
 }
 
@@ -44,9 +43,6 @@ int d2_free_work_sphBregman(var_sphBregman *var_phwork) {
   return 0;
 }
 
-
-void accumulate_symbolic(int d, int m, int n, const int *supp, const double *xx, double *z, int vocab_size);
-void minimize_symbolic(int d, int n, int *supp, const double *z, const int vocab_size, const double *dist_mat, double* z_buffer);
 
 /**
  * See matlab/centroid_sphBregman.m 
@@ -107,22 +103,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   strxdim = str * dim;
 
   /* compute C */  
-  switch (data_ph->metric_type) {
-  case D2_EUCLIDEAN_L2 :
-    for (i=0;i < size;  ++i) 
-      _D2_FUNC(pdist2)(dim, str, p_str[i], c->p_supp + label[i]*strxdim, p_supp + dim*p_str_cum[i], C + str*p_str_cum[i]);
-    break;
-
-  case D2_HISTOGRAM : 
-    for (i=0; i< size; ++i) 
-      _D2_CBLAS_FUNC(copy)(str*p_str[i], data_ph->dist_mat, 1, C + str*p_str_cum[i], 1);
-    break;
-
-  case D2_N_GRAM :
-    for (i=0;i < size; ++i)
-      _D2_FUNC(pdist_symbolic)(dim, str, p_str[i], c->p_supp_sym + label[i]*strxdim, p_supp_sym + dim*p_str_cum[i], C + str*p_str_cum[i], data_ph->vocab_size, data_ph->dist_mat);
-    break;
-  }
+  calculate_distmat(data_ph, label, size, c, C);
 
   /* rho is an important hyper-parameter */
   rho = p_badmm_options->rhoCoeff * _D2_CBLAS_FUNC(asum)(str*col, C, 1) / (str*col);
@@ -235,15 +216,14 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
 
 	// re-calculate C
-	for (i=0;i < size;  ++i) {
-	  _D2_FUNC(pdist2)(dim, str, p_str[i], &c->p_supp[label[i]*strxdim], p_supp + dim*p_str_cum[i], C + str*p_str_cum[i]);
-	}
+	calculate_distmat(data_ph, label, size, c, C);
 	break;
 
       case D2_HISTOGRAM :
 	break;
 
       case D2_N_GRAM :
+	if (iter > 0) {
 	assert(num_of_labels * (strxdim * data_ph->vocab_size + 1) <= size);
 
 	for (i=0; i<num_of_labels*strxdim*data_ph->vocab_size; ++i) Zr[i] = 0; //reset Zr to temporarily storage
@@ -261,6 +241,9 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	  minimize_symbolic(dim, str, c->p_supp_sym + i*strxdim, Zr + i*strxdim*data_ph->vocab_size, data_ph->vocab_size, data_ph->dist_mat, Zr + num_of_labels*strxdim*data_ph->vocab_size);
 	}
 
+	// re-calculate C
+	calculate_distmat(data_ph, label, size, c, C);
+	}
 	break;
       }
     }    
@@ -284,30 +267,4 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   _D2_FREE(label_count);
 
   return 0;
-}
-
-
-void accumulate_symbolic(int d, int m, int n, const int *supp /* d x n*/, const double *xx /* m x n*/, double *z /* vocab_size x d x m  */, int vocab_size) {
-  int i,j,k; double val;
-  for (i=0; i<n; ++i)
-    for (j=0; j<m; ++j) 
-      if ((val = xx[i*m + j]) > 1E-10) {
-	for (k=0; k<d; ++k)
-	  z[vocab_size*(d*j + k) + supp[i*d + k]] += val;      
-      }
-}
-
-void minimize_symbolic(int d, int m, int *supp, const double *z, const int vocab_size, const double *dist_mat, double *z_buffer) {
-  int i,j, min_idx;
-  double min ;
-  _D2_CBLAS_FUNC(gemm)(CblasColMajor, CblasNoTrans, CblasNoTrans, 
-		       vocab_size, d * m, vocab_size, 1, dist_mat, vocab_size, z, vocab_size, 0, 
-		       z_buffer, vocab_size);
-  
-  for (i=0; i<d*m; ++i, z_buffer += vocab_size) {
-    min = DBL_MAX; 
-    for (j=0; j<vocab_size; ++j) 
-      if (z_buffer[j] < min) {min = z_buffer[j]; min_idx = j;}
-    supp[i] = min_idx;
-  }
 }

@@ -7,6 +7,13 @@ typedef struct {
   int updatePerLoops;
 } BADMM_options;
 
+
+typedef struct {
+  int maxIters;
+  double stepSize;
+} GRADDEC_options;
+
+
 #define D2_CENTROID_BADMM    (0)
 #define D2_CENTROID_ADMM     (1)
 #define D2_CENTROID_GRADDEC  (2)

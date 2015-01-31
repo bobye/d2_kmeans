@@ -11,41 +11,7 @@
 #include <stdbool.h>
 #include <float.h>
 #include "d2_clustering.h"
-//#include "d2_math.h"
-
-#ifdef __APPLE__
-
-#include <Accelerate/Accelerate.h>
-#define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
-#define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
-#define _D2_MALLOC_SIZE_T(x)       (size_t *) malloc( (x) *sizeof(size_t))
-#define _D2_CALLOC_SCALAR(x)       (SCALAR *) calloc( (x) , sizeof(SCALAR)) 
-#define _D2_CALLOC_INT(x)       (int *) calloc( (x) , sizeof(int))
-#define _D2_CALLOC_SIZE_T(x)       (size_t *) calloc( (x) , sizeof(size_t))
-#define _D2_FREE(x)         free(x)
-
-#elif defined __USE_MKL__
-#include <mkl.h>
-#define _D2_MALLOC_SCALAR(x)       (SCALAR *) mkl_malloc( (x) *sizeof(SCALAR), 16) 
-#define _D2_MALLOC_INT(x)       (int *) mkl_malloc( (x) *sizeof(int), 16)
-#define _D2_MALLOC_SIZE_T(x)       (size_t *) mkl_malloc( (x) *sizeof(size_t), 16)
-#define _D2_CALLOC_SCALAR(x)       (SCALAR *) mkl_calloc( (x) , sizeof(SCALAR), 16) 
-#define _D2_CALLOC_INT(x)       (int *) mkl_calloc( (x) , sizeof(int), 16)
-#define _D2_CALLOC_SIZE_T(x)       (size_t *) mkl_calloc( (x) , sizeof(size_t), 16)
-#define _D2_FREE(x)         mkl_free(x)
-
-#elif defined __GNUC__
-#include <cblas.h>
-#include <lapacke.h>
-#define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
-#define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
-#define _D2_MALLOC_SIZE_T(x)       (size_t *) malloc( (x) *sizeof(size_t))
-#define _D2_CALLOC_SCALAR(x)       (SCALAR *) calloc( (x) , sizeof(SCALAR)) 
-#define _D2_CALLOC_INT(x)       (int *) calloc( (x) , sizeof(int))
-#define _D2_CALLOC_SIZE_T(x)       (size_t *) calloc( (x) , sizeof(size_t))
-#define _D2_FREE(x)         free(x)
-
-#endif
+#include "blas_util.h"
 
 
 /* centroid methods
@@ -57,6 +23,7 @@
 int d2_alg_type = D2_CENTROID_BADMM;
 
 extern BADMM_options *p_badmm_options;
+extern GRADDEC_options *p_graddec_options;
 
 #define PROTEIN_VOCAB_SIZE (20)
 
@@ -247,7 +214,7 @@ int d2_write_protein(const char* filename, mph *p_data) {
 
   for (i=0; i<size; ++i) {
     for (j=0; j<s_ph; ++j) 
-      if (p_data->ph[j].p_str != NULL) {
+      if (p_data->ph[j].col > 0) {
 	int dim = p_data->ph[j].dim;
 	int str = p_data->ph[j].p_str[i];
 	fprintf(fp, "%d\n", dim);
@@ -314,9 +281,11 @@ int main(int argc, char *argv[]) {
   
   printf("Centroid initialization done; start clustering ... \n");
 
-  BADMM_options ad_hoc_op = {.maxIters = 100, .rhoCoeff = 20.f, .updatePerLoops = 10};
-  p_badmm_options = &ad_hoc_op;
-  
+  BADMM_options ad_hoc_op_badmm = {.maxIters = 100, .rhoCoeff = 20.f, .updatePerLoops = 100};
+  GRADDEC_options ad_hoc_op_graddec = {.maxIters = 5, .stepSize = 1.f};
+  p_badmm_options = &ad_hoc_op_badmm;
+  p_graddec_options = &ad_hoc_op_graddec;
+
   d2_clustering(number_of_clusters, 
 		100, 
 		&data, 
