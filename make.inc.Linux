@@ -1,7 +1,10 @@
-# Linux at cyberstar
+TCC=gcc -std=gnu99
+TCXX=g++ -std=c++11
 
-MOSEK=/gpfs/home/jxy198/work/software/mosek/7/tools/platform/linux64x86
+MPICC=mpicc -D __USE_MPI__ -std=gnu99
+MPICXX=mpicxx -D __USE_MPI__ -std=c++11
+
+MOSEK=$(HOME)/mosek/7/tools/platform/osx64x86
 MOSEK_VERSION=7.0
-OTHER_LIB=-lrt
-BLAS_LIB=/usr/global/CBLAS/3.5.0/lib/cblas_LINUX.a /usr/global/BLAS/3.5.0/libblas.a -lgfortran
-
+OTHER_LIB=
+BLAS_LIB=-lblas
