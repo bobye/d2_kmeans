@@ -20,7 +20,7 @@
  * 2: Gradient Decent
  */
 #include "d2_param.h"
-int d2_alg_type = D2_CENTROID_BADMM;
+int d2_alg_type; //  = D2_CENTROID_BADMM;
 
 extern BADMM_options *p_badmm_options;
 extern GRADDEC_options *p_graddec_options;
@@ -235,7 +235,7 @@ int d2_write_protein(const char* filename, mph *p_data) {
 }
 
 
-/* $ ./protein <selected_phase> <num_of_clusters> */
+/* $ ./protein <selected_phase> <num_of_clusters> <type_of_methods> */
 int main(int argc, char *argv[]) {
   int avg_strides[3] = {20, 26, 32};
   int dimension_of_phases[3] = {1, 2, 3};
@@ -248,6 +248,8 @@ int main(int argc, char *argv[]) {
 
   mph data;
   mph c;
+
+  d2_alg_type = atoi(argv[3]);
 
   d2_read_protein(&data, 
 		  size_of_phases,
@@ -281,7 +283,7 @@ int main(int argc, char *argv[]) {
   
   printf("Centroid initialization done; start clustering ... \n");
 
-  BADMM_options ad_hoc_op_badmm = {.maxIters = 100, .rhoCoeff = 20.f, .updatePerLoops = 100};
+  BADMM_options ad_hoc_op_badmm = {.maxIters = 40, .rhoCoeff = 2.f, .updatePerLoops = 40};
   GRADDEC_options ad_hoc_op_graddec = {.maxIters = 5, .stepSize = 1.f};
   p_badmm_options = &ad_hoc_op_badmm;
   p_graddec_options = &ad_hoc_op_graddec;

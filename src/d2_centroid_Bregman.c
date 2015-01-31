@@ -11,7 +11,7 @@
 
 /* choose options */
 
-static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = 5.f, .updatePerLoops = 10};
+static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = 2.f, .updatePerLoops = 10};
 static BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .updatePerLoops = 10};
 
 
@@ -116,8 +116,10 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     for (i=0; i<size; ++i) {
       if (label_switch[i] == 1) {
 	SCALAR *p_scal = Z + str*p_str_cum[i];
-	tmp = 1./(str * p_str[i]);
-	for (j=0; j<str*p_str[i]; ++j, ++p_scal) *p_scal = tmp;
+	SCALAR *data_w_scal  = p_w + p_str_cum[i];
+	SCALAR *c_w_scal = c->p_w + label[i]*str;
+	for (j=0; j<str*p_str[i]; ++j, ++p_scal) 
+	  *p_scal =  data_w_scal[j/str] * c_w_scal[j%str];
       }
     }
   }
@@ -230,7 +232,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	for (i=0; i<size; ++i) {
 	  accumulate_symbolic(dim, str, p_str[i], 
 			      p_supp_sym + dim*p_str_cum[i], 
-			      X + str*p_str_cum[i], 
+			      Z + str*p_str_cum[i], 
 			      Zr + label[i]*strxdim*data_ph->vocab_size,
 			      data_ph->vocab_size);	  
 	}
