@@ -1,14 +1,19 @@
-CC=mpicc -std=gnu99
-CXX=mpic++ -std=c++11
-
 include make.inc
+
+ifeq ($(MPI),1)
+CC=$(MPICC)
+CXX=$(MPICXX)
+else
+CC=$(TCC)
+CXX=$(TCXX)
+endif
 
 OS=$(shell uname)
 
 ARCH_FLAGS=-m64
 CFLAGS=-Wextra -Wall -pedantic-errors -O3 $(ARCH_FLAGS)
 LDFLAGS=$(ARCH_FLAGS)
-DEFINES=-D __BLAS_LEGACY__ -D __USE_MPI__
+DEFINES=-D __BLAS_LEGACY__
 INCLUDES=-Iinclude/ -I$(MOSEK)/h
 LIBRARIES=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread $(BLAS_LIB) $(OTHER_LIB)
 
