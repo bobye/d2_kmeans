@@ -51,10 +51,10 @@ void shuffle(long *array, size_t n)
         }
     }
 }
-
+/*
 void d2_mean(sph * data, int * label, long num_of_entries, int num_of_labels, 	     
-	     /** OUT **/ SCALAR * means,
-	     /** OUT **/ SCALAR * covs) {
+	     __OUT__ SCALAR * means,
+	     __OUT__ covs) {
   long i, j;
   int k, m, idx, dim, dim2, *p_str;  
   SCALAR *p_supp, *p_w, *p_mean, *p_cov;
@@ -80,11 +80,6 @@ void d2_mean(sph * data, int * label, long num_of_entries, int num_of_labels,
   //  VPRINTF(("Means of different clusters:\n"));
   for (i=0; i<num_of_labels; ++i) {
     _D2_CBLAS_FUNC(scal)(dim, 1./counts[i], means + i*dim, 1);
-    /*
-    VPRINTF(("  mean%d= ", i+1));
-    for (j=0; j<dim; ++j) VPRINTF((SCALAR_STDIO_TYPE, means[i*dim+j]));
-    VPRINTF(("\n"));
-    */
   }
 
   p_supp = data->p_supp; p_w = data->p_w; p_str = data->p_str;  
@@ -105,22 +100,13 @@ void d2_mean(sph * data, int * label, long num_of_entries, int num_of_labels,
   //  VPRINTF(("Covariances of different clusters:\n"));
   for (i=0; i<num_of_labels; ++i) {
     _D2_CBLAS_FUNC(scal)(dim2, 1./(counts[i]-dim), covs + i*dim2, 1);
-    /*
-    VPRINTF(("  cov%d=", i+1));
-    for (j=0; j<dim; ++j) {
-      VPRINTF(("\t"));
-      for (k=0; k<dim; ++k)
-	VPRINTF((SCALAR_STDIO_TYPE, covs[i*dim2+j*dim+k]));
-      VPRINTF(("\n"));
-    }
-    */
   }
 }
 
 
   
-void d2_mvnrnd(SCALAR * mean, /** IN/OUT **/ SCALAR * cov, int d, int n, 
-	       /** OUT **/ SCALAR * sample) {
+void d2_mvnrnd(SCALAR * mean, __IN_OUT__ SCALAR * cov, int d, int n, 
+	       __OUT__ SCALAR * sample) {
   int info;
   int i,j,k;
   SCALAR *univar_sample;
@@ -149,3 +135,4 @@ void d2_mvnrnd(SCALAR * mean, /** IN/OUT **/ SCALAR * cov, int d, int n,
       sample[k] += mean[j];
   
 }
+*/

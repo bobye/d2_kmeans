@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 /* initialize with multivariate normal */
+/*
 int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   int i;
   sph *data_ph = p_data->ph + idx_ph;
@@ -48,7 +49,7 @@ int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   free(covs);
   return 0;
 }
-
+*/
 void merge_symbolic(const int dim,
 		    const int * m_supp, const SCALAR * m_w, const int m,
 		    int * c_supp, SCALAR * c_w, const int n,
