@@ -1,5 +1,5 @@
-CC=gcc -std=gnu99
-CXX=g++ -std=c++11
+CC=mpicc -std=gnu99
+CXX=mpic++ -std=c++11
 
 include make.inc
 
