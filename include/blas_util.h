@@ -24,7 +24,7 @@
 
 #elif defined __GNUC__
 #include <cblas.h>
-#include <lapacke.h>
+//#include <lapacke.h> //! hasn't used
 #define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
 #define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
 #define _D2_MALLOC_SIZE_T(x)       (size_t *) malloc( (x) *sizeof(size_t))

@@ -39,7 +39,7 @@ int d2_centroid_sphADMM(mph *p_data,
   assert(dim > 0); // current only support the D2 format
 
   if (!c0) {
-    d2_centroid_randn(p_data, idx_ph, c);// For profile purpose only
+    d2_centroid_rands(p_data, idx_ph, c);// For profile purpose only
   } else {
     *c = *c0; // warm start (for clustering purpose)
   }  
