@@ -266,6 +266,7 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
   size_t i, count = 0;
   int *label = p_data->label;
   size_t size = p_data->size;
+  double cost = 0.f;
 
   nclock_start();
 
@@ -281,6 +282,8 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 	min_distance = d; jj = j;
       }
     }
+    
+    cost += min_distance * min_distance;
 
     if (p_data->label[i] == jj) {
       if (d2_alg_type == D2_CENTROID_BADMM) {
@@ -295,7 +298,7 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
     }
   }
 
-  VPRINTF(("\t %ld objects change their labels in %f s [done]\n", count, nclock_end()));
+  VPRINTF(("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/size, nclock_end()));
   
   return count;
 }
@@ -400,6 +403,8 @@ int d2_clustering(int num_of_clusters,
     if (use_triangle) 
       d2_labeling_post(p_data, &the_centroids_copy, centroids, &var_work, selected_phase);
   }
+
+  if (use_triangle)  label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
   d2_solver_release();
 
   d2_free_work(&var_work);
