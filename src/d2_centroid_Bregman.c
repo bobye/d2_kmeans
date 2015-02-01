@@ -6,7 +6,10 @@
 #include <float.h>
 #include <assert.h>
 
-// #define __USE_MPI__ /* macro for the use of MPI */
+#ifdef __USE_MPI__
+#include <mpi.h>
+#endif
+
 
 
 /* choose options */
@@ -89,9 +92,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   if (!c0) {
     // MPI note: to be done only on one node
     d2_centroid_rands(p_data, idx_ph, c);// For profile purpose only!
-#ifdef __USE_MPI__
-    /* initialize c from one node, and broadcast to other nodes */
-#endif
+    broadcast_centroids(p_data, idx_ph);
   } else {
     *c = *c0; // warm start (for clustering purpose)
   }  
@@ -129,6 +130,10 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
    */
   label_count = _D2_CALLOC_SIZE_T(num_of_labels);    
   for (i=0; i<size; ++i) ++label_count[label[i]];
+#ifdef __USE_MPI__
+  assert(sizeof(size_t) == sizeof(uint64_t));
+  MPI_Allreduce(MPI_IN_PLACE, label_count, num_of_labels, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+#endif  
   for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
 
   // main loop
@@ -180,7 +185,8 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     for (i=0; i<size; ++i) 
       _D2_CBLAS_FUNC(axpy)(str, 1, Zr + str*i, 1, c->p_w +label[i]*str, 1);
 #ifdef __USE_MPI__
-    /* ALLREDUCE by SUM operator: vec(c->p_w, num_of_labels*str) */
+    /* ALLREDUCE by SUM operator: vec(c->p_w, c->col) */
+    MPI_Allreduce(MPI_IN_PLACE, c->p_w, c->col, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
     _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, NULL);
     
@@ -205,8 +211,10 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	  _D2_FUNC(rsum2)(str, p_str[i], X + str*p_str_cum[i], Zr + label[i]*str);
 	}
 #ifdef __USE_MPI__
-	/* ALLREDUCE by SUM operator: vec(c->p_supp, num_of_labels*str*dim) */
-	/* ALLREDUCE by SUM operator: vec(Zr, num_of_labels*str) */
+	/* ALLREDUCE by SUM operator: vec(c->p_supp, c->col*dim) */
+	MPI_Allreduce(MPI_IN_PLACE, c->p_supp, c->col * dim, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	/* ALLREDUCE by SUM operator: vec(Zr, c->col) */
+	MPI_Allreduce(MPI_IN_PLACE, Zr, c->col, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
 	for (i=0; i<num_of_labels; ++i) {
 	  _D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, Zr + i*str);
@@ -234,6 +242,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	}
 #ifdef __USE_MPI__
 	/* ALLREDUCE by SUM operator: vec(Zr, num_of_labels*str*dim*data_ph->vocab_size) */
+	MPI_Allreduce(MPI_IN_PLACE, Zr, c->col * dim * data_ph->vocab_size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
 	for (i=0; i<num_of_labels; ++i) {
 	  minimize_symbolic(dim, str, c->p_supp_sym + i*strxdim, Zr + i*strxdim*data_ph->vocab_size, data_ph->vocab_size, data_ph->dist_mat, Zr + num_of_labels*strxdim*data_ph->vocab_size);
@@ -252,10 +261,14 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     if (iter%100 == 0 || (iter < 100 && iter%20 == 0) ) {
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, X, 1);
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, Z0,1);
-      primres = _D2_CBLAS_FUNC(asum)(str*col, X, 1) / size;
-      dualres = _D2_CBLAS_FUNC(asum)(str*col,Z0, 1) / size;
+      primres = _D2_CBLAS_FUNC(asum)(str*col, X, 1);
+      dualres = _D2_CBLAS_FUNC(asum)(str*col,Z0, 1);
 #ifdef __USE_MPI__
-      /* ALLREDUCE by MEAN operator: primres, dualres */
+      /* ALLREDUCE by SUM operator: primres, dualres */
+      MPI_Allreduce(MPI_IN_PLACE, &primres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &dualres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      primres /= p_data->global_size;
+      dualres /= p_data->global_size;
 #endif
       VPRINTF("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end());
     }
