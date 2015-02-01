@@ -3,7 +3,9 @@
 #include <assert.h>
 #include "d2_clustering.h"
 #include "d2_math.h"
-
+#ifdef __USE_MPI__
+#include <mpi.h>
+#endif
 /** Load Data Set: see specification of format at README.md */
 int d2_read(const char* filename, mph *p_data) {
   FILE *fp = fopen(filename, "r+");
@@ -104,6 +106,12 @@ int d2_read(const char* filename, mph *p_data) {
   // free the pointer space
   free(p_w); free(p_supp); free(p_str); 
   fclose(fp);
+
+#ifdef __USE_MPI__
+  assert(sizeof(size_t)  == sizeof(uint64_t));
+  MPI_Allreduce(&p_data->size, &p_data->global_size, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+#endif
+
   return 0;
 }
 

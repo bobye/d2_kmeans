@@ -36,4 +36,6 @@ inline void minimize_symbolic(int d, int m, int *supp, const double *z, const in
 void calculate_distmat(sph *data_ph, int* label, size_t size, sph *c, SCALAR* C);
 
 
+void broadcast_centroids(mph *centroids, int i);
+
 #endif /* _D2_CENTROID_UTIL_H_ */

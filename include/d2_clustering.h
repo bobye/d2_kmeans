@@ -91,6 +91,7 @@ extern "C" {
   typedef struct {
     int s_ph; /* size of phases */
     size_t size; /* size of entries */
+    size_t global_size;
     int *label;
     int num_of_labels;
     sph *ph;
