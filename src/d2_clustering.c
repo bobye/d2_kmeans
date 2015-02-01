@@ -8,7 +8,10 @@
 #include "d2_math.h"
 #include "d2_solver.h"
 #include "d2_param.h"
-
+#include "d2_centroid_util.h"
+#ifdef __USE_MPI__
+#include <mpi.h>
+#endif
 extern int d2_alg_type;
 
 
@@ -179,6 +182,11 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
   }
   }
 
+#ifdef __USE_MPI__
+  assert(sizeof(size_t)  == sizeof(uint64_t));
+  MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+#endif
+
   VPRINTF("\n\t\t\t\t %ld objects change their labels\n\t\t\t\t %ld distance pairs computed\n\t\t\t\t seconds: %f\n", count, dist_count, nclock_end());
   
   return count;
@@ -299,6 +307,11 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
     }
   }
 
+#ifdef __USE_MPI__
+  assert(sizeof(size_t)  == sizeof(uint64_t));
+  MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+#endif
+
   VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/size, nclock_end());
   
   return count;
@@ -325,7 +338,7 @@ int d2_clustering(int num_of_clusters,
   // int *label = p_data->label;
   size_t label_change_count;
   var_mph var_work = {.tr = {NULL, NULL, NULL, NULL, NULL}};
-  mph the_centroids_copy = {0, 0, NULL, 0, NULL};
+  mph the_centroids_copy = {0, 0, 0, NULL, 0, NULL};
 
   assert(num_of_clusters>0 && max_iter > 0 && selected_phase < s_ph);
 
@@ -345,15 +358,12 @@ int d2_clustering(int num_of_clusters,
       d2_allocate_sph(&centroids->ph[i],  p_data->ph[i].dim, p_data->ph[i].str, p_data->num_of_labels, 0.);
       /* initialize centroids from random samples */
       d2_centroid_rands(p_data, i, &centroids->ph[i]);
+      broadcast_centroids(centroids, i);
     } else {
       centroids->ph[i].col = 0;
     }
   //  d2_write(NULL, centroids); 
   VPRINTF("[done]\n");
-
-#ifdef __USE_MPI__
-  /* initialize centroids from one node, and broadcast to other nodes */
-#endif
   }
 
 
@@ -378,7 +388,7 @@ int d2_clustering(int num_of_clusters,
       label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
 
     /* termination criterion */
-    if (label_change_count < 0.005 * size) {
+    if (label_change_count < 0.005 * p_data->global_size) {
       VPRINTF("Terminate!\n");
       break;
     }
