@@ -154,10 +154,12 @@ int main(int argc, char *argv[])
   mph c; 
   c.ph = NULL; // make sure c is (re-)initialized 
 
+  if (world_rank == 0) {
   if (selected_phase >= 0 && size_of_phases > 1) {
     cout << "Clustering upon " << selected_phase <<"-th phase" << endl;
   } else if (selected_phase < 0 && size_of_phases == 1) {
     cout << "Clustering upon all phases (more than one)" << endl;
+  }
   }
 
   d2_clustering(number_of_clusters, 
