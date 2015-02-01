@@ -1,5 +1,7 @@
 include make.inc
 
+MPI=1
+
 ifeq ($(MPI),1)
 CC=$(MPICC)
 CXX=$(MPICXX)
