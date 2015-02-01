@@ -110,6 +110,8 @@ int d2_read(const char* filename, mph *p_data) {
 #ifdef __USE_MPI__
   assert(sizeof(size_t)  == sizeof(uint64_t));
   MPI_Allreduce(&p_data->size, &p_data->global_size, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+#else
+  p_data->global_size = p_data->size;
 #endif
 
   return 0;
