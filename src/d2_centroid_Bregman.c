@@ -21,8 +21,6 @@ static BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .up
 BADMM_options *p_badmm_options = &badmm_clu_options;
  
 int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwork) {
-  size_t i; int j;
-  SCALAR tmp;
   assert(ph->str > 0 && ph->col > 0 && size > 0);
   var_phwork->X = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->X);
   var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Z);
@@ -86,7 +84,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   size_t i; int j;
   int max_niter = p_badmm_options->maxIters, iter;
   SCALAR rho, obj, primres, dualres;
-  SCALAR tmp, *Z0;
+  SCALAR *Z0;
   size_t *label_count;
 
   /* Initialization */
