@@ -12,7 +12,9 @@
 #include <float.h>
 #include "d2_clustering.h"
 #include "blas_util.h"
-
+#ifdef __USE_MPI__
+#include <mpi.h>
+#endif
 
 /* centroid methods
  * 0: Bregman ADMM
@@ -21,7 +23,7 @@
  */
 #include "d2_param.h"
 int d2_alg_type; //  = D2_CENTROID_BADMM;
-int world_rank;
+int world_rank = 0;
 
 extern BADMM_options *p_badmm_options;
 extern GRADDEC_options *p_graddec_options;
@@ -238,6 +240,10 @@ int d2_write_protein(const char* filename, mph *p_data) {
 
 /* $ ./protein <selected_phase> <num_of_clusters> <type_of_methods> */
 int main(int argc, char *argv[]) {
+#ifdef __USE_MPI__
+  MPI_Init(NULL, NULL);
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+#endif
   int avg_strides[3] = {20, 26, 32};
   int dimension_of_phases[3] = {1, 2, 3};
   int size_of_phases = 3;
@@ -303,5 +309,8 @@ int main(int argc, char *argv[]) {
   d2_free(&data);
   d2_free(&c);
 
+#ifdef __USE_MPI__
+  MPI_Finalize();
+#endif
   return 0;
 }
