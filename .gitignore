@@ -5,4 +5,5 @@
 *.txt
 *.pdf
 *.mat
-*.dat
+*.dat*
+*.d2*
