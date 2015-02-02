@@ -72,6 +72,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   SCALAR *Z = var_work->l_var_sphBregman[idx_ph].Z;
   SCALAR *Xc= var_work->l_var_sphBregman[idx_ph].Xc;
   SCALAR *Zr= var_work->l_var_sphBregman[idx_ph].Zr; 
+  SCALAR *Zr2 = Zr; char hasZr2 = 0;
 
   /**
    * MPI notes: vector needs synchronized __USE_MPI__ : 
@@ -122,7 +123,10 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   }
   // allocate buffer of Z
   Z0 = _D2_MALLOC_SCALAR(str*col);
-
+  if (num_of_labels * (strxdim * data_ph->vocab_size + 1) < size && data_ph->metric_type == D2_N_GRAM) {
+    Zr2 = _D2_MALLOC_SCALAR(str * num_of_labels * (strxdim * data_ph->vocab_size + 1));    
+    hasZr2 = 1;
+  }
   /**
    *  Calculate labels counts:
    *  it could be possible that some clusters might not have any instances,
@@ -230,22 +234,22 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
       case D2_N_GRAM :
 	if (iter > 0) {
-	assert(num_of_labels * (strxdim * data_ph->vocab_size + 1) <= size);
+	  //assert(num_of_labels * (strxdim * data_ph->vocab_size + 1) <= size);
 
-	for (i=0; i<num_of_labels*strxdim*data_ph->vocab_size; ++i) Zr[i] = 0; //reset Zr to temporarily storage
+	for (i=0; i<num_of_labels*strxdim*data_ph->vocab_size; ++i) Zr2[i] = 0; //reset Zr to temporarily storage
 	for (i=0; i<size; ++i) {
 	  accumulate_symbolic(dim, str, p_str[i], 
 			      p_supp_sym + dim*p_str_cum[i], 
 			      Z + str*p_str_cum[i], 
-			      Zr + label[i]*strxdim*data_ph->vocab_size,
+			      Zr2 + label[i]*strxdim*data_ph->vocab_size,
 			      data_ph->vocab_size);	  
 	}
 #ifdef __USE_MPI__
-	/* ALLREDUCE by SUM operator: vec(Zr, num_of_labels*str*dim*data_ph->vocab_size) */
-	MPI_Allreduce(MPI_IN_PLACE, Zr, c->col * dim * data_ph->vocab_size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	/* ALLREDUCE by SUM operator: vec(Zr2, num_of_labels*str*dim*data_ph->vocab_size) */
+	MPI_Allreduce(MPI_IN_PLACE, Zr2, c->col * dim * data_ph->vocab_size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
 	for (i=0; i<num_of_labels; ++i) {
-	  minimize_symbolic(dim, str, c->p_supp_sym + i*strxdim, Zr + i*strxdim*data_ph->vocab_size, data_ph->vocab_size, data_ph->dist_mat, Zr + num_of_labels*strxdim*data_ph->vocab_size);
+	  minimize_symbolic(dim, str, c->p_supp_sym + i*strxdim, Zr2 + i*strxdim*data_ph->vocab_size, data_ph->vocab_size, data_ph->dist_mat, Zr2 + num_of_labels*strxdim*data_ph->vocab_size);
 	}
 
 	// re-calculate C
@@ -268,16 +272,16 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
       MPI_Allreduce(MPI_IN_PLACE, &obj,     1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &primres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &dualres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+#endif
       obj     /= p_data->global_size;
       primres /= p_data->global_size;
       dualres /= p_data->global_size;
-#endif
       VPRINTF("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end());
     }
   }
 
   _D2_FREE(Z0);
   _D2_FREE(label_count);
-
+  if (hasZr2) _D2_FREE(Zr2);
   return 0;
 }
