@@ -51,7 +51,7 @@ int d2_read(const char* filename, mph *p_data) {
       // read dimension and stride    
       c=fscanf(fp, "%d", &dim); 
       if (c!=1) {
-	printf("rank %d warning: only read %ld d2!\n", world_rank, i);
+	printf("rank %d warning: only read %zd d2!\n", world_rank, i);
 	p_data->size = i;
 	size = i; break;
       }
@@ -122,7 +122,7 @@ int d2_write(const char* filename, mph *p_data) {
   size_t i;
   const int s_ph = p_data->s_ph;
   const size_t size = p_data->size;
-
+  if (world_rank == 0) {
   fp = filename? fopen(filename, "w+") : stdout;
   assert(fp);
 
@@ -146,6 +146,7 @@ int d2_write(const char* filename, mph *p_data) {
   }
 
   if (filename) fclose(fp);
+  }
   return 0;
 }
 
