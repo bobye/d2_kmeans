@@ -1,6 +1,8 @@
 include make.inc
 
+ifndef MPI
 MPI=1
+endif
 
 ifeq ($(MPI),1)
 CC=$(MPICC)
