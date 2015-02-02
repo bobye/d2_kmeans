@@ -49,6 +49,7 @@ double d2_compute_distance(mph *a, size_t i,
 				  NULL, // x and lambda are implemented later
 				  NULL,
 				  index);
+	d += val;
 	break;
       case D2_HISTOGRAM :
 	val = d2_match_by_distmat(b_sph->p_str[j],
@@ -58,6 +59,7 @@ double d2_compute_distance(mph *a, size_t i,
 				  a_sph->p_w + a_sph->p_str_cum[i], 
 				  NULL, NULL,
 				  index);
+	d += val;
 	break;	
       case D2_N_GRAM : 
 	_D2_FUNC(pdist_symbolic)(dim, 
@@ -76,12 +78,11 @@ double d2_compute_distance(mph *a, size_t i,
 				  a_sph->p_w + a_sph->p_str_cum[i], 
 				  NULL, // x and lambda are implemented later
 				  NULL,
-				  index);
+				  index) / dim;
 
-
+	d += 2*val;	
 	break;
       }
-      d += val;
     }
   return sqrt(d);
 }

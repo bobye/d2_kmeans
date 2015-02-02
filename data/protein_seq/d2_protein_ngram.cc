@@ -210,7 +210,7 @@ int d2_read_protein(const char* name,
 #else
     sprintf(filename, "%s_%zdgram.dat", name, i+1);
 #endif
-    VPRINTF("Load %s ...\n", filename);
+    printf("Load %s ...\n", filename);
     d2_allocate_sph_protein(p_data->ph + i, 
 			dimension_of_phases[i], 
 			avg_strides[i], 
@@ -377,7 +377,7 @@ int main(int argc, char *argv[]) {
   
   VPRINTF("Centroid initialization done; start clustering ... \n");
 
-  BADMM_options ad_hoc_op_badmm = {.maxIters = 40, .rhoCoeff = 2.f, .updatePerLoops = 40};
+  BADMM_options ad_hoc_op_badmm = {.maxIters = 40, .rhoCoeff = 1.f, .updatePerLoops = 40};
   GRADDEC_options ad_hoc_op_graddec = {.maxIters = 5, .stepSize = 1.f};
   p_badmm_options = &ad_hoc_op_badmm;
   p_graddec_options = &ad_hoc_op_graddec;
