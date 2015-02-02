@@ -261,16 +261,18 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
     /*************************************************************************/
     // step 6: check residuals
-    obj = _D2_CBLAS_FUNC(dot)(str*col, C, 1, X, 1) / size;
     if (iter%100 == 0 || (iter < 100 && iter%20 == 0) ) {
+      obj = _D2_CBLAS_FUNC(dot)(str*col, C, 1, X, 1);
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, X, 1);
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, Z0,1);
       primres = _D2_CBLAS_FUNC(asum)(str*col, X, 1);
       dualres = _D2_CBLAS_FUNC(asum)(str*col,Z0, 1);
 #ifdef __USE_MPI__
-      /* ALLREDUCE by SUM operator: primres, dualres */
+      /* ALLREDUCE by SUM operator: obj, primres, dualres */
+      MPI_Allreduce(MPI_IN_PLACE, &obj,     1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &primres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &dualres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      obj     /= p_data->global_size;
       primres /= p_data->global_size;
       dualres /= p_data->global_size;
 #endif
