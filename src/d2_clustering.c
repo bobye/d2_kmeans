@@ -310,9 +310,10 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 #ifdef __USE_MPI__
   assert(sizeof(size_t)  == sizeof(uint64_t));
   MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &cost,  1, MPI_DOUBLE,   MPI_SUM, MPI_COMM_WORLD);
 #endif
 
-  VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/size, nclock_end());
+  VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/p_data->global_size, nclock_end());
   
   return count;
 }
