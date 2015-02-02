@@ -9,6 +9,7 @@ extern "C" {
 #define __OUT__ 
 #define __IN_OUT__
 
+#include <stdint.h> // for -std=gnu99
 
 #define _D2_DOUBLE
 #define _VERBOSE_OUTPUT
