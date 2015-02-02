@@ -41,6 +41,8 @@ void shuffle(size_t *array, size_t n)
   // srand (time(NULL));
     if (n > 1) 
     {
+      int k;
+      for (k=0; k<10; ++k) {
         size_t i;
         for (i = 0; i < n - 1; i++) 
         {
@@ -49,6 +51,7 @@ void shuffle(size_t *array, size_t n)
           array[j] = array[i];
           array[i] = t;
         }
+      }
     }
 }
 /*
