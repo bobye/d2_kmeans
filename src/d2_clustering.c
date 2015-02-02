@@ -118,8 +118,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
     for (j=i+1; j<num_of_labels; ++j) {
       double d;
       d = d2_compute_distance(centroids, i, centroids, j, selected_phase, var_work, p_data->size + i); 
-      dist_count +=1;
-
+      //      dist_count +=1;
       p_tr->c[i*num_of_labels + j] = d; 
       p_tr->c[i + j*num_of_labels] = d;
 
@@ -185,6 +184,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
 #ifdef __USE_MPI__
   assert(sizeof(size_t)  == sizeof(uint64_t));
   MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &dist_count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 #endif
 
   VPRINTF("\n\t\t\t\t %ld objects change their labels\n\t\t\t\t %ld distance pairs computed\n\t\t\t\t seconds: %f\n", count, dist_count, nclock_end());
