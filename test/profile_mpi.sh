@@ -2,12 +2,12 @@
 
 ## Parameters 
 num_of_nodes=8 # MPI processors
-meta_class=500 # variability of population
+meta_class=50 # variability of population
 
-dim_of_vec=8
-size_of_bag=16
+dim_of_vec=64
+size_of_bag=64
 k=16
-total_size=12800
+total_size=1280
 max_iter=20
 
 filename="${total_size}_${dim_of_vec}_${size_of_bag}_${meta_class}"
