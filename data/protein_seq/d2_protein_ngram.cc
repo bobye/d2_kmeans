@@ -12,6 +12,7 @@
 #include <float.h>
 #include "d2_clustering.h"
 #include "blas_util.h"
+#include "d2_math.h"
 #ifdef __USE_MPI__
 #include <mpi.h>
 #endif
@@ -236,8 +237,74 @@ int d2_write_protein(const char* filename, mph *p_data) {
   return 0;
 }
 
+int d2_write_protein_split(const char* filename, mph *p_data, int splits) {
+  const int s_ph = p_data->s_ph;
+  const size_t size = p_data->size; 
+  size_t *indices, batch_size, n;
+  int **p_supp; double **p_w; 
+  int m, j;
+  
+  assert(filename != NULL && splits > 1);
 
-/* $ ./protein <selected_phase> <num_of_clusters> <type_of_methods> */
+  p_supp = (int **) malloc(s_ph * sizeof(int *));
+  p_w    = (double **) malloc(s_ph * sizeof(double *));
+  
+  for (n=0; n<s_ph; ++n) {
+    p_supp[n] = p_data->ph[n].p_supp_sym;
+    p_w[n]    = p_data->ph[n].p_w;
+  }
+
+  indices = _D2_MALLOC_SIZE_T(size);
+  for (n = 0; n < size; ++n) indices[n] = n; shuffle(indices, size);
+  batch_size = 1 + (size-1) / splits;
+  VPRINTF("batch_size: %zd\n", batch_size);
+
+  for (j=0; j<s_ph; ++j) for (m=0; m<splits; ++m) {
+    size_t idx;
+    FILE *fp = NULL;
+    char local_filename[255];
+    sprintf(local_filename, "%s_%dgram.dat.%d", filename, j+1, m);
+
+    fp = fopen(local_filename, "w+");
+    assert(fp);
+
+    /* print header */
+    fprintf(fp, "Seq # %zd\n", (size < batch_size * (m+1) ? (size- batch_size * m) : batch_size));
+    fprintf(fp, "Class # 0\n");
+
+    for (idx=batch_size*m; idx<size && idx<batch_size*(m+1); ++idx) {
+      size_t i = indices[idx];
+      int dim = p_data->ph[j].dim, d, k;
+      int str = p_data->ph[j].p_str[i];
+
+      fprintf(fp, "Q00000 0\n");
+      fprintf(fp, "%d\n", dim);
+      fprintf(fp, "%d\n", str);
+      for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[j][k]);
+      fprintf(fp, "\n"); p_w[j] += str;
+      for (k=0; k<str; ++k) {
+	for (d=0; d<dim; ++d) fprintf(fp, "%c", reverseKey[p_supp[j][d]]);
+	fprintf(fp, " "); p_supp[j] += dim;
+      }
+      fprintf(fp, "\n\n");
+    }
+
+    fclose(fp);
+    VPRINTF("\twrite %zd objects to %s\n", idx - batch_size * m, local_filename);
+  }  
+
+  free(p_supp); free(p_w);
+
+  return 0;
+}
+
+/**
+ * $ ./protein <selected_phase> <num_of_clusters> <type_of_methods> 
+ * 
+ * if num_of_clusters >= 1: clustering
+ * if num_of_clusters < -1: prepare data batches
+ *
+ */
 int main(int argc, char *argv[]) {
 #ifdef __USE_MPI__
   MPI_Init(NULL, NULL);
@@ -264,7 +331,13 @@ int main(int argc, char *argv[]) {
 		  &dimension_of_phases[0]);
 
 
-  {
+
+
+  if (number_of_clusters < -1) {
+    if (world_rank == 0)
+      d2_write_protein_split("protein", &data, -number_of_clusters);
+  }
+  else {
   // MPI note: to be done only on one node
   c.s_ph = size_of_phases;
   c.size = number_of_clusters;
@@ -285,7 +358,6 @@ int main(int argc, char *argv[]) {
       c.ph[i].col = 0;
     }
   }  
-  }
   
   printf("Centroid initialization done; start clustering ... \n");
 
@@ -304,9 +376,10 @@ int main(int argc, char *argv[]) {
 
   // MPI note: to be done only on one node
   d2_write_protein(NULL, &c); // output centroids
+  d2_free(&c);
+  }
 
   d2_free(&data);
-  d2_free(&c);
 
 #ifdef __USE_MPI__
   MPI_Finalize();
