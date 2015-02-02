@@ -21,8 +21,8 @@ int d2_allocate_sph(sph *p_data_sph,
 		    const size_t num,
 		    double semicol) {
 
-  int n, m;
-  assert(stride >0 && num >0);
+  size_t n, m;
+  assert(stride >0 && num >0 && semicol >= 0);
 
   n = num * (stride + semicol) * d; // pre-allocate
   m = num * (stride + semicol); p_data_sph->max_col = m;
@@ -55,17 +55,21 @@ int d2_allocate_sph(sph *p_data_sph,
  * Free the space of a single phase
  */
 int d2_free_sph(sph *p_data_sph) {
+  _D2_FREE(p_data_sph->p_w);
   _D2_FREE(p_data_sph->p_str);
   _D2_FREE(p_data_sph->p_str_cum);
+
   if (p_data_sph->metric_type == D2_EUCLIDEAN_L2 ||
       p_data_sph->metric_type == D2_CITYBLOCK_L1) {
     _D2_FREE(p_data_sph->p_supp);
   }
-  else if (p_data_sph->metric_type == D2_HISTOGRAM ||
-	   p_data_sph->metric_type == D2_N_GRAM) {
+  else if (p_data_sph->metric_type == D2_HISTOGRAM) {
     _D2_FREE(p_data_sph->dist_mat);
   }
-  _D2_FREE(p_data_sph->p_w);
+  else if (p_data_sph->metric_type == D2_N_GRAM) {
+    _D2_FREE(p_data_sph->p_supp_sym);
+    _D2_FREE(p_data_sph->dist_mat);
+  }
   return 0;
 }
 
@@ -84,7 +88,7 @@ int d2_allocate(mph *p_data,
 					   of bins of data objects.
 					*/
 		const int *dimension_of_phases) {
-  int i;
+  size_t i;
   int success = 0;
 
   p_data->s_ph = size_of_phases;
@@ -132,9 +136,10 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
   var_work->s_ph = p_data->s_ph;
 
   var_work->g_var = (var_sph *) malloc(p_data->s_ph * sizeof(var_sph));
-  if (d2_alg_type == D2_CENTROID_BADMM) 
-    var_work->l_var_sphBregman = (var_sphBregman *) malloc(p_data->s_ph * sizeof(var_sphBregman));
-
+  if (d2_alg_type == D2_CENTROID_BADMM) {
+      var_work->l_var_sphBregman = (var_sphBregman *) malloc(p_data->s_ph * sizeof(var_sphBregman));
+      assert(var_work->l_var_sphBregman);
+  }
   for (i=0; i<p_data->s_ph; ++i) {
     int str = p_data->ph[i].str;
     int col = p_data->ph[i].col;
@@ -154,14 +159,13 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
       var_work->g_var[i].X = _D2_MALLOC_SCALAR(str * col);
       assert(var_work->g_var[i].X);
     }
-    if (d2_alg_type == D2_CENTROID_GRADDEC || d2_alg_type == D2_CENTROID_ADMM) {
+    if (d2_alg_type == D2_CENTROID_GRADDEC) {
       var_work->g_var[i].X = _D2_MALLOC_SCALAR(str * (col + num_of_labels * str));
       var_work->g_var[i].L = _D2_MALLOC_SCALAR(str * (size + num_of_labels));
       assert(var_work->g_var[i].X);
       assert(var_work->g_var[i].L);
     }
   }
-
   var_work->label_switch = (char *) malloc(size * sizeof(char)); 
 
   if (use_triangle) {
@@ -194,10 +198,10 @@ int d2_free_work(var_mph *var_work) {
       d2_free_work_sphBregman(var_work->l_var_sphBregman + i);
     }
   }
-  free(var_work->g_var);
-  if (d2_alg_type == D2_CENTROID_BADMM) free(var_work->l_var_sphBregman);
-  free(var_work->label_switch);
 
+  if (var_work->g_var) free(var_work->g_var);
+  if (d2_alg_type == D2_CENTROID_BADMM) free(var_work->l_var_sphBregman);
+  if (var_work->label_switch) free(var_work->label_switch);
   if (p_tr->l) _D2_FREE(p_tr->l);
   if (p_tr->u) _D2_FREE(p_tr->u);
   if (p_tr->s) _D2_FREE(p_tr->s);

@@ -152,7 +152,6 @@ void merge         (const int dim,
       j++;
     }
   assert(j == n);
-
   _D2_FREE(D); _D2_FREE(supp); _D2_FREE(w);
 }
 
@@ -163,6 +162,7 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   int num_of_labels = p_data->num_of_labels;
   int dim = data_ph->dim;
   int str = data_ph->str;
+  int vocab_size = data_ph->vocab_size;
   long size = p_data->size;
   int strxdim = str*dim;
 
@@ -180,7 +180,7 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
 
   // set vocab_size and dist_mat
   if (data_ph->metric_type == D2_HISTOGRAM || data_ph->metric_type == D2_N_GRAM) {
-    for (i=0; i<str * str; ++i) c->dist_mat[i] = data_ph->dist_mat[i];
+    for (i=0; i<vocab_size * vocab_size; ++i) c->dist_mat[i] = data_ph->dist_mat[i];
     c->vocab_size = data_ph->vocab_size;
   }
   
