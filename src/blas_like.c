@@ -14,6 +14,11 @@ void _dgzero(size_t n, double *a) {
   for (i=0; i<n; ++i) assert(a[i] > 1E-10);
 }
 
+void _dadd(size_t n, double *a, double b) {
+  size_t i;
+  for (i=0; i<n; ++i) a[i] += b;
+}
+
 // a(:,*) = a(:,*) .+ b
 void _dgcmv(size_t m, size_t n, double *a, double *b) {
   size_t i,j;
@@ -64,7 +69,7 @@ void _dicms(size_t m, size_t n, double *a, double *b) {
 void _dirms(size_t m, size_t n, double *a, double *b) {
   size_t i,j;
   double *pa, *pb;
-  for (i=0; i<n; ++i) {assert(b[i] > 0);}
+  for (i=0; i<n; ++i) assert(b[i] > 0);
   for (i=0,pa=a,pb=b; i<n; ++i,++pb) {
     for (j=0; j<m; ++j, ++pa)
       *pa /= *pb;
@@ -123,6 +128,7 @@ void _dcnorm(size_t m, size_t n, double *a, double *sa) {
     sa = _D2_MALLOC_SCALAR(n);
   }    
   _dcsum(m, n, a, sa);
+  for (i=0; i<n; ++i) assert(sa[i] > 0);
   for (i=0, pa=sa; i<n; ++i, ++pa) {
     for (j=0; j<m; ++j, ++a) (*a) /= *pa;
   }
@@ -139,6 +145,7 @@ void _drnorm(size_t m, size_t n, double *a, double *sa) {
     sa = _D2_MALLOC_SCALAR(m);
   }    
   _drsum(m, n, a, sa);
+  for (i=0; i<m; ++i) assert(sa[i] > 0);
   for (i=0; i<n; ++i) {
     pa = sa;
     for (j=0; j<m; ++j, ++a, ++pa) (*a) /= *pa;
