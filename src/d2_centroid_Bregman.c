@@ -20,26 +20,22 @@ BADMM_options *p_badmm_options = &badmm_clu_options;
 int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwork) {
   size_t i; int j;
   SCALAR tmp;
-  var_phwork->X = _D2_MALLOC_SCALAR (ph->str * ph->col);
-  var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col);
-  var_phwork->Xc= _D2_MALLOC_SCALAR (ph->col);
-  var_phwork->Zr= _D2_MALLOC_SCALAR (ph->str * size);
-  var_phwork->Y = _D2_CALLOC_SCALAR (ph->str * ph->col); // initialized
+  assert(ph->str > 0 && ph->col > 0 && size > 0);
+  var_phwork->X = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->X);
+  var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Z);
+  var_phwork->Xc= _D2_MALLOC_SCALAR (ph->col);           assert(var_phwork->Xc);
+  var_phwork->Zr= _D2_MALLOC_SCALAR (ph->str * size);    assert(var_phwork->Zr);
+  var_phwork->Y = _D2_CALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Y); // initialized
 
-  for (i=0; i<size; ++i) {
-    SCALAR *p_scal = var_phwork->Z + ph->str*ph->p_str_cum[i];
-    tmp = 1./(ph->str * ph->p_str[i]);
-    for (j=0; j<ph->str*ph->p_str[i]; ++j, ++p_scal) *p_scal = tmp;
-  }
   return 0;
 }
 
 int d2_free_work_sphBregman(var_sphBregman *var_phwork) {
-  _D2_FREE(var_phwork->X);
-  _D2_FREE(var_phwork->Z);
-  _D2_FREE(var_phwork->Y);
-  _D2_FREE(var_phwork->Xc);
-  _D2_FREE(var_phwork->Zr);
+  if (var_phwork->X) _D2_FREE(var_phwork->X);
+  if (var_phwork->Z) _D2_FREE(var_phwork->Z);
+  if (var_phwork->Y) _D2_FREE(var_phwork->Y);
+  if (var_phwork->Xc)_D2_FREE(var_phwork->Xc);
+  if (var_phwork->Zr)_D2_FREE(var_phwork->Zr);
   return 0;
 }
 

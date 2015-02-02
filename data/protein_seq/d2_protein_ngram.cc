@@ -37,7 +37,7 @@ int d2_allocate_sph_protein(sph *p_data_sph,
 		    const size_t num,
 		    double semicol) {
 
-  int n, m;
+  size_t n, m;
   assert(stride >0 && num >0);
 
   n = num * (stride + semicol) * d; // pre-allocate
@@ -46,18 +46,17 @@ int d2_allocate_sph_protein(sph *p_data_sph,
   p_data_sph->dim = d;  
   p_data_sph->str = stride;
   p_data_sph->col = 0;
-  //  p_data_sph->size = num;
 
 
-  p_data_sph->p_str  = _D2_CALLOC_INT(num);
-  p_data_sph->p_str_cum  = _D2_CALLOC_SIZE_T(num);
-  p_data_sph->p_w    = _D2_MALLOC_SCALAR(m);
+  p_data_sph->p_str  = _D2_CALLOC_INT(num); assert(p_data_sph->p_str);
+  p_data_sph->p_str_cum  = _D2_CALLOC_SIZE_T(num); assert(p_data_sph->p_str_cum);
+  p_data_sph->p_w    = _D2_MALLOC_SCALAR(m); assert(p_data_sph->p_w);
 
 
   p_data_sph->p_supp_sym = _D2_MALLOC_INT(n);
 
   p_data_sph->vocab_size = PROTEIN_VOCAB_SIZE; // 20 types of amino acids
-  p_data_sph->dist_mat = _D2_MALLOC_SCALAR( p_data_sph->vocab_size * p_data_sph->vocab_size);
+  p_data_sph->dist_mat = _D2_MALLOC_SCALAR(PROTEIN_VOCAB_SIZE*PROTEIN_VOCAB_SIZE); assert(p_data_sph->dist_mat);
 
   p_data_sph->metric_type = D2_N_GRAM;
 
@@ -167,7 +166,7 @@ int d2_read_protein(mph *p_data,
 					   of bins of data objects.
 					*/
 		const int *dimension_of_phases) {
-  int i;
+  size_t i;
   int success = 0;
 
   p_data->s_ph = size_of_phases;
@@ -181,7 +180,7 @@ int d2_read_protein(mph *p_data,
 
   for (i=0; i<p_data->s_ph; ++i) {
     char filename[255];
-    sprintf(filename, "protein_%dgram.dat", i+1);
+    sprintf(filename, "protein_%zdgram.dat", i+1);
     printf("Load %s ...\n", filename);
     d2_allocate_sph_protein(p_data->ph + i, 
 			dimension_of_phases[i], 
@@ -262,7 +261,7 @@ int main(int argc, char *argv[]) {
   // MPI note: to be done only on one node
   c.s_ph = size_of_phases;
   c.size = number_of_clusters;
-  c.ph = (sph *) malloc (c.s_ph * sizeof(sph));
+  c.ph = (sph *) malloc (c.s_ph * sizeof(sph));  
   data.num_of_labels = number_of_clusters;
 
   for (i=0; i<c.s_ph; ++i) {
