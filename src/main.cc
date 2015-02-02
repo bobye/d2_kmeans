@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
   int selected_phase = -1; 
   int number_of_clusters = 3; 
   int max_iters = 50; 
+  size_t num_of_batches = 0; // default not used, for prepare data only
 
   /* IO specification */
   int ch;
@@ -52,12 +53,13 @@ int main(int argc, char *argv[])
     {"max_iters", 1, 0, 'm'},
     {"centroid_method", 1, 0, 'M'},
     {"non_triangle", 0, 0, 'T'},
+    {"prepare_batches", 1, 0, 'P'},
     {NULL, 0, NULL, 0}
   };
 
   /* [BEGIN] Parsing program arguments */
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:T", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:TP:", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
@@ -92,6 +94,9 @@ int main(int argc, char *argv[])
       break;
     case 'T':
       use_triangle = false;
+      break;
+    case 'P':
+      num_of_batches = atoi(optarg); assert(num_of_batches > 0);
       break;
     default:
       printf ("?? getopt returned character code 0%o ??\n", ch);
@@ -139,14 +144,23 @@ int main(int argc, char *argv[])
 			&dimension_of_phases[0]);
 
 
-  if (err == 0) {  
+  if (err == 0 && num_of_batches == 0) {  
 #ifdef __USE_MPI__
     string fn(filename);
     d2_read((fn + '.' + to_string(world_rank)).c_str(), &data);  
 #else
     d2_read(filename, &data);  
 #endif
-  } else {
+  } else if (num_of_batches > 0 && world_rank == 0) {
+    d2_read(filename, &data);      
+    d2_write_split(filename, &data, num_of_batches);    
+    d2_free(&data);
+    if (world_rank == 0) {  cout << "[Finish!]" <<endl; }
+#ifdef __USE_MPI__
+  MPI_Finalize();
+#endif
+    return 0;
+  } else if (err != 0) {
     cerr << "Allocation Failed!" << endl;
   }
   

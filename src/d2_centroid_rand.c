@@ -157,13 +157,13 @@ void merge         (const int dim,
 
 /* initialize with random samples */
 int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
-  long i, j, k, *array;
+  size_t i, j, k, *array;
   sph *data_ph = p_data->ph + idx_ph;
-  int num_of_labels = p_data->num_of_labels;
+  size_t num_of_labels = p_data->num_of_labels;
   int dim = data_ph->dim;
   int str = data_ph->str;
   int vocab_size = data_ph->vocab_size;
-  long size = p_data->size;
+  size_t size = p_data->size;
   int strxdim = str*dim;
 
   SCALAR *m_supp, *m_w;
@@ -185,7 +185,7 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   }
   
   // generate index array
-  array = (long *) malloc(size * sizeof(long));
+  array = _D2_MALLOC_SIZE_T(size);
   for (i = 0; i < size; ++i) array[i] = i;
   shuffle(array, size);
 
