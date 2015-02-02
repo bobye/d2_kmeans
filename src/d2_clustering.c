@@ -356,6 +356,7 @@ int d2_clustering(int num_of_clusters,
 #endif
   }
 
+  assert(centroids->s_ph == s_ph && centroids->size == num_of_clusters);
 
   // allocate initialize auxiliary variables
   d2_allocate_work(p_data, &var_work, use_triangle);
@@ -409,7 +410,7 @@ int d2_clustering(int num_of_clusters,
   d2_solver_release();
 
   d2_free_work(&var_work);
-  d2_free(&the_centroids_copy);
+  if (use_triangle) d2_free(&the_centroids_copy);
   return 0;
 }
 
