@@ -26,7 +26,6 @@ static void MSKAPI printstr(void *handle,
 
 void d2_solver_setup(size_t num) {
   MSKrescodee r;
-  size_t i;
   /* Create the mosek environment. */
   r = MSK_makeenv(&env, NULL);
 
