@@ -21,12 +21,14 @@
 #include "d2_param.h"
 int d2_alg_type = D2_CENTROID_BADMM;
 int world_rank = 0; 
+int nprocs;
 
 int main(int argc, char *argv[])
 { 
 #ifdef __USE_MPI__
   MPI_Init(NULL, NULL);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 #endif
 
   using namespace std;
@@ -146,8 +148,12 @@ int main(int argc, char *argv[])
 
   if (err == 0 && num_of_batches == 0) {  
 #ifdef __USE_MPI__
+    if (nprocs > 1) {
     string fn(filename);
     d2_read((fn + '.' + to_string(world_rank)).c_str(), &data);  
+    } else {
+    d2_read(filename, &data);
+    }
 #else
     d2_read(filename, &data);  
 #endif

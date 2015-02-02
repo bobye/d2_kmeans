@@ -235,39 +235,29 @@ int d2_write_protein(const char* filename, mph *p_data) {
 
   size_t i, j;
   int k, d, n;
-  int **p_supp; double **p_w; 
   int s_ph = p_data->s_ph;
   size_t size = p_data->size;
-
-  if (world_rank == 0) {
-  p_supp = (int **) malloc(s_ph * sizeof(int *));
-  p_w    = (double **) malloc(s_ph * sizeof(double *));
-  
-  for (n=0; n<s_ph; ++n) {
-    p_supp[n] = p_data->ph[n].p_supp_sym;
-    p_w[n]    = p_data->ph[n].p_w;
-  }
 
   for (i=0; i<size; ++i) {
     for (j=0; j<s_ph; ++j) 
       if (p_data->ph[j].col > 0) {
 	int dim = p_data->ph[j].dim;
 	int str = p_data->ph[j].p_str[i];
+	SCALAR *p_w = p_data->ph[j].p_w + p_data->ph[j].p_str_cum[i];
+	int *p_supp_sym = p_data->ph[j].p_supp_sym + p_data->ph[j].p_str_cum[i] * dim;
 	fprintf(fp, "%d\n", dim);
 	fprintf(fp, "%d\n", str);
-	for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[j][k]);
-	fprintf(fp, "\n"); p_w[j] += str;
+	for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[k]);
+	fprintf(fp, "\n"); 
 	for (k=0; k<str; ++k) {
-	  for (d=0; d<dim; ++d) fprintf(fp, "%c", reverseKey[p_supp[j][d]]);
-	  fprintf(fp, " "); p_supp[j] += dim;
+	  for (d=0; d<dim; ++d) fprintf(fp, "%c", reverseKey[p_supp_sym[d]]);
+	  fprintf(fp, " "); p_supp_sym += dim;
 	}
 	fprintf(fp, "\n");
       }
   }
 
-  free(p_supp); free(p_w);
   fclose(fp);
-  }
   return 0;
 }
 
@@ -279,14 +269,6 @@ int d2_write_protein_split(const char* filename, mph *p_data, int splits) {
   int m, j;
   
   assert(filename != NULL && splits > 1);
-
-  p_supp = (int **) malloc(s_ph * sizeof(int *));
-  p_w    = (double **) malloc(s_ph * sizeof(double *));
-  
-  for (n=0; n<s_ph; ++n) {
-    p_supp[n] = p_data->ph[n].p_supp_sym;
-    p_w[n]    = p_data->ph[n].p_w;
-  }
 
   indices = _D2_MALLOC_SIZE_T(size);
   for (n = 0; n < size; ++n) indices[n] = n; shuffle(indices, size);
@@ -310,15 +292,17 @@ int d2_write_protein_split(const char* filename, mph *p_data, int splits) {
       size_t i = indices[idx];
       int dim = p_data->ph[j].dim, d, k;
       int str = p_data->ph[j].p_str[i];
+      SCALAR *p_w = p_data->ph[j].p_w + p_data->ph[j].p_str_cum[i];
+      int *p_supp_sym = p_data->ph[j].p_supp_sym + p_data->ph[j].p_str_cum[i] * dim;
 
       fprintf(fp, "Q00000 0\n");
       fprintf(fp, "%d\n", dim);
       fprintf(fp, "%d\n", str);
-      for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[j][k]);
-      fprintf(fp, "\n"); p_w[j] += str;
+      for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[k]);
+      fprintf(fp, "\n");
       for (k=0; k<str; ++k) {
-	for (d=0; d<dim; ++d) fprintf(fp, "%c", reverseKey[p_supp[j][d]]);
-	fprintf(fp, " "); p_supp[j] += dim;
+	for (d=0; d<dim; ++d) fprintf(fp, "%c", reverseKey[p_supp_sym[d]]);
+	fprintf(fp, " "); p_supp_sym += dim;
       }
       fprintf(fp, "\n\n");
     }
@@ -326,8 +310,6 @@ int d2_write_protein_split(const char* filename, mph *p_data, int splits) {
     fclose(fp);
     VPRINTF("\twrite %zd objects to %s\n", idx - batch_size * m, local_filename);
   }  
-
-  free(p_supp); free(p_w);
 
   return 0;
 }
@@ -409,7 +391,7 @@ int main(int argc, char *argv[]) {
 
 
   // MPI note: to be done only on one node
-  d2_write_protein(NULL, &c); // output centroids
+  if (world_rank == 0) d2_write_protein(NULL, &c); // output centroids
   d2_free(&c);
   }
 
