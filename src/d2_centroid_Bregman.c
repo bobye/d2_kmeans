@@ -14,7 +14,7 @@
 
 /* choose options */
 
-static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = 2.f, .updatePerLoops = 10};
+static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = .5f, .updatePerLoops = 10};
 static BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .updatePerLoops = 10};
 
 
@@ -148,27 +148,19 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     // step 1: update X
 
     // X = Z.*exp(- (C + Y)/rho)
-    _D2_CBLAS_FUNC(copy)(str*col, C, 1, X, 1);
-    _D2_CBLAS_FUNC(axpy)(str*col, 1, Y, 1, X, 1);
-    _D2_CBLAS_FUNC(scal)(str*col, -1./rho, X, 1);
-    _D2_FUNC(exp)(str*col, X);
-    _D2_FUNC(vmul)(str*col, X, Z, X);
-    // normalize X
-    _D2_FUNC(add)(str*col, X, 1E-9);
+    for (i=0; i<str*col; ++i) {
+      X[i] = Z[i] * exp (- (C[i] + Y[i]) / rho) + 1E-9;
+    }      
     _D2_FUNC(cnorm)(str, col, X, Xc); 
     _D2_FUNC(grms)(str, col, X, p_w);
 
     /*************************************************************************/
     // step 2: update Z
     // Z = X.*exp(Y/rho)
-    _D2_CBLAS_FUNC(copy)(str*col, Z, 1, Z0, 1);
-    _D2_CBLAS_FUNC(copy)(str*col, Y, 1, Z, 1);
-    _D2_CBLAS_FUNC(scal)(str*col, 1./rho, Z, 1);
-    _D2_FUNC(exp)(str*col, Z);
-    _D2_FUNC(vmul)(str*col, Z, X, Z);
-    
-    // normalize Z
-    _D2_FUNC(add)(str*col, Z, 1E-9);
+    for (i=0; i<str*col; ++i) {
+      Z0[i] = Z[i];
+      Z[i]  = X[i] * exp(Y[i] / rho) + 1E-9;
+    }
     for (i=0;i<size; ++i) {
       _D2_FUNC(rnorm)(str, p_str[i], Z + str*p_str_cum[i], Zr + str*i); 
       _D2_FUNC(gcms)(str, p_str[i], Z + str*p_str_cum[i], c->p_w + str*label[i]);
@@ -176,14 +168,16 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
    
     /*************************************************************************/
     // step 3: update Y
+    /*
     _D2_CBLAS_FUNC(axpy)(str*col, rho, X, 1, Y, 1);
     _D2_CBLAS_FUNC(axpy)(str*col, -rho, Z, 1, Y, 1);
-
+    */
+    for (i=0; i<str*col; ++i) Y[i] += rho*(X[i] - Z[i]);
 
     /*************************************************************************/
     // step 4: update c->p_w
     for (i=0; i<str*num_of_labels; ++i) c->p_w[i] = 0; //reset c->p_w locally
-    _D2_FUNC(cnorm)(str, size, Zr, NULL);
+    _D2_FUNC(cnorm)(str, size, Zr, Xc);
 
 
     // ADD vec(&Zr[str*i], str) TO vec(&c->p_w[label[i]*str], str)
@@ -193,7 +187,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     /* ALLREDUCE by SUM operator: vec(c->p_w, c->col) */
     MPI_Allreduce(MPI_IN_PLACE, c->p_w, c->col, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
-    _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, NULL);
+    _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, Xc);
     
 
     // step 5: update c->p_supp (optional)
