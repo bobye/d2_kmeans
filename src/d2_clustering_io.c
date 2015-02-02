@@ -51,7 +51,7 @@ int d2_read(const char* filename, mph *p_data) {
       // read dimension and stride    
       c=fscanf(fp, "%d", &dim); 
       if (c!=1) {
-	VPRINTF("Warning: only read %ld d2!\n", i);
+	printf("rank %d warning: only read %ld d2!\n", world_rank, i);
 	p_data->size = i;
 	size = i; break;
       }
@@ -146,5 +146,54 @@ int d2_write(const char* filename, mph *p_data) {
   }
 
   if (filename) fclose(fp);
+  return 0;
+}
+
+
+int d2_write_split(const char* filename, mph *p_data, int splits) {
+  const int s_ph = p_data->s_ph;
+  const size_t size = p_data->size; 
+  size_t *indices, batch_size, n;
+  int k;
+  
+  assert(filename != NULL);
+
+  indices = _D2_MALLOC_SIZE_T(size);
+  for (n = 0; n < size; ++n) indices[n] = n; shuffle(indices, size);
+  batch_size = 1 + (size-1) / splits;
+  VPRINTF("batch_size: %zd\n", batch_size);
+
+  for (k=0; k<splits; ++k) {
+    size_t idx;
+    FILE *fp = NULL;
+    char local_filename[255];
+    sprintf(local_filename, "%s.%d", filename, k);
+
+    fp = fopen(local_filename, "w+");
+    assert(fp);
+    
+    for (idx=batch_size*k; idx<size && idx<batch_size*(k+1); ++idx) {
+      int j;
+      size_t i = indices[idx];
+      for (j=0; j<s_ph; ++j) 
+	if (p_data->ph[j].col > 0) {
+	  int k, d;
+	  int dim = p_data->ph[j].dim;
+	  int str = p_data->ph[j].p_str[i];
+	  size_t pos = p_data->ph[j].p_str_cum[i];
+	  fprintf(fp, "%d\n", dim);
+	  fprintf(fp, "%d\n", str);
+	  for (k=0; k<str; ++k) fprintf(fp, "%lf ", p_data->ph[j].p_w[pos + k]);
+	  fprintf(fp, "\n");
+	  for (k=0; k<str; ++k) {
+	    for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
+	    fprintf(fp, "\n"); 
+	  }
+	}
+    }
+
+    fclose(fp);
+    VPRINTF("\twrite %zd objects to %s\n", idx - batch_size * k, local_filename);
+  }
   return 0;
 }
