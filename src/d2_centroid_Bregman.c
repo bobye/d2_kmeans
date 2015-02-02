@@ -26,7 +26,7 @@ int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwor
   var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Z);
   var_phwork->Xc= _D2_MALLOC_SCALAR (ph->col);           assert(var_phwork->Xc);
   var_phwork->Zr= _D2_MALLOC_SCALAR (ph->str * size);    assert(var_phwork->Zr);
-  var_phwork->Y = _D2_CALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Y); // initialized
+  var_phwork->Y = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Y); // initialized
 
   return 0;
 }
@@ -121,6 +121,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   }
   // allocate buffer of Z
   Z0 = _D2_MALLOC_SCALAR(str*col);
+  for (i=0; i<str*col; ++i) Y[i] = 0; // set Y to zero
   if (num_of_labels * (strxdim * data_ph->vocab_size + 1) < size && data_ph->metric_type == D2_N_GRAM) {
     Zr2 = _D2_MALLOC_SCALAR(str * num_of_labels * (strxdim * data_ph->vocab_size + 1));    
     hasZr2 = 1;
@@ -153,6 +154,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     _D2_FUNC(exp)(str*col, X);
     _D2_FUNC(vmul)(str*col, X, Z, X);
     // normalize X
+    _D2_FUNC(add)(str*col, X, 1E-9);
     _D2_FUNC(cnorm)(str, col, X, Xc); 
     _D2_FUNC(grms)(str, col, X, p_w);
 
@@ -166,6 +168,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     _D2_FUNC(vmul)(str*col, Z, X, Z);
     
     // normalize Z
+    _D2_FUNC(add)(str*col, Z, 1E-9);
     for (i=0;i<size; ++i) {
       _D2_FUNC(rnorm)(str, p_str[i], Z + str*p_str_cum[i], Zr + str*i); 
       _D2_FUNC(gcms)(str, p_str[i], Z + str*p_str_cum[i], c->p_w + str*label[i]);
@@ -197,8 +200,9 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     if (iter % p_badmm_options->updatePerLoops == 0) {
       switch (data_ph->metric_type) {
       case D2_EUCLIDEAN_L2 :
-	for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
-	for (i=0; i<str*num_of_labels; ++i) Zr[i] = 1E-9; //reset Zr to temporarily storage
+	assert(num_of_labels < size);
+	for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0.f; // reset c->p_supp
+	for (i=0; i<c->col; ++i) Zr[i] = 0.f; //reset Zr to temporarily storage
 
 	for (i=0;i < size;  ++i) {
 	  /* ADD mat(&p_supp[p_str_cum[i]*dim], dim, p_str[i]) * 

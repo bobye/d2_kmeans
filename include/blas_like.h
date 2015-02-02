@@ -12,6 +12,7 @@ extern "C" {
   void _dgzero(size_t n, double *a); //assert (a>0)
 
   // element-wise op
+  void _dadd(size_t, double *a, double b); // a(:) += b;
   void _dvmul(size_t n, double *a, double *b, double *c);// c = a .* b
   void _dexp(size_t n, double *a);//inplace a -> exp(a);
 
