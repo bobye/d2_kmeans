@@ -103,6 +103,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
   /* rho is an important hyper-parameter */
   rho = p_badmm_options->rhoCoeff * _D2_CBLAS_FUNC(asum)(str*col, C, 1) / (str*col);
+  for (i=0; i<str*col; ++i) C[i] /= rho; // normalize C and Y
 
   if (dim > 0) { // for histogram, no re-init needed
   /* 
@@ -149,7 +150,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
     // X = Z.*exp(- (C + Y)/rho)
     for (i=0; i<str*col; ++i) {
-      X[i] = Z[i] * exp (- (C[i] + Y[i]) / rho) + 1E-9;
+      X[i] = Z[i] * exp (- (C[i] + Y[i])) + 1E-9;
     }      
     _D2_FUNC(cnorm)(str, col, X, Xc); 
     _D2_FUNC(grms)(str, col, X, p_w);
@@ -159,7 +160,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     // Z = X.*exp(Y/rho)
     for (i=0; i<str*col; ++i) {
       Z0[i] = Z[i];
-      Z[i]  = X[i] * exp(Y[i] / rho) + 1E-9;
+      Z[i]  = X[i] * exp(Y[i]) + 1E-9;
     }
     for (i=0;i<size; ++i) {
       _D2_FUNC(rnorm)(str, p_str[i], Z + str*p_str_cum[i], Zr + str*i); 
@@ -168,11 +169,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
    
     /*************************************************************************/
     // step 3: update Y
-    /*
-    _D2_CBLAS_FUNC(axpy)(str*col, rho, X, 1, Y, 1);
-    _D2_CBLAS_FUNC(axpy)(str*col, -rho, Z, 1, Y, 1);
-    */
-    for (i=0; i<str*col; ++i) Y[i] += rho*(X[i] - Z[i]);
+    for (i=0; i<str*col; ++i) Y[i] += X[i] - Z[i];
 
     /*************************************************************************/
     // step 4: update c->p_w
@@ -223,6 +220,8 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
 	// re-calculate C
 	calculate_distmat(data_ph, label, size, c, C);
+	/* rho is an important hyper-parameter */
+	for (i=0; i<str*col; ++i) C[i] /= rho; // normalize C and Y
 	break;
 
       case D2_HISTOGRAM :
@@ -250,6 +249,8 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
 	// re-calculate C
 	calculate_distmat(data_ph, label, size, c, C);
+	/* rho is an important hyper-parameter */
+	for (i=0; i<str*col; ++i) C[i] /= rho; // normalize C and Y
 	}
 	break;
       }
@@ -269,7 +270,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
       MPI_Allreduce(MPI_IN_PLACE, &primres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &dualres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
-      obj     /= p_data->global_size;
+      obj     *= rho / p_data->global_size;
       primres /= p_data->global_size;
       dualres /= p_data->global_size;
       VPRINTF("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end());
