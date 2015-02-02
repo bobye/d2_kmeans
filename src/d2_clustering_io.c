@@ -74,7 +74,7 @@ int d2_read(const char* filename, mph *p_data) {
       // read weights      
       p_w_sph = p_w[n]; w_sum = 0.;
       for (j=0; j<str; ++j) {
-	fscanf(fp, SCALAR_STDIO_TYPE, &p_w_sph[j]); assert(p_w_sph[j] > 1E-6);
+	fscanf(fp, SCALAR_STDIO_TYPE, &p_w_sph[j]); assert(p_w_sph[j] > 1E-9);
 	w_sum += p_w_sph[j];
       }
       //assert(fabs(w_sum - 1.0) <= 1E-6);

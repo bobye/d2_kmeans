@@ -200,7 +200,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
       switch (data_ph->metric_type) {
       case D2_EUCLIDEAN_L2 :
 	for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
-	for (i=0; i<str*num_of_labels; ++i) Zr[i] = 0; //reset Zr to temporarily storage
+	for (i=0; i<str*num_of_labels; ++i) Zr[i] = 1E-9; //reset Zr to temporarily storage
 
 	for (i=0;i < size;  ++i) {
 	  /* ADD mat(&p_supp[p_str_cum[i]*dim], dim, p_str[i]) * 
