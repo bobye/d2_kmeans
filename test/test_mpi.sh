@@ -34,7 +34,7 @@ cd data/protein_seq
 
 ./protein protein -1 -$num_of_nodes 0 > /dev/null
 
-echo "[$num_of_nodes processes] Profile protein centroids: test 3-gram with one cluster'
+echo "[$num_of_nodes processes] Profile protein centroids: test 3-gram with one cluster"
 time mpirun -n $num_of_nodes ./protein protein 2 1 0 > /dev/null
 
 echo "[$num_of_nodes processes] Profile protein centroids: test 1,2,3-gram with one cluster"
