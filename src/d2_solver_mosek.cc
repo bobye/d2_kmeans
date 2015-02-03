@@ -26,7 +26,6 @@ static void MSKAPI printstr(void *handle,
 
 void d2_solver_setup(size_t num) {
   MSKrescodee r;
-  size_t i;
   /* Create the mosek environment. */
   r = MSK_makeenv(&env, NULL);
 
@@ -61,7 +60,7 @@ void d2_solver_release() {
 
 
 double d2_match_by_distmat(int n, int m, double *C, double *wX, double *wY,
-			   /** OUT **/ double *x, /** OUT **/ double *lambda, size_t index) {
+			   __OUT__ double *x, __OUT__ double *lambda, size_t index) {
   
   const MSKint32t numvar = n * m,
                   numcon = n + m;

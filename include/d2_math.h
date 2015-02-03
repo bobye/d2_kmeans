@@ -17,7 +17,7 @@ extern "C" {
 	       __OUT__ SCALAR * means, __OUT__ SCALAR * covs);
   void d2_mvnrnd(SCALAR * mean, SCALAR * cov, int d, int n, __OUT__ SCALAR * sample);
   */
-  void shuffle(long * array, size_t n);
+  void shuffle(size_t * array, size_t n);
 
 
 
