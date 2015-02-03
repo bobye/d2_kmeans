@@ -6,7 +6,10 @@
 #include <float.h>
 #include <assert.h>
 
-// #define __USE_MPI__ /* macro for the use of MPI */
+#ifdef __USE_MPI__
+#include <mpi.h>
+#endif
+
 
 
 /* choose options */
@@ -18,14 +21,12 @@ static BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .up
 BADMM_options *p_badmm_options = &badmm_clu_options;
  
 int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwork) {
-  size_t i; int j;
-  SCALAR tmp;
   assert(ph->str > 0 && ph->col > 0 && size > 0);
   var_phwork->X = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->X);
   var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Z);
   var_phwork->Xc= _D2_MALLOC_SCALAR (ph->col);           assert(var_phwork->Xc);
   var_phwork->Zr= _D2_MALLOC_SCALAR (ph->str * size);    assert(var_phwork->Zr);
-  var_phwork->Y = _D2_CALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Y); // initialized
+  var_phwork->Y = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Y); // initialized
 
   return 0;
 }
@@ -69,6 +70,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   SCALAR *Z = var_work->l_var_sphBregman[idx_ph].Z;
   SCALAR *Xc= var_work->l_var_sphBregman[idx_ph].Xc;
   SCALAR *Zr= var_work->l_var_sphBregman[idx_ph].Zr; 
+  SCALAR *Zr2 = Zr; char hasZr2 = 0;
 
   /**
    * MPI notes: vector needs synchronized __USE_MPI__ : 
@@ -82,16 +84,14 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   size_t i; int j;
   int max_niter = p_badmm_options->maxIters, iter;
   SCALAR rho, obj, primres, dualres;
-  SCALAR tmp, *Z0;
+  SCALAR *Z0;
   size_t *label_count;
 
   /* Initialization */
   if (!c0) {
     // MPI note: to be done only on one node
     d2_centroid_rands(p_data, idx_ph, c);// For profile purpose only!
-#ifdef __USE_MPI__
-    /* initialize c from one node, and broadcast to other nodes */
-#endif
+    //broadcast_centroids(p_data, idx_ph);
   } else {
     *c = *c0; // warm start (for clustering purpose)
   }  
@@ -103,6 +103,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
   /* rho is an important hyper-parameter */
   rho = p_badmm_options->rhoCoeff * _D2_CBLAS_FUNC(asum)(str*col, C, 1) / (str*col);
+  for (i=0; i<str*col; ++i) C[i] /= rho; // normalize C and Y
 
   if (dim > 0) { // for histogram, no re-init needed
   /* 
@@ -121,7 +122,11 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   }
   // allocate buffer of Z
   Z0 = _D2_MALLOC_SCALAR(str*col);
-
+  for (i=0; i<str*col; ++i) Y[i] = 0; // set Y to zero
+  if (num_of_labels * (strxdim * data_ph->vocab_size + 1) < size && data_ph->metric_type == D2_N_GRAM) {
+    Zr2 = _D2_MALLOC_SCALAR(str * num_of_labels * (strxdim * data_ph->vocab_size + 1));    
+    hasZr2 = 1;
+  }
   /**
    *  Calculate labels counts:
    *  it could be possible that some clusters might not have any instances,
@@ -129,36 +134,34 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
    */
   label_count = _D2_CALLOC_SIZE_T(num_of_labels);    
   for (i=0; i<size; ++i) ++label_count[label[i]];
+#ifdef __USE_MPI__
+  assert(sizeof(size_t) == sizeof(uint64_t));
+  MPI_Allreduce(MPI_IN_PLACE, label_count, num_of_labels, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+#endif  
   for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
 
   // main loop
-  printf("\titer\tobj\t\tprimres\t\tdualres\t\tseconds\n");
-  printf("\t----------------------------------------------------------------\n");
+  VPRINTF(("\titer\tobj\t\tprimres\t\tdualres\t\tseconds\n"));
+  VPRINTF(("\t----------------------------------------------------------------\n"));
   nclock_start();
   for (iter=0; iter <= max_niter; ++iter) {
     /*************************************************************************/
     // step 1: update X
 
     // X = Z.*exp(- (C + Y)/rho)
-    _D2_CBLAS_FUNC(copy)(str*col, C, 1, X, 1);
-    _D2_CBLAS_FUNC(axpy)(str*col, 1, Y, 1, X, 1);
-    _D2_CBLAS_FUNC(scal)(str*col, -1./rho, X, 1);
-    _D2_FUNC(exp)(str*col, X);
-    _D2_FUNC(vmul)(str*col, X, Z, X);
-    // normalize X
+    for (i=0; i<str*col; ++i) {
+      X[i] = Z[i] * exp (- (C[i] + Y[i])) + 1E-9;
+    }      
     _D2_FUNC(cnorm)(str, col, X, Xc); 
     _D2_FUNC(grms)(str, col, X, p_w);
 
     /*************************************************************************/
     // step 2: update Z
     // Z = X.*exp(Y/rho)
-    _D2_CBLAS_FUNC(copy)(str*col, Z, 1, Z0, 1);
-    _D2_CBLAS_FUNC(copy)(str*col, Y, 1, Z, 1);
-    _D2_CBLAS_FUNC(scal)(str*col, 1./rho, Z, 1);
-    _D2_FUNC(exp)(str*col, Z);
-    _D2_FUNC(vmul)(str*col, Z, X, Z);
-    
-    // normalize Z
+    for (i=0; i<str*col; ++i) {
+      Z0[i] = Z[i];
+      Z[i]  = X[i] * exp(Y[i]) + 1E-9;
+    }
     for (i=0;i<size; ++i) {
       _D2_FUNC(rnorm)(str, p_str[i], Z + str*p_str_cum[i], Zr + str*i); 
       _D2_FUNC(gcms)(str, p_str[i], Z + str*p_str_cum[i], c->p_w + str*label[i]);
@@ -166,31 +169,31 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
    
     /*************************************************************************/
     // step 3: update Y
-    _D2_CBLAS_FUNC(axpy)(str*col, rho, X, 1, Y, 1);
-    _D2_CBLAS_FUNC(axpy)(str*col, -rho, Z, 1, Y, 1);
-
+    for (i=0; i<str*col; ++i) Y[i] += X[i] - Z[i];
 
     /*************************************************************************/
     // step 4: update c->p_w
     for (i=0; i<str*num_of_labels; ++i) c->p_w[i] = 0; //reset c->p_w locally
-    _D2_FUNC(cnorm)(str, size, Zr, NULL);
+    _D2_FUNC(cnorm)(str, size, Zr, Xc);
 
 
     // ADD vec(&Zr[str*i], str) TO vec(&c->p_w[label[i]*str], str)
     for (i=0; i<size; ++i) 
       _D2_CBLAS_FUNC(axpy)(str, 1, Zr + str*i, 1, c->p_w +label[i]*str, 1);
 #ifdef __USE_MPI__
-    /* ALLREDUCE by SUM operator: vec(c->p_w, num_of_labels*str) */
+    /* ALLREDUCE by SUM operator: vec(c->p_w, c->col) */
+    MPI_Allreduce(MPI_IN_PLACE, c->p_w, c->col, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
-    _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, NULL);
+    _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, Xc);
     
 
     // step 5: update c->p_supp (optional)
     if (iter % p_badmm_options->updatePerLoops == 0) {
       switch (data_ph->metric_type) {
       case D2_EUCLIDEAN_L2 :
-	for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
-	for (i=0; i<str*num_of_labels; ++i) Zr[i] = 0; //reset Zr to temporarily storage
+	assert(num_of_labels < size);
+	for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0.f; // reset c->p_supp
+	for (i=0; i<c->col; ++i) Zr[i] = 0.f; //reset Zr to temporarily storage
 
 	for (i=0;i < size;  ++i) {
 	  /* ADD mat(&p_supp[p_str_cum[i]*dim], dim, p_str[i]) * 
@@ -205,8 +208,10 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	  _D2_FUNC(rsum2)(str, p_str[i], X + str*p_str_cum[i], Zr + label[i]*str);
 	}
 #ifdef __USE_MPI__
-	/* ALLREDUCE by SUM operator: vec(c->p_supp, num_of_labels*str*dim) */
-	/* ALLREDUCE by SUM operator: vec(Zr, num_of_labels*str) */
+	/* ALLREDUCE by SUM operator: vec(c->p_supp, c->col*dim) */
+	MPI_Allreduce(MPI_IN_PLACE, c->p_supp, c->col * dim, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	/* ALLREDUCE by SUM operator: vec(Zr, c->col) */
+	MPI_Allreduce(MPI_IN_PLACE, Zr, c->col, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
 	for (i=0; i<num_of_labels; ++i) {
 	  _D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, Zr + i*str);
@@ -215,6 +220,8 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
 	// re-calculate C
 	calculate_distmat(data_ph, label, size, c, C);
+	/* rho is an important hyper-parameter */
+	for (i=0; i<str*col; ++i) C[i] /= rho; // normalize C and Y
 	break;
 
       case D2_HISTOGRAM :
@@ -222,25 +229,28 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
       case D2_N_GRAM :
 	if (iter > 0) {
-	assert(num_of_labels * (strxdim * data_ph->vocab_size + 1) <= size);
+	  //assert(num_of_labels * (strxdim * data_ph->vocab_size + 1) <= size);
 
-	for (i=0; i<num_of_labels*strxdim*data_ph->vocab_size; ++i) Zr[i] = 0; //reset Zr to temporarily storage
+	for (i=0; i<num_of_labels*strxdim*data_ph->vocab_size; ++i) Zr2[i] = 0; //reset Zr to temporarily storage
 	for (i=0; i<size; ++i) {
 	  accumulate_symbolic(dim, str, p_str[i], 
 			      p_supp_sym + dim*p_str_cum[i], 
 			      Z + str*p_str_cum[i], 
-			      Zr + label[i]*strxdim*data_ph->vocab_size,
+			      Zr2 + label[i]*strxdim*data_ph->vocab_size,
 			      data_ph->vocab_size);	  
 	}
 #ifdef __USE_MPI__
-	/* ALLREDUCE by SUM operator: vec(Zr, num_of_labels*str*dim*data_ph->vocab_size) */
+	/* ALLREDUCE by SUM operator: vec(Zr2, num_of_labels*str*dim*data_ph->vocab_size) */
+	MPI_Allreduce(MPI_IN_PLACE, Zr2, c->col * dim * data_ph->vocab_size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
 	for (i=0; i<num_of_labels; ++i) {
-	  minimize_symbolic(dim, str, c->p_supp_sym + i*strxdim, Zr + i*strxdim*data_ph->vocab_size, data_ph->vocab_size, data_ph->dist_mat, Zr + num_of_labels*strxdim*data_ph->vocab_size);
+	  minimize_symbolic(dim, str, c->p_supp_sym + i*strxdim, Zr2 + i*strxdim*data_ph->vocab_size, data_ph->vocab_size, data_ph->dist_mat, Zr2 + num_of_labels*strxdim*data_ph->vocab_size);
 	}
 
 	// re-calculate C
 	calculate_distmat(data_ph, label, size, c, C);
+	/* rho is an important hyper-parameter */
+	for (i=0; i<str*col; ++i) C[i] /= rho; // normalize C and Y
 	}
 	break;
       }
@@ -248,21 +258,27 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
     /*************************************************************************/
     // step 6: check residuals
-    obj = _D2_CBLAS_FUNC(dot)(str*col, C, 1, X, 1) / size;
     if (iter%100 == 0 || (iter < 100 && iter%20 == 0) ) {
+      obj = _D2_CBLAS_FUNC(dot)(str*col, C, 1, X, 1);
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, X, 1);
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, Z0,1);
-      primres = _D2_CBLAS_FUNC(asum)(str*col, X, 1) / size;
-      dualres = _D2_CBLAS_FUNC(asum)(str*col,Z0, 1) / size;
+      primres = _D2_CBLAS_FUNC(asum)(str*col, X, 1);
+      dualres = _D2_CBLAS_FUNC(asum)(str*col,Z0, 1);
 #ifdef __USE_MPI__
-      /* ALLREDUCE by MEAN operator: primres, dualres */
+      /* ALLREDUCE by SUM operator: obj, primres, dualres */
+      MPI_Allreduce(MPI_IN_PLACE, &obj,     1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &primres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &dualres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
-      printf("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end());
+      obj     *= rho / p_data->size;
+      primres /= p_data->size;
+      dualres /= p_data->size;
+      VPRINTF(("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end()));
     }
   }
 
   _D2_FREE(Z0);
   _D2_FREE(label_count);
-
+  if (hasZr2) _D2_FREE(Zr2);
   return 0;
 }
