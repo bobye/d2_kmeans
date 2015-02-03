@@ -49,6 +49,7 @@ double d2_compute_distance(mph *a, size_t i,
 				  NULL, // x and lambda are implemented later
 				  NULL,
 				  index);
+	d += val;
 	break;
       case D2_HISTOGRAM :
 	val = d2_match_by_distmat(b_sph->p_str[j],
@@ -58,6 +59,7 @@ double d2_compute_distance(mph *a, size_t i,
 				  a_sph->p_w + a_sph->p_str_cum[i], 
 				  NULL, NULL,
 				  index);
+	d += val;
 	break;	
       case D2_N_GRAM : 
 	_D2_FUNC(pdist_symbolic)(dim, 
@@ -76,12 +78,11 @@ double d2_compute_distance(mph *a, size_t i,
 				  a_sph->p_w + a_sph->p_str_cum[i], 
 				  NULL, // x and lambda are implemented later
 				  NULL,
-				  index);
+				  index) / dim;
 
-
+	d += 2*val;	
 	break;
       }
-      d += val;
     }
   return sqrt(d);
 }
@@ -118,8 +119,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
     for (j=i+1; j<num_of_labels; ++j) {
       double d;
       d = d2_compute_distance(centroids, i, centroids, j, selected_phase, var_work, p_data->size + i); 
-      dist_count +=1;
-
+      //      dist_count +=1;
       p_tr->c[i*num_of_labels + j] = d; 
       p_tr->c[i + j*num_of_labels] = d;
 
@@ -185,6 +185,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
 #ifdef __USE_MPI__
   assert(sizeof(size_t)  == sizeof(uint64_t));
   MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &dist_count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 #endif
 
   VPRINTF("\n\t\t\t\t %ld objects change their labels\n\t\t\t\t %ld distance pairs computed\n\t\t\t\t seconds: %f\n", count, dist_count, nclock_end());
@@ -310,9 +311,10 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 #ifdef __USE_MPI__
   assert(sizeof(size_t)  == sizeof(uint64_t));
   MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &cost,  1, MPI_DOUBLE,   MPI_SUM, MPI_COMM_WORLD);
 #endif
 
-  VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/size, nclock_end());
+  VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/p_data->global_size, nclock_end());
   
   return count;
 }
@@ -366,6 +368,7 @@ int d2_clustering(int num_of_clusters,
   VPRINTF("[done]\n");
   }
 
+  assert(centroids->s_ph == s_ph && centroids->size == num_of_clusters);
 
   // allocate initialize auxiliary variables
   d2_allocate_work(p_data, &var_work, use_triangle);
@@ -387,11 +390,18 @@ int d2_clustering(int num_of_clusters,
     else 
       label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
 
-    /* termination criterion */
+
+    /*********************************************************
+     * Termination criterion                                 *
+     * For performance profile: comment this part out and    *
+     * use --max_iter parameter of main.                     *
+     *********************************************************/        
     if (label_change_count < 0.005 * p_data->global_size) {
-      VPRINTF("Terminate!\n");
+      VPRINTF("Terminate!\n");        
       break;
     }
+    /*********************************************************/
+
 
     /* make copies of centroids */
     if (use_triangle) d2_copy(centroids, &the_centroids_copy);
@@ -419,7 +429,7 @@ int d2_clustering(int num_of_clusters,
   d2_solver_release();
 
   d2_free_work(&var_work);
-  d2_free(&the_centroids_copy);
+  if (use_triangle) d2_free(&the_centroids_copy);
   return 0;
 }
 
