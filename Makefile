@@ -1,6 +1,8 @@
 include make.inc
 
+ifndef MPI
 MPI=1
+endif
 
 ifeq ($(MPI),1)
 CC=$(MPICC)
@@ -94,7 +96,7 @@ protein: data/protein_seq/protein
 
 .PHONY: clean
 clean:
-	@rm -f *_test d2
+	@rm -f *_test d2 data/protein_seq/protein
 	@for pattern in '*.o' '*.d'; do \
 		find . -name "$$pattern" | xargs rm; \
 	done

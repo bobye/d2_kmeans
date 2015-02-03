@@ -4,43 +4,6 @@
 #include "d2_param.h"
 #include <float.h>
 #include <assert.h>
-#ifdef __USE_MPI__
-#include <mpi.h>
-#endif
-
-void broadcast_centroids(mph *centroids, int i) {
-#ifdef __USE_MPI__
-  /* initialize centroids from one node, and broadcast to other nodes */
-  switch (centroids->ph[i].metric_type) {
-  case D2_EUCLIDEAN_L2:
-    MPI_Bcast(centroids->ph[i].p_supp, 
-	      centroids->ph[i].col * centroids->ph[i].dim, 
-	      MPI_DOUBLE, // must set SCALAR to double
-	      0, MPI_COMM_WORLD);
-    MPI_Bcast(centroids->ph[i].p_w, 
-	      centroids->ph[i].col, 
-	      MPI_DOUBLE,
-	      0, MPI_COMM_WORLD);
-    break;
-  case D2_HISTOGRAM:
-    MPI_Bcast(centroids->ph[i].p_w, 
-	      centroids->ph[i].col, 
-	      MPI_DOUBLE,
-	      0, MPI_COMM_WORLD);
-    break;
-  case D2_N_GRAM:
-    MPI_Bcast(centroids->ph[i].p_supp_sym, 
-	      centroids->ph[i].col * centroids->ph[i].dim, 
-	      MPI_INT,
-	      0, MPI_COMM_WORLD);
-    MPI_Bcast(centroids->ph[i].p_w, 
-	      centroids->ph[i].col, 
-	      MPI_DOUBLE,
-	      0, MPI_COMM_WORLD);
-  }
-  MPI_Barrier(MPI_COMM_WORLD);
-#endif
-}
 
 void calculate_distmat(sph *data_ph, int* label, size_t size, sph *c, SCALAR* C) {
   int dim = c->dim, str = c->str, strxdim = c->dim*c->str;

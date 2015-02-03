@@ -9,6 +9,7 @@ extern "C" {
 #define __OUT__ 
 #define __IN_OUT__
 
+#include <stdint.h> // for -std=gnu99
 
 #define _D2_DOUBLE
 #define _VERBOSE_OUTPUT
@@ -72,6 +73,7 @@ extern "C" {
 inline int clock_gettime(int clk_id, struct timespec* ts) {
   clock_serv_t cclock;
   mach_timespec_t mts;
+  clk_id = 0; // something stupid to get ride of warnings
   host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
   clock_get_time(cclock, &mts);
   mach_port_deallocate(mach_task_self(), cclock);
