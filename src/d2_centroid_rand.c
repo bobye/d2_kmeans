@@ -169,6 +169,8 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   SCALAR *m_supp, *m_w;
   int *m_supp_sym;
 
+  assert(c->str == str);
+
   // set stride
   for (i=0; i<num_of_labels; ++i) {
     c->p_str[i] = str;
@@ -189,7 +191,19 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   for (i = 0; i < size; ++i) array[i] = i;
   shuffle(array, size);
 
-  i = 0; j = 0;
+  // set to zero
+  for (i=0; i<c->col; ++i) c->p_w[i] = 0;
+  if (data_ph->metric_type == D2_EUCLIDEAN_L2) {
+    for (i=0; i<c->col * c->dim; ++i) c->p_supp[i] = 0;
+  }
+  else if (data_ph->metric_type == D2_N_GRAM) {
+    for (i=0; i<c->col * c->dim; ++i) c->p_supp_sym[i] = 0;
+  }
+
+  
+
+  i = 0; j = world_rank;
+
   while (i<size && j<num_of_labels) {
     while (i<size && data_ph->p_str[array[i]] < str)  { ++i; }
     if (i == size) break;
@@ -225,10 +239,8 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
       fprintf(stderr, "Unknown type of data!");
       assert(false);
     }
-    ++i; ++j;
+    ++i; j+= nprocs;
   }
-
-  assert(j == num_of_labels);
 
   free(array);
   return 0;
