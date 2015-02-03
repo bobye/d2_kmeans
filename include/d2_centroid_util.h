@@ -46,33 +46,37 @@ inline void broadcast_centroids(mph *centroids, int i) {
   /* initialize centroids from one node, and broadcast to other nodes */
   switch (centroids->ph[i].metric_type) {
   case D2_EUCLIDEAN_L2:
-    MPI_Bcast(centroids->ph[i].p_supp, 
-	      centroids->ph[i].col * centroids->ph[i].dim, 
-	      MPI_DOUBLE, // must set SCALAR to double
-	      0, MPI_COMM_WORLD);
-    MPI_Bcast(centroids->ph[i].p_w, 
-	      centroids->ph[i].col, 
-	      MPI_DOUBLE,
-	      0, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, 
+		  centroids->ph[i].p_supp, 
+		  centroids->ph[i].col * centroids->ph[i].dim, 
+		  MPI_DOUBLE, // must set SCALAR to double
+		  MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, 
+		  centroids->ph[i].p_w, 
+		  centroids->ph[i].col, 
+		  MPI_DOUBLE,
+		  MPI_SUM, MPI_COMM_WORLD);
     break;
   case D2_HISTOGRAM:
-    MPI_Bcast(centroids->ph[i].p_w, 
-	      centroids->ph[i].col, 
-	      MPI_DOUBLE,
-	      0, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE,
+		  centroids->ph[i].p_w, 
+		  centroids->ph[i].col, 
+		  MPI_DOUBLE,
+		  MPI_SUM, MPI_COMM_WORLD);
     break;
   case D2_N_GRAM:
-    MPI_Bcast(centroids->ph[i].p_supp_sym, 
-	      centroids->ph[i].col * centroids->ph[i].dim, 
-	      MPI_INT,
-	      0, MPI_COMM_WORLD);
-    MPI_Bcast(centroids->ph[i].p_w, 
-	      centroids->ph[i].col, 
-	      MPI_DOUBLE,
-	      0, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE,
+		  centroids->ph[i].p_supp_sym, 
+		  centroids->ph[i].col * centroids->ph[i].dim, 
+		  MPI_INT,
+		  MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE,
+		  centroids->ph[i].p_w, 
+		  centroids->ph[i].col, 
+		  MPI_DOUBLE,
+		  MPI_SUM, MPI_COMM_WORLD);
     break;
   }
-  MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }
 
