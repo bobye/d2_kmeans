@@ -111,22 +111,28 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
   nclock_start();
   /* step 1 */
   for (i=0; i<num_of_labels; ++i) p_tr->s[i] = DBL_MAX;
+  for (i=0; i<num_of_labels * num_of_labels; ++i) p_tr->c[i] = 0;
+
   /* pre-compute pairwise distance between centroids */
-  for (i=0; i<num_of_labels; ++i) {
+  for (i=0; i<num_of_labels; ++i) 
+    if (world_rank == i % nprocs) {
     size_t j;
-    p_tr->c[i*num_of_labels + i] = 0; // d(c_i, c_i)
 
     for (j=i+1; j<num_of_labels; ++j) {
       double d;
       d = d2_compute_distance(centroids, i, centroids, j, selected_phase, var_work, p_data->size + i); 
-      //      dist_count +=1;
+      dist_count +=1;
       p_tr->c[i*num_of_labels + j] = d; 
       p_tr->c[i + j*num_of_labels] = d;
 
-      if (p_tr->s[i] > d) p_tr->s[i] = d;
-      if (p_tr->s[j] > d) p_tr->s[j] = d;
+      if (p_tr->s[i] > d/2.f) p_tr->s[i] = d/2.f;
+      if (p_tr->s[j] > d/2.f) p_tr->s[j] = d/2.f;
     }    
-  }
+    }
+#ifdef __USE_MPI__
+    MPI_Allreduce(MPI_IN_PLACE, p_tr->c, num_of_labels*num_of_labels, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, p_tr->s, num_of_labels, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+#endif
 
 
   /* initialization */

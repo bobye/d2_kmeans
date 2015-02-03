@@ -21,7 +21,7 @@
 #include "d2_param.h"
 int d2_alg_type = D2_CENTROID_BADMM;
 int world_rank = 0; 
-int nprocs;
+int nprocs = 1;
 
 int main(int argc, char *argv[])
 { 
