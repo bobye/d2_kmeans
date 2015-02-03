@@ -390,11 +390,18 @@ int d2_clustering(int num_of_clusters,
     else 
       label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
 
-    /* termination criterion */
+
+    /*********************************************************
+     * Termination criterion                                 *
+     * For performance profile: comment this part out and    *
+     * use --max_iter parameter of main.                     *
+     *********************************************************/        
     if (label_change_count < 0.005 * p_data->global_size) {
-      VPRINTF("Terminate!\n");
+      VPRINTF("Terminate!\n");        
       break;
     }
+    /*********************************************************/
+
 
     /* make copies of centroids */
     if (use_triangle) d2_copy(centroids, &the_centroids_copy);
