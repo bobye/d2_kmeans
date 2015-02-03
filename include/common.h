@@ -23,6 +23,7 @@ extern "C" {
 #endif
 
   extern int world_rank; // rank of processor
+  extern int nprocs; // number of processors
 
 #ifdef _VERBOSE_OUTPUT
 #include <stdarg.h>
