@@ -120,8 +120,8 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
       p_tr->c[i*num_of_labels + j] = d; 
       p_tr->c[i + j*num_of_labels] = d;
 
-      if (p_tr->s[i] > d) p_tr->s[i] = d;
-      if (p_tr->s[j] > d) p_tr->s[j] = d;
+      if (p_tr->s[i] > d / 2.f) p_tr->s[i] = d / 2.f;
+      if (p_tr->s[j] > d / 2.f) p_tr->s[j] = d / 2.f;
     }    
   }
 
