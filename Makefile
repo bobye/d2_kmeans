@@ -94,9 +94,13 @@ endif
 
 protein: data/protein_seq/protein
 
-.PHONY: clean
+.PHONY: clean test
 clean:
 	@rm -f *_test d2 data/protein_seq/protein
 	@for pattern in '*.o' '*.d'; do \
 		find . -name "$$pattern" | xargs rm; \
 	done
+
+test:
+	cd test && ./test_mpi.sh
+
