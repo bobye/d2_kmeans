@@ -33,11 +33,11 @@ dependencies:
  - [Mosek](https://mosek.com) 7.0+
  
 ```
- $ make # build sequential version, or
+ $ make MPI=0 # build sequential version, or
  $ make MPI=1 # build MPI version
 ```
 
-tests (TBA):
+tests:
 ```
  $ make test # it takes several minutes. 
 ```
@@ -52,4 +52,4 @@ tests (TBA):
 ## Reference
 1. Elkan, Charles. "Using the triangle inequality to accelerate k-means." ICML. Vol. 3. 2003.
 2. Wang, Huahua et al. "Bregman Alternating Direction Method of Multipliers." NIPS. 2014.
-3. Ye, Jianbo et al. "D2-Kmeans: Accelerated and Parallel Clustering of Discrete Distributions" in submission.
+3. Ye, Jianbo et al. "AD2-Clustering: Accelerated Clustering of Discrete Distributions with Bregman ADMM" in submission.
