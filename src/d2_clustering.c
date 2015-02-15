@@ -14,7 +14,7 @@
 #endif
 extern int d2_alg_type;
 
-const double time_budget_ratio = 2.0;
+const double time_budget_ratio = 2000.0;
 double time_budget;
 struct timespec n_time;
 /**
