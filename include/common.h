@@ -91,6 +91,15 @@ static inline double nclock_end() {clock_gettime(CLOCK_MONOTONIC, &nend);
   return (double) ( nend.tv_sec - nstart.tv_sec ) + (double) ( nend.tv_nsec - nstart.tv_nsec ) / (double) BILLION ;
 }
 
+static inline void nclock_start_p(struct timespec * p_time) {
+  clock_gettime(CLOCK_MONOTONIC, p_time);
+}
+static inline double nclock_end_p(struct timespec * p_time) {
+  struct timespec nend;
+  clock_gettime(CLOCK_MONOTONIC, &nend);     
+  return (double) ( nend.tv_sec - p_time->tv_sec ) + (double) ( nend.tv_nsec - p_time->tv_nsec ) / (double) BILLION ;
+}
+
 #ifdef __cplusplus
 }
 #endif
