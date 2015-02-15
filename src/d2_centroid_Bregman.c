@@ -14,11 +14,13 @@
 
 /* choose options */
 
-static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = .5f, .updatePerLoops = 10};
+static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = 2.f, .updatePerLoops = 10};
 static BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .updatePerLoops = 10};
 
 
 BADMM_options *p_badmm_options = &badmm_clu_options;
+
+extern double time_budget;
  
 int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwork) {
   assert(ph->str > 0 && ph->col > 0 && size > 0);
@@ -275,6 +277,8 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
       dualres /= p_data->global_size;
       VPRINTF("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end());
     }
+
+    if (nclock_end() > time_budget) {break;}
   }
 
   _D2_FREE(Z0);
