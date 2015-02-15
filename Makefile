@@ -1,7 +1,16 @@
-CC=gcc -std=gnu99
-CXX=g++ -std=c++11
-
 include make.inc
+
+ifndef MPI
+MPI=1
+endif
+
+ifeq ($(MPI),1)
+CC=$(MPICC)
+CXX=$(MPICXX)
+else
+CC=$(TCC)
+CXX=$(TCXX)
+endif
 
 OS=$(shell uname)
 
@@ -87,7 +96,7 @@ protein: data/protein_seq/protein
 
 .PHONY: clean
 clean:
-	@rm -f *_test d2
+	@rm -f *_test d2 data/protein_seq/protein
 	@for pattern in '*.o' '*.d'; do \
 		find . -name "$$pattern" | xargs rm; \
 	done

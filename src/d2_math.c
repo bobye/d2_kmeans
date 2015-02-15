@@ -36,19 +36,22 @@ double randn () {
    Only effective if N is much smaller than RAND_MAX;
    if this may not be the case, use a better random
    number generator. */
-void shuffle(long *array, size_t n)
+void shuffle(size_t *array, size_t n)
 {
   // srand (time(NULL));
     if (n > 1) 
     {
+      int k;
+      for (k=0; k<10; ++k) {
         size_t i;
         for (i = 0; i < n - 1; i++) 
         {
           size_t j = i + rand() / (RAND_MAX / (n - i) + 1);
-          long t = array[j];
+          size_t t = array[j];
           array[j] = array[i];
           array[i] = t;
         }
+      }
     }
 }
 /*

@@ -9,6 +9,7 @@ extern "C" {
 #define __OUT__ 
 #define __IN_OUT__
 
+#include <stdint.h> // for -std=gnu99
 
 #define _D2_DOUBLE
 #define _VERBOSE_OUTPUT
@@ -21,14 +22,31 @@ extern "C" {
 #define SCALAR_STDIO_TYPE ("%f ")
 #endif
 
+  extern int world_rank; // rank of processor
+  extern int nprocs; // number of processors
+
 #ifdef _VERBOSE_OUTPUT
-#define VPRINTF(x) printf x
-#define VFLUSH fflush(stdout)
-#define ARR_PRINTF(x,n) {int i; for(i=0; i<(n); ++i) printf("%lf ", *((x) + i));} printf("\n")
-#else
-#define VPRINTF(x) 
-#define VFLUSH 
+#include <stdarg.h>
+#include <stdio.h>
+  static inline void VPRINTF(const char *format, ...) {
+    va_list args;
+#ifdef __USE_MPI__
+    if (world_rank == 0) {
 #endif
+      va_start(args, format);
+      vprintf(format, args);
+      va_end(args);
+#ifdef __USE_MPI__
+    }
+#endif
+  }
+
+  static inline void VFLUSH() {fflush(stdout);}
+#else
+  static inline void VPRINTF(const char *format, ...) {}
+  static inline void VFLUSH() {}
+#endif
+
 
 #ifdef  _D2_DOUBLE
 #define _D2_SCALAR          double
@@ -56,6 +74,7 @@ extern "C" {
 inline int clock_gettime(int clk_id, struct timespec* ts) {
   clock_serv_t cclock;
   mach_timespec_t mts;
+  clk_id = 0; // something stupid to get ride of warnings
   host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
   clock_get_time(cclock, &mts);
   mach_port_deallocate(mach_task_self(), cclock);
@@ -70,6 +89,15 @@ static struct timespec nstart, nend;
 static inline void nclock_start() {clock_gettime(CLOCK_MONOTONIC, &nstart);}
 static inline double nclock_end() {clock_gettime(CLOCK_MONOTONIC, &nend);     
   return (double) ( nend.tv_sec - nstart.tv_sec ) + (double) ( nend.tv_nsec - nstart.tv_nsec ) / (double) BILLION ;
+}
+
+static inline void nclock_start_p(struct timespec * p_time) {
+  clock_gettime(CLOCK_MONOTONIC, p_time);
+}
+static inline double nclock_end_p(struct timespec * p_time) {
+  struct timespec nend;
+  clock_gettime(CLOCK_MONOTONIC, &nend);     
+  return (double) ( nend.tv_sec - p_time->tv_sec ) + (double) ( nend.tv_nsec - p_time->tv_nsec ) / (double) BILLION ;
 }
 
 #ifdef __cplusplus

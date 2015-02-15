@@ -9,6 +9,10 @@
 #include <cstdlib>
 #include <getopt.h> /* for getopt_long; GNU extension */
 
+#ifdef __USE_MPI__
+#include <mpi.h>
+#endif
+
 /* centroid methods
  * 0: Bregman ADMM
  * 1: ADMM
@@ -16,9 +20,17 @@
  */
 #include "d2_param.h"
 int d2_alg_type = D2_CENTROID_BADMM;
+int world_rank = 0; 
+int nprocs = 1;
 
 int main(int argc, char *argv[])
 { 
+#ifdef __USE_MPI__
+  MPI_Init(NULL, NULL);
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+#endif
+
   using namespace std;
 
   int size_of_phases = 1;
@@ -29,6 +41,7 @@ int main(int argc, char *argv[])
   int selected_phase = -1; 
   int number_of_clusters = 3; 
   int max_iters = 50; 
+  size_t num_of_batches = 0; // default not used, for prepare data only
 
   /* IO specification */
   int ch;
@@ -42,12 +55,13 @@ int main(int argc, char *argv[])
     {"max_iters", 1, 0, 'm'},
     {"centroid_method", 1, 0, 'M'},
     {"non_triangle", 0, 0, 'T'},
+    {"prepare_batches", 1, 0, 'P'},
     {NULL, 0, NULL, 0}
   };
 
   /* [BEGIN] Parsing program arguments */
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:T", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:TP:", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
@@ -83,6 +97,9 @@ int main(int argc, char *argv[])
     case 'T':
       use_triangle = false;
       break;
+    case 'P':
+      num_of_batches = atoi(optarg); assert(num_of_batches > 0);
+      break;
     default:
       printf ("?? getopt returned character code 0%o ??\n", ch);
       exit(0);
@@ -100,14 +117,16 @@ int main(int argc, char *argv[])
 	 && size_of_phases == (int) ss2.size()
 	 && ss2_c_str);
 
-  cout << "Task: " << endl;
+  if (world_rank == 0) {cout << "Task: " << endl;}  
   for (int i=0; i<size_of_phases; ++i) {
     dimension_of_phases[i] = atoi(ss1[i].c_str());
     avg_strides[i] = atoi(ss2[i].c_str());
+    if (world_rank == 0) {
     if (dimension_of_phases[i] == 0) {
       cout << "\t" << i << "-th phase is of histogram format" << endl;
     } else if (dimension_of_phases[i] > 0) {
       cout << "\t" << i << "-th phase is of discrete distribution format" << endl;
+    }
     }
     assert(dimension_of_phases[i] >= 0 && avg_strides[i] > 0);
   }     
@@ -127,9 +146,27 @@ int main(int argc, char *argv[])
 			&dimension_of_phases[0]);
 
 
-  if (err == 0) {
+  if (err == 0 && num_of_batches == 0) {  
+#ifdef __USE_MPI__
+    if (nprocs > 1) {
+    string fn(filename);
+    d2_read((fn + '.' + to_string(world_rank)).c_str(), &data);  
+    } else {
+    d2_read(filename, &data);
+    }
+#else
     d2_read(filename, &data);  
-  } else {
+#endif
+  } else if (num_of_batches > 0 && world_rank == 0) {
+    d2_read(filename, &data);      
+    d2_write_split(filename, &data, num_of_batches);    
+    d2_free(&data);
+    if (world_rank == 0) {  cout << "[Finish!]" <<endl; }
+#ifdef __USE_MPI__
+  MPI_Finalize();
+#endif
+    return 0;
+  } else if (err != 0) {
     cerr << "Allocation Failed!" << endl;
   }
   
@@ -137,10 +174,12 @@ int main(int argc, char *argv[])
   mph c; 
   c.ph = NULL; // make sure c is (re-)initialized 
 
+  if (world_rank == 0) {
   if (selected_phase >= 0 && size_of_phases > 1) {
     cout << "Clustering upon " << selected_phase <<"-th phase" << endl;
   } else if (selected_phase < 0 && size_of_phases == 1) {
     cout << "Clustering upon all phases (more than one)" << endl;
+  }
   }
 
   d2_clustering(number_of_clusters, 
@@ -150,16 +189,21 @@ int main(int argc, char *argv[])
 		selected_phase,
 		use_triangle);
 
-  if (ofilename) {
-    cout << "Write computed centroids to " << ofilename << endl;
-    d2_write(ofilename, &c);
-  } else {
-    d2_write(NULL, &c);
+  if (world_rank == 0) {
+    if (ofilename) {
+      cout << "Write computed centroids to " << ofilename << endl;
+      d2_write(ofilename, &c);
+    } else {
+      d2_write(NULL, &c);
+    }
   }
-  
+
   d2_free(&data);
   d2_free(&c);
 
-  cout << "[Finish!]" <<endl;
+  if (world_rank == 0) {  cout << "[Finish!]" <<endl; }
+#ifdef __USE_MPI__
+  MPI_Finalize();
+#endif
   return 0;
 }

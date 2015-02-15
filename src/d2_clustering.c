@@ -8,10 +8,15 @@
 #include "d2_math.h"
 #include "d2_solver.h"
 #include "d2_param.h"
-
+#include "d2_centroid_util.h"
+#ifdef __USE_MPI__
+#include <mpi.h>
+#endif
 extern int d2_alg_type;
 
-
+const double time_budget_ratio = 2000.0;
+double time_budget;
+struct timespec n_time;
 /**
  * Compute the distance between i-th d2 in a and j-th d2 in b 
  * Return square root of the undergoing cost as distance
@@ -46,6 +51,7 @@ double d2_compute_distance(mph *a, size_t i,
 				  NULL, // x and lambda are implemented later
 				  NULL,
 				  index);
+	d += val;
 	break;
       case D2_HISTOGRAM :
 	val = d2_match_by_distmat(b_sph->p_str[j],
@@ -55,6 +61,7 @@ double d2_compute_distance(mph *a, size_t i,
 				  a_sph->p_w + a_sph->p_str_cum[i], 
 				  NULL, NULL,
 				  index);
+	d += val;
 	break;	
       case D2_N_GRAM : 
 	_D2_FUNC(pdist_symbolic)(dim, 
@@ -73,13 +80,14 @@ double d2_compute_distance(mph *a, size_t i,
 				  a_sph->p_w + a_sph->p_str_cum[i], 
 				  NULL, // x and lambda are implemented later
 				  NULL,
-				  index);
+				  index) / dim;
 
-
+	d += 2*val;	
 	break;
       }
-      d += val;
     }
+
+  if (d <= 0) return 0.;
   return sqrt(d);
 }
 
@@ -107,23 +115,28 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
   nclock_start();
   /* step 1 */
   for (i=0; i<num_of_labels; ++i) p_tr->s[i] = DBL_MAX;
+  for (i=0; i<num_of_labels * num_of_labels; ++i) p_tr->c[i] = 0;
+
   /* pre-compute pairwise distance between centroids */
-  for (i=0; i<num_of_labels; ++i) {
+  for (i=0; i<num_of_labels; ++i) 
+    if (world_rank == i % nprocs) {
     size_t j;
-    p_tr->c[i*num_of_labels + i] = 0; // d(c_i, c_i)
 
     for (j=i+1; j<num_of_labels; ++j) {
       double d;
       d = d2_compute_distance(centroids, i, centroids, j, selected_phase, var_work, p_data->size + i); 
       dist_count +=1;
-
       p_tr->c[i*num_of_labels + j] = d; 
       p_tr->c[i + j*num_of_labels] = d;
 
       if (p_tr->s[i] > d / 2.f) p_tr->s[i] = d / 2.f;
       if (p_tr->s[j] > d / 2.f) p_tr->s[j] = d / 2.f;
     }    
-  }
+    }
+#ifdef __USE_MPI__
+    MPI_Allreduce(MPI_IN_PLACE, p_tr->c, num_of_labels*num_of_labels, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, p_tr->s, num_of_labels, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+#endif
 
 
   /* initialization */
@@ -179,8 +192,16 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
   }
   }
 
-  VPRINTF(("\n\t\t\t\t %ld objects change their labels\n\t\t\t\t %ld distance pairs computed\n\t\t\t\t seconds: %f\n", count, dist_count, nclock_end()));
-  
+#ifdef __USE_MPI__
+  assert(sizeof(size_t)  == sizeof(uint64_t));
+  MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &dist_count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+#endif
+
+  VPRINTF("\n\t\t\t\t %ld objects change their labels\n\t\t\t\t %ld distance pairs computed\n\t\t\t\t seconds: %f\n", count, dist_count, nclock_end_p(&n_time));
+
+  // set time budget for update step
+  time_budget = time_budget_ratio * nclock_end();
   return count;
 }
 
@@ -283,7 +304,6 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 	min_distance = d; jj = j;
       }
     }
-    
     cost += min_distance * min_distance;
 
     if (p_data->label[i] == jj) {
@@ -299,7 +319,16 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
     }
   }
 
-  VPRINTF(("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/size, nclock_end()));
+#ifdef __USE_MPI__
+  assert(sizeof(size_t)  == sizeof(uint64_t));
+  MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &cost,  1, MPI_DOUBLE,   MPI_SUM, MPI_COMM_WORLD);
+#endif
+
+  VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/p_data->global_size, nclock_end_p(&n_time));
+
+  // set time budget for update step
+  time_budget = time_budget_ratio * nclock_end() / p_data->num_of_labels;
   
   return count;
 }
@@ -325,7 +354,7 @@ int d2_clustering(int num_of_clusters,
   // int *label = p_data->label;
   size_t label_change_count;
   var_mph var_work = {.tr = {NULL, NULL, NULL, NULL, NULL}};
-  mph the_centroids_copy = {0, 0, NULL, 0, NULL};
+  mph the_centroids_copy = {0, 0, 0, NULL, 0, NULL};
 
   assert(num_of_clusters>0 && max_iter > 0 && selected_phase < s_ph);
 
@@ -335,7 +364,7 @@ int d2_clustering(int num_of_clusters,
   if (!centroids->ph) {
   // MPI note: to be done only on one node
   // initialize centroids from random
-  VPRINTF(("Initializing centroids ... ")); VFLUSH;
+  VPRINTF("Initializing centroids ... "); VFLUSH();
   centroids->s_ph = s_ph;
   centroids->size = num_of_clusters;
   centroids->ph = (sph *) malloc(s_ph * sizeof(sph));
@@ -345,15 +374,12 @@ int d2_clustering(int num_of_clusters,
       d2_allocate_sph(&centroids->ph[i],  p_data->ph[i].dim, p_data->ph[i].str, p_data->num_of_labels, 0.);
       /* initialize centroids from random samples */
       d2_centroid_rands(p_data, i, &centroids->ph[i]);
+      broadcast_centroids(centroids, i);
     } else {
       centroids->ph[i].col = 0;
     }
   //  d2_write(NULL, centroids); 
-  VPRINTF(("[done]\n"));
-
-#ifdef __USE_MPI__
-  /* initialize centroids from one node, and broadcast to other nodes */
-#endif
+  VPRINTF("[done]\n");
   }
 
   assert(centroids->s_ph == s_ph && centroids->size == num_of_clusters);
@@ -370,28 +396,36 @@ int d2_clustering(int num_of_clusters,
   else 
     d2_solver_setup(size + num_of_clusters);
 
+  nclock_start_p(&n_time);
   for (iter=0; iter<max_iter; ++iter) {
-    VPRINTF(("Round %d ... \n", iter));
-    VPRINTF(("\tRe-labeling all instances ... ")); VFLUSH;
+    VPRINTF("Round %d ... \n", iter);
+    VPRINTF("\tRe-labeling all instances ... "); VFLUSH();
     if (use_triangle)
       label_change_count = d2_labeling_prep(p_data, centroids, &var_work, selected_phase);
     else 
       label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
 
-    /* termination criterion */
-    if (label_change_count < 0.005 * size) {
-      VPRINTF(("Terminate!\n"));
+
+    /*********************************************************
+     * Termination criterion                                 *
+     * For performance profile: comment this part out and    *
+     * use --max_iter parameter of main.                     *
+     *********************************************************/        
+    if (label_change_count < 0.001 * p_data->global_size) {
+      VPRINTF("Terminate!\n");        
       break;
     }
+    /*********************************************************/
+
 
     /* make copies of centroids */
     if (use_triangle) d2_copy(centroids, &the_centroids_copy);
 
-    VPRINTF(("\tUpdate centroids ... \n"));
+    VPRINTF("\tUpdate centroids ... \n");
     /* update centroids */
     for (i=0; i<s_ph; ++i) 
       if (selected_phase < 0 || i == selected_phase) {
-	VPRINTF(("\t phase %d: \n", i));            
+	VPRINTF("\t phase %d: \n", i);            
       
 	if (d2_alg_type == D2_CENTROID_BADMM) 
 	  d2_centroid_sphBregman(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);
@@ -411,6 +445,8 @@ int d2_clustering(int num_of_clusters,
 
   d2_free_work(&var_work);
   if (use_triangle) d2_free(&the_centroids_copy);
+
+  VPRINTF("Iteration time: %lf\n", nclock_end_p(&n_time));
   return 0;
 }
 

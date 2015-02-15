@@ -11,8 +11,12 @@
 #include <stdbool.h>
 #include <float.h>
 #include "d2_clustering.h"
+#include "d2_centroid_util.h"
 #include "blas_util.h"
-
+#include "d2_math.h"
+#ifdef __USE_MPI__
+#include <mpi.h>
+#endif
 
 /* centroid methods
  * 0: Bregman ADMM
@@ -21,7 +25,8 @@
  */
 #include "d2_param.h"
 int d2_alg_type; //  = D2_CENTROID_BADMM;
-
+int world_rank = 0;
+int nprocs = 1;
 extern BADMM_options *p_badmm_options;
 extern GRADDEC_options *p_graddec_options;
 
@@ -76,6 +81,7 @@ int d2_read_sph_protein(const char* filename, sph *p_data_sph, mph *p_data) {
   FILE *fp_new; // local variable
   int str, c;
   char symbol, name[1000];
+  char local_filename[255];
 
   
   /* Begin: load keymap and their distances */
@@ -94,7 +100,7 @@ int d2_read_sph_protein(const char* filename, sph *p_data_sph, mph *p_data) {
   /* Being: Load n-gram data */
   fp = fopen(filename, "r+");assert(fp);
 
-  c=fscanf(fp, "Seq #%zd\n", &i); assert(c>=1 && i >= size);
+  c=fscanf(fp, "Seq #%zd\n", &i); assert(c>=1 && i == size);
   c=fscanf(fp, "Class #%d\n", &n); assert(c>=1);
 
   count_w = 0; count_supp = 0;
@@ -105,7 +111,7 @@ int d2_read_sph_protein(const char* filename, sph *p_data_sph, mph *p_data) {
     c = fscanf(fp, "%d %d", &dim, &str); assert(c==2 && dim == p_data_sph->dim && str > 0);
 
     if (p_data_sph->col + str >= p_data_sph->max_col) {
-      VPRINTF(("Warning: preallocated memory as it is insufficient! Reallocated.\n"));
+      printf("Warning: preallocated memory as it is insufficient! Reallocated.\n");
       p_data_sph->p_supp_sym = (int *) realloc(p_data_sph->p_supp_sym, 2 * dim * p_data_sph->max_col * sizeof(int));
       p_data_sph->p_w = (SCALAR *) realloc(p_data_sph->p_w, 2* p_data_sph->max_col * sizeof(SCALAR));
       assert(p_data_sph->p_supp_sym != NULL && p_data_sph->p_w != NULL);
@@ -155,9 +161,9 @@ int d2_read_sph_protein(const char* filename, sph *p_data_sph, mph *p_data) {
 
 
 
-int d2_read_protein(mph *p_data,
+int d2_read_protein(const char* name,
+		    mph *p_data,
 		const int size_of_phases,
-		const size_t size_of_samples,
 		const int *avg_strides, /**
 					   It is very important to make sure 
 					   that avg_strides are specified correctly.
@@ -168,6 +174,22 @@ int d2_read_protein(mph *p_data,
 		const int *dimension_of_phases) {
   size_t i;
   int success = 0;
+  size_t size_of_samples;
+  FILE *fp;
+  char local_filename[255];
+
+#ifdef __USE_MPI__
+  if (nprocs > 1)
+    sprintf(local_filename, "%s_1gram.dat.%d", name, world_rank);
+  else 
+    sprintf(local_filename, "%s_1gram.dat", name);    
+  fp = (FILE *) fopen(local_filename, "r+");
+#else
+  sprintf(local_filename, "%s_1gram.dat", name);
+  fp = (FILE *) fopen(local_filename, "r+");
+#endif
+  fscanf(fp, "Seq # %zd", &size_of_samples);
+  fclose(fp);
 
   p_data->s_ph = size_of_phases;
   p_data->size = size_of_samples; 
@@ -180,7 +202,14 @@ int d2_read_protein(mph *p_data,
 
   for (i=0; i<p_data->s_ph; ++i) {
     char filename[255];
-    sprintf(filename, "protein_%zdgram.dat", i+1);
+#ifdef __USE_MPI__
+  if (nprocs > 1)
+    sprintf(filename, "%s_%zdgram.dat.%d", name, i+1, world_rank);
+  else 
+    sprintf(filename, "%s_%zdgram.dat", name, i+1);    
+#else
+    sprintf(filename, "%s_%zdgram.dat", name, i+1);
+#endif
     printf("Load %s ...\n", filename);
     d2_allocate_sph_protein(p_data->ph + i, 
 			dimension_of_phases[i], 
@@ -189,6 +218,13 @@ int d2_read_protein(mph *p_data,
 			0.6);
     d2_read_sph_protein(filename, p_data->ph + i, p_data);
   }
+
+#ifdef __USE_MPI__
+  assert(sizeof(size_t)  == sizeof(uint64_t));
+  MPI_Allreduce(&p_data->size, &p_data->global_size, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+#else
+  p_data->global_size = p_data->size;
+#endif
 
   return success;
 }
@@ -199,65 +235,124 @@ int d2_write_protein(const char* filename, mph *p_data) {
 
   size_t i, j;
   int k, d, n;
-  int **p_supp; double **p_w; 
   int s_ph = p_data->s_ph;
   size_t size = p_data->size;
-
-  p_supp = (int **) malloc(s_ph * sizeof(int *));
-  p_w    = (double **) malloc(s_ph * sizeof(double *));
-  
-  for (n=0; n<s_ph; ++n) {
-    p_supp[n] = p_data->ph[n].p_supp_sym;
-    p_w[n]    = p_data->ph[n].p_w;
-  }
 
   for (i=0; i<size; ++i) {
     for (j=0; j<s_ph; ++j) 
       if (p_data->ph[j].col > 0) {
 	int dim = p_data->ph[j].dim;
 	int str = p_data->ph[j].p_str[i];
+	SCALAR *p_w = p_data->ph[j].p_w + p_data->ph[j].p_str_cum[i];
+	int *p_supp_sym = p_data->ph[j].p_supp_sym + p_data->ph[j].p_str_cum[i] * dim;
 	fprintf(fp, "%d\n", dim);
 	fprintf(fp, "%d\n", str);
-	for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[j][k]);
-	fprintf(fp, "\n"); p_w[j] += str;
+	for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[k]);
+	fprintf(fp, "\n"); 
 	for (k=0; k<str; ++k) {
-	  for (d=0; d<dim; ++d) fprintf(fp, "%c", reverseKey[p_supp[j][d]]);
-	  fprintf(fp, " "); p_supp[j] += dim;
+	  for (d=0; d<dim; ++d) fprintf(fp, "%c", reverseKey[p_supp_sym[d]]);
+	  fprintf(fp, " "); p_supp_sym += dim;
 	}
 	fprintf(fp, "\n");
       }
   }
 
-  free(p_supp); free(p_w);
   fclose(fp);
   return 0;
 }
 
+int d2_write_protein_split(const char* filename, mph *p_data, int splits) {
+  const int s_ph = p_data->s_ph;
+  const size_t size = p_data->size; 
+  size_t *indices, batch_size, n;
+  int **p_supp; double **p_w; 
+  int m, j;
+  
+  assert(filename != NULL && splits > 1);
 
-/* $ ./protein <selected_phase> <num_of_clusters> <type_of_methods> */
+  indices = _D2_MALLOC_SIZE_T(size);
+  for (n = 0; n < size; ++n) indices[n] = n; shuffle(indices, size);
+  batch_size = 1 + (size-1) / splits;
+  VPRINTF("batch_size: %zd\n", batch_size);
+
+  for (j=0; j<s_ph; ++j) for (m=0; m<splits; ++m) {
+    size_t idx;
+    FILE *fp = NULL;
+    char local_filename[255];
+    sprintf(local_filename, "%s_%dgram.dat.%d", filename, j+1, m);
+
+    fp = fopen(local_filename, "w+");
+    assert(fp);
+
+    /* print header */
+    fprintf(fp, "Seq # %zd\n", (size < batch_size * (m+1) ? (size- batch_size * m) : batch_size));
+    fprintf(fp, "Class # 0\n");
+
+    for (idx=batch_size*m; idx<size && idx<batch_size*(m+1); ++idx) {
+      size_t i = indices[idx];
+      int dim = p_data->ph[j].dim, d, k;
+      int str = p_data->ph[j].p_str[i];
+      SCALAR *p_w = p_data->ph[j].p_w + p_data->ph[j].p_str_cum[i];
+      int *p_supp_sym = p_data->ph[j].p_supp_sym + p_data->ph[j].p_str_cum[i] * dim;
+
+      fprintf(fp, "Q00000 0\n");
+      fprintf(fp, "%d\n", dim);
+      fprintf(fp, "%d\n", str);
+      for (k=0; k<str; ++k) fprintf(fp, "%f ", p_w[k]);
+      fprintf(fp, "\n");
+      for (k=0; k<str; ++k) {
+	for (d=0; d<dim; ++d) fprintf(fp, "%c", reverseKey[p_supp_sym[d]]);
+	fprintf(fp, " "); p_supp_sym += dim;
+      }
+      fprintf(fp, "\n\n");
+    }
+
+    fclose(fp);
+    VPRINTF("\twrite %zd objects to %s\n", idx - batch_size * m, local_filename);
+  }  
+
+  return 0;
+}
+
+/**
+ * $ ./protein <name> <selected_phase> <num_of_clusters> <type_of_methods> 
+ * 
+ * if num_of_clusters >= 1: clustering
+ * if num_of_clusters < -1: prepare -num_of_clusters data batches
+ *
+ */
 int main(int argc, char *argv[]) {
+#ifdef __USE_MPI__
+  MPI_Init(NULL, NULL);
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+#endif
   int avg_strides[3] = {20, 26, 32};
   int dimension_of_phases[3] = {1, 2, 3};
   int size_of_phases = 3;
-  size_t size_of_samples = 10742;
-  int number_of_clusters = atoi(argv[2]);
-  int selected_phase = atoi(argv[1]);
+  int number_of_clusters = atoi(argv[3]);
+  int selected_phase = atoi(argv[2]);
   char use_triangle = false;
   int i;
 
   mph data;
   mph c;
 
-  d2_alg_type = atoi(argv[3]);
+  d2_alg_type = atoi(argv[4]);
 
-  d2_read_protein(&data, 
+  d2_read_protein(argv[1], &data, 
 		  size_of_phases,
-		  size_of_samples,
 		  &avg_strides[0],
 		  &dimension_of_phases[0]);
 
 
-  {
+
+
+  if (number_of_clusters < -1) {
+    if (world_rank == 0)
+      d2_write_protein_split(argv[1], &data, -number_of_clusters);
+  }
+  else {
   // MPI note: to be done only on one node
   c.s_ph = size_of_phases;
   c.size = number_of_clusters;
@@ -273,17 +368,17 @@ int main(int argc, char *argv[]) {
 
 #ifdef __USE_MPI__
       /* initialize c.ph[i] from one node, and broadcast to other nodes */
+      broadcast_centroids(&c, i);      
 #endif
     } else {
       c.ph[i].col = 0;
     }
   }  
-  }
   
-  printf("Centroid initialization done; start clustering ... \n");
+  VPRINTF("Centroid initialization done; start clustering ... \n");
 
-  BADMM_options ad_hoc_op_badmm = {.maxIters = 40, .rhoCoeff = 2.f, .updatePerLoops = 40};
-  GRADDEC_options ad_hoc_op_graddec = {.maxIters = 5, .stepSize = 1.f};
+  BADMM_options ad_hoc_op_badmm = {.maxIters = 40, .rhoCoeff = 1.f, .updatePerLoops = 40};
+  GRADDEC_options ad_hoc_op_graddec = {.maxIters = 5, .stepSize = 0.5};
   p_badmm_options = &ad_hoc_op_badmm;
   p_graddec_options = &ad_hoc_op_graddec;
 
@@ -296,10 +391,14 @@ int main(int argc, char *argv[]) {
 
 
   // MPI note: to be done only on one node
-  d2_write_protein(NULL, &c); // output centroids
+  if (world_rank == 0) d2_write_protein(NULL, &c); // output centroids
+  d2_free(&c);
+  }
 
   d2_free(&data);
-  d2_free(&c);
 
+#ifdef __USE_MPI__
+  MPI_Finalize();
+#endif
   return 0;
 }
