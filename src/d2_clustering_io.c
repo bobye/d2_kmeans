@@ -157,17 +157,51 @@ int d2_write(const char* filename, mph *p_data) {
   return 0;
 }
 
+int d2_write_labels(const char* filename, mph *p_data) {
+  FILE *fp = NULL;
+  size_t i;
+  const size_t size = p_data->global_size;
+  int k;
+
+  assert(filename);
+
+  for (k=0; k<nprocs; ++k) {
+    if (k == world_rank) {
+      if (k==0) fp = fopen(filename, "w"); else fp=fopen(filename, "a");
+      for (i=0; i<p_data->size; ++i) {
+	fprintf(fp, "%d\n", p_data->label[i]);
+      }
+      fclose(fp);
+    }
+#ifdef __USE_MPI__
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+  }
+
+  return 0;
+}
 
 int d2_write_split(const char* filename, mph *p_data, int splits) {
   const int s_ph = p_data->s_ph;
   const size_t size = p_data->size; 
   size_t *indices, batch_size, n;
   int k;
+  FILE *fp;
+  char local_filename[255];
+
   
   assert(filename != NULL);
 
   indices = _D2_MALLOC_SIZE_T(size);
   for (n = 0; n < size; ++n) indices[n] = n; shuffle(indices, size);
+
+  // output indices
+  sprintf(local_filename, "%s.ind", filename, k);
+  fp = fopen(local_filename, "w+"); assert(fp);
+  for (n = 0; n < size; ++n) fprintf(fp, "%d\n", indices[n]);
+  fclose(fp);
+
+  // output reads in several segments
   batch_size = 1 + (size-1) / splits;
   VPRINTF("batch_size: %zd\n", batch_size);
 

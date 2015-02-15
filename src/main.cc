@@ -198,6 +198,8 @@ int main(int argc, char *argv[])
     }
   }
 
+  d2_write_labels((string(filename) + ".label").c_str(), &data);
+
   d2_free(&data);
   d2_free(&c);
 
