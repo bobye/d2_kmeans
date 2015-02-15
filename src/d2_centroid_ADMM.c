@@ -75,11 +75,6 @@ int d2_centroid_sphADMM(mph *p_data,
 				  X + p_str_cum[i]*str,
 				  L + i*str,
 				  i); // known bug as for only one phase
-      if(val <= 0) {	
-	ARR_PRINTF(C + str*p_str_cum[i], str*p_str[i]);
-	printf("%lf\n", val); 
-	assert(val > 0);
-      };
       fval += val;
     }
     fval /= size;

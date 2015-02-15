@@ -91,6 +91,7 @@ extern "C" {
   typedef struct {
     int s_ph; /* size of phases */
     size_t size; /* size of entries */
+    size_t global_size;
     int *label;
     int num_of_labels;
     sph *ph;
@@ -114,6 +115,7 @@ extern "C" {
 
   int d2_read(const char* filename, __OUT__ mph *p_data);
   int d2_write(const char* filename, mph *p_data);
+  int d2_write_split(const char* filename, mph *p_data, int splits);
   int d2_free(mph *p_data);
 
   /* main algorithm */

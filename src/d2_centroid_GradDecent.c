@@ -7,9 +7,11 @@
 #include <assert.h>
 #include "d2_centroid_util.h"
 
-static GRADDEC_options graddec_default_options = {.maxIters = 5, .stepSize = 1E-3};
+static GRADDEC_options graddec_default_options = {.maxIters = 5, .stepSize = 0.5};
 
 GRADDEC_options *p_graddec_options = &graddec_default_options;
+
+extern double time_budget;
 
 
 int d2_centroid_sphGradDecent(mph *p_data,
@@ -37,7 +39,7 @@ int d2_centroid_sphGradDecent(mph *p_data,
   SCALAR *L = var_work->g_var[idx_ph].L;
   SCALAR *C = var_work->g_var[idx_ph].C;
   size_t *label_count;
-  SCALAR *p_grad, *Zr;
+  SCALAR *p_grad, *Zr, tmp;
   double step_size = p_graddec_options->stepSize;
 
   assert(dim > 0); // current only support the D2 format
@@ -84,14 +86,17 @@ int d2_centroid_sphGradDecent(mph *p_data,
     fval /= size;
   
     printf("\t%d\t%f\t%f\n", iter, fval, nclock_end());    
-    if (fabs(fval - fval0) < 1E-4 * fval) break;
+    if (fabs(fval - fval0) < 1E-4 * fval || nclock_end() > time_budget) break;
 
     /* compute p_grad */
     _D2_FUNC(ccenter)(str, size, L, NULL);
     for (i=0; i<num_of_labels*str; ++i) p_grad[i] = 0; //reset
     for (i=0; i < size; ++i)
       _D2_CBLAS_FUNC(axpy)(str, 1./label_count[label[i]], L + i*str, 1, p_grad + label[i]*str, 1);
-    for (i=0; i < num_of_labels*str; ++i) p_grad[i] = p_grad[i] * c->p_w[i] * (1-c->p_w[i]);
+    for (i=0, tmp = 0.; i < num_of_labels*str; ++i) {
+      p_grad[i] = p_grad[i] * c->p_w[i] * (1-c->p_w[i]);
+      tmp += p_grad[i]*p_grad[i];
+    }
 
     /* update c->p_supp */
     switch (data_ph->metric_type) {
@@ -132,7 +137,15 @@ int d2_centroid_sphGradDecent(mph *p_data,
     }
 
     /* update c->p_w */
-    for (i=0; i<num_of_labels*str; ++i) c->p_w[i] *= exp(- step_size * p_grad[i]);
+    if (step_size / sqrt(tmp) < 5.) {
+      tmp = step_size / sqrt(tmp);
+    } else {
+      tmp = 5.;
+    }
+
+    //    printf("%lf\n", tmp);
+
+    for (i=0; i<num_of_labels*str; ++i) c->p_w[i] *= exp(- tmp * p_grad[i]);
     _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, NULL);
 
   }

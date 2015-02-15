@@ -19,6 +19,8 @@ static BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .up
 
 
 BADMM_options *p_badmm_options = &badmm_clu_options;
+
+extern double time_budget;
  
 int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwork) {
   assert(ph->str > 0 && ph->col > 0 && size > 0);
@@ -91,7 +93,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   if (!c0) {
     // MPI note: to be done only on one node
     d2_centroid_rands(p_data, idx_ph, c);// For profile purpose only!
-    //broadcast_centroids(p_data, idx_ph);
+    broadcast_centroids(p_data, idx_ph);
   } else {
     *c = *c0; // warm start (for clustering purpose)
   }  
@@ -141,8 +143,8 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
 
   // main loop
-  VPRINTF(("\titer\tobj\t\tprimres\t\tdualres\t\tseconds\n"));
-  VPRINTF(("\t----------------------------------------------------------------\n"));
+  VPRINTF("\titer\tobj\t\tprimres\t\tdualres\t\tseconds\n");
+  VPRINTF("\t----------------------------------------------------------------\n");
   nclock_start();
   for (iter=0; iter <= max_niter; ++iter) {
     /*************************************************************************/
@@ -270,11 +272,13 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
       MPI_Allreduce(MPI_IN_PLACE, &primres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
       MPI_Allreduce(MPI_IN_PLACE, &dualres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
-      obj     *= rho / p_data->size;
-      primres /= p_data->size;
-      dualres /= p_data->size;
-      VPRINTF(("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end()));
+      obj     *= rho / p_data->global_size;
+      primres /= p_data->global_size;
+      dualres /= p_data->global_size;
+      VPRINTF("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end());
     }
+
+    if (nclock_end() > time_budget) {break;}
   }
 
   _D2_FREE(Z0);

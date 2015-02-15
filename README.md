@@ -25,12 +25,26 @@ sequence can be represented as distributions in three phases, aka,
 1-gram,2-gram,3-gram of amino acid.
 The clustering is then performed jointly over differernt phases.
 
-## How to compile
+## How to compile and run tests
 
+dependencies:
  - MPI
  - CBLAS: OpenBLAS or MKL or Accelerate(Mac)
  - [Mosek](https://mosek.com) 7.0+
  
+```
+ $ make # build sequential version, or
+ $ make MPI=1 # build MPI version
+```
+
+tests (TBA):
+```
+ $ make test # it takes several minutes. 
+```
+
+## Guides and Tutorials
+ - a brief user guide
+ - [clustering documents as bags of word-vectors](https://github.com/bobye/d2_kmeans/wiki/Document-Clustering)
 
 ## Port to Interfaces
  - Matlab [to appear]
