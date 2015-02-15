@@ -16,7 +16,7 @@ OS=$(shell uname)
 
 ARCH_FLAGS=-m64
 CFLAGS=-Wextra -Wall -pedantic-errors -O3 $(ARCH_FLAGS)
-LDFLAGS=$(ARCH_FLAGS)
+LDFLAGS=$(ARCH_FLAGS) 
 DEFINES=-D __BLAS_LEGACY__
 INCLUDES=-Iinclude/ -I$(MOSEK)/h $(CBLAS_INC)
 LIBRARIES=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread $(BLAS_LIB) $(OTHER_LIB)
@@ -94,9 +94,13 @@ endif
 
 protein: data/protein_seq/protein
 
-.PHONY: clean
+.PHONY: clean test
 clean:
 	@rm -f *_test d2 data/protein_seq/protein
 	@for pattern in '*.o' '*.d'; do \
 		find . -name "$$pattern" | xargs rm; \
 	done
+
+test:
+	cd test && ./test_mpi.sh
+
