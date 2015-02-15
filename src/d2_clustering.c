@@ -14,7 +14,9 @@
 #endif
 extern int d2_alg_type;
 
-
+const double time_budget_ratio = 2.0;
+double time_budget;
+struct timespec n_time;
 /**
  * Compute the distance between i-th d2 in a and j-th d2 in b 
  * Return square root of the undergoing cost as distance
@@ -84,6 +86,8 @@ double d2_compute_distance(mph *a, size_t i,
 	break;
       }
     }
+
+  if (d <= 0) return 0.;
   return sqrt(d);
 }
 
@@ -194,8 +198,10 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
   MPI_Allreduce(MPI_IN_PLACE, &dist_count, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 #endif
 
-  VPRINTF("\n\t\t\t\t %ld objects change their labels\n\t\t\t\t %ld distance pairs computed\n\t\t\t\t seconds: %f\n", count, dist_count, nclock_end());
-  
+  VPRINTF("\n\t\t\t\t %ld objects change their labels\n\t\t\t\t %ld distance pairs computed\n\t\t\t\t seconds: %f\n", count, dist_count, nclock_end_p(&n_time));
+
+  // set time budget for update step
+  time_budget = time_budget_ratio * nclock_end();
   return count;
 }
 
@@ -298,7 +304,6 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 	min_distance = d; jj = j;
       }
     }
-    
     cost += min_distance * min_distance;
 
     if (p_data->label[i] == jj) {
@@ -320,7 +325,10 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
   MPI_Allreduce(MPI_IN_PLACE, &cost,  1, MPI_DOUBLE,   MPI_SUM, MPI_COMM_WORLD);
 #endif
 
-  VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/p_data->global_size, nclock_end());
+  VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/p_data->global_size, nclock_end_p(&n_time));
+
+  // set time budget for update step
+  time_budget = time_budget_ratio * nclock_end() / p_data->num_of_labels;
   
   return count;
 }
@@ -388,6 +396,7 @@ int d2_clustering(int num_of_clusters,
   else 
     d2_solver_setup(size + num_of_clusters);
 
+  nclock_start_p(&n_time);
   for (iter=0; iter<max_iter; ++iter) {
     VPRINTF("Round %d ... \n", iter);
     VPRINTF("\tRe-labeling all instances ... "); VFLUSH();
@@ -402,7 +411,7 @@ int d2_clustering(int num_of_clusters,
      * For performance profile: comment this part out and    *
      * use --max_iter parameter of main.                     *
      *********************************************************/        
-    if (label_change_count < 0.005 * p_data->global_size) {
+    if (label_change_count < 0.001 * p_data->global_size) {
       VPRINTF("Terminate!\n");        
       break;
     }
