@@ -115,6 +115,7 @@ extern "C" {
 
   int d2_read(const char* filename, __OUT__ mph *p_data);
   int d2_write(const char* filename, mph *p_data);
+  int d2_write_labels(const char* filename, mph *p_data);
   int d2_write_split(const char* filename, mph *p_data, int splits);
   int d2_free(mph *p_data);
 
