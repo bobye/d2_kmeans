@@ -23,11 +23,11 @@ distributions (of any aforementioned type). For example, an image can be
 represented as color distribution and texture distribution; a protein
 sequence can be represented as distributions in three phases, aka,
 1-gram,2-gram,3-gram of amino acid.
-The clustering is then performed jointly over differernt phases.
+The co-clustering is then performed jointly over multiple phases.
 
 ## How to compile and run tests
 
-dependencies:
+Build dependencies:
  - MPI
  - CBLAS: OpenBLAS or MKL or Accelerate(Mac)
  - [Mosek](https://mosek.com) 7.0+
@@ -37,13 +37,13 @@ dependencies:
  $ make MPI=1 # build MPI version
 ```
 
-tests:
+Run unit tests:
 ```
  $ make test # it takes several minutes. 
 ```
 
 ## Guides and Tutorials
- - a brief user guide
+ - [data format supported](data)
  - [clustering documents as bags of word-vectors](https://github.com/bobye/d2_kmeans/wiki/Document-Clustering)
 
 ## Port to Interfaces
