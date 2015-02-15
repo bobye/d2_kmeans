@@ -445,6 +445,8 @@ int d2_clustering(int num_of_clusters,
 
   d2_free_work(&var_work);
   if (use_triangle) d2_free(&the_centroids_copy);
+
+  VPRINTF("Total time: %lf\n", nclock_end_p(&n_time));
   return 0;
 }
 
