@@ -37,7 +37,7 @@ dependencies:
  $ make MPI=1 # build MPI version
 ```
 
-tests (TBA):
+tests:
 ```
  $ make test # it takes several minutes. 
 ```
