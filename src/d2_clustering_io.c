@@ -6,8 +6,13 @@
 #ifdef __USE_MPI__
 #include <mpi.h>
 #endif
+
+struct timespec io_time;
+
 /** Load Data Set: see specification of format at README.md */
 int d2_read(const char* filename, mph *p_data) {
+  nclock_start_p(&io_time);
+
   FILE *fp = fopen(filename, "r+");
   assert(fp);
 
@@ -113,6 +118,8 @@ int d2_read(const char* filename, mph *p_data) {
 #else
   p_data->global_size = p_data->size;
 #endif
+
+  VPRINTF("IO time: %lf\n", nclock_end_p(&io_time));
 
   return 0;
 }
