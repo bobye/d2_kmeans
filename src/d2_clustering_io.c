@@ -65,7 +65,7 @@ int d2_read(const char* filename, mph *p_data) {
       c=fscanf(fp_new, "%d", &dim); assert(c>0 && dim == p_data->ph[n].dim);
       c=fscanf(fp_new, "%d", &p_data->ph[n].vocab_size);
       p_data->ph[n].vocab_vec = _D2_MALLOC_SCALAR(dim * p_data->ph[n].vocab_size);
-      for (i=0; i<p_data->ph[n].vocab_size; ++i) 
+      for (i=0; i<p_data->ph[n].vocab_size * dim; ++i) 
 	fscanf(fp_new, SCALAR_STDIO_TYPE, &(p_data->ph[n].vocab_vec[i]));
       fclose(fp_new);
     }
@@ -101,7 +101,7 @@ int d2_read(const char* filename, mph *p_data) {
 	  assert(p_data->ph[n].p_w != NULL);
 	  p_w[n]    = p_data->ph[n].p_w + p_data->ph[n].col;
 	} else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {
-	  p_data->ph[n].p_supp_sym = (int *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(int));
+	  p_data->ph[n].p_supp_sym = (int *) realloc(p_data->ph[n].p_supp_sym, 2* p_data->ph[n].max_col * sizeof(int));
 	  p_data->ph[n].p_w = (SCALAR *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(SCALAR));
 	  assert(p_data->ph[n].p_supp_sym != NULL && p_data->ph[n].p_w != NULL);
 	  p_supp_sym[n] = p_data->ph[n].p_supp_sym + p_data->ph[n].col;
@@ -133,8 +133,9 @@ int d2_read(const char* filename, mph *p_data) {
 	p_supp[n] = p_supp[n] + strxdim;
       } else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {	
 	p_supp_sym_sph = p_supp_sym[n]; 
-	for (j=0; j<str; ++j)
-	  fscanf(fp, "%d", &p_supp_sym_sph[j]);
+	for (j=0; j<str; ++j) {
+	  fscanf(fp, "%d", &p_supp_sym_sph[j]); p_supp_sym_sph[j] --; // index started at one
+	}
 	p_supp_sym[n] = p_supp_sym[n] + str;
       }
       p_str[n] ++;
