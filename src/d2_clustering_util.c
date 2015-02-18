@@ -41,13 +41,20 @@ int d2_allocate_sph(sph *p_data_sph,
   if (type == D2_EUCLIDEAN_L2) {
     p_data_sph->p_supp = _D2_MALLOC_SCALAR(n);
     p_data_sph->metric_type = D2_EUCLIDEAN_L2;
+    p_data_sph->p_supp_sym = NULL;
   }
   else if (type == D2_HISTOGRAM) { 
     p_data_sph->dist_mat = _D2_MALLOC_SCALAR( stride * stride );
     p_data_sph->metric_type = D2_HISTOGRAM;
+    p_data_sph->p_supp_sym = NULL;
+  }
+  else if (type == D2_WORD_EMBED) {
+    p_data_sph->p_supp_sym = _D2_MALLOC_INT(m);
+    p_data_sph->metric_type = D2_WORD_EMBED;
+    p_data_sph->p_supp = NULL;
+    // vocab_size and vocab_vec not specified
   }
 
-  p_data_sph->p_supp_sym = NULL;
 
   return 0;
 }
