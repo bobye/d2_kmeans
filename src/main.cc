@@ -35,7 +35,8 @@ int main(int argc, char *argv[])
 
   int size_of_phases = 1;
   long size_of_samples;
-  char *ss1_c_str = 0, *ss2_c_str = 0, *filename = 0, *ofilename = 0;
+  char *ss1_c_str = 0, *ss2_c_str = 0, *ss3_c_str = 0,
+    *filename = 0, *ofilename = 0;
   char use_triangle = true;
   /* default settings */
   int selected_phase = -1; 
@@ -56,12 +57,13 @@ int main(int argc, char *argv[])
     {"centroid_method", 1, 0, 'M'},
     {"non_triangle", 0, 0, 'T'},
     {"prepare_batches", 1, 0, 'P'},
+    {"types", 1, 0, 'E'},
     {NULL, 0, NULL, 0}
   };
 
   /* [BEGIN] Parsing program arguments */
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:TP:", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:TP:E:", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
@@ -81,6 +83,8 @@ int main(int argc, char *argv[])
     case 's': 
       ss2_c_str = optarg;
       break;
+    case 'E':
+      ss3_c_str = optarg;
     case 't':
       selected_phase = atoi(optarg); assert(selected_phase >= 0);
       break;
@@ -109,24 +113,30 @@ int main(int argc, char *argv[])
 
   vector<int> dimension_of_phases(size_of_phases, 0);  
   vector<int> avg_strides(size_of_phases, 0);
+  vector<int> type_of_phases(size_of_phases, 0);
 
-  vector<string> ss1 = ss1_c_str? split(string(ss1_c_str), ',') : vector<string> (1, "0");
+  vector<string> ss1 = ss1_c_str? split(string(ss1_c_str), ',') : vector<string> (size_of_phases, "0");
   vector<string> ss2 = split(string(ss2_c_str), ',');
+  vector<string> ss3 = ss3_c_str? split(string(ss3_c_str), ',') : vector<string> (size_of_phases, "0"); // default is D2_EUCLIDEAN_L2
 
   assert(size_of_phases == (int) ss1.size() 
 	 && size_of_phases == (int) ss2.size()
+	 && size_of_phases == (int) ss3.size()
 	 && ss2_c_str);
 
   if (world_rank == 0) {cout << "Task: " << endl;}  
   for (int i=0; i<size_of_phases; ++i) {
     dimension_of_phases[i] = atoi(ss1[i].c_str());
     avg_strides[i] = atoi(ss2[i].c_str());
+    type_of_phases[i] = atoi(ss3[i].c_str());
     if (world_rank == 0) {
-    if (dimension_of_phases[i] == 0) {
-      cout << "\t" << i << "-th phase is of histogram format" << endl;
-    } else if (dimension_of_phases[i] > 0) {
-      cout << "\t" << i << "-th phase is of discrete distribution format" << endl;
-    }
+      if (type_of_phases[i] == D2_HISTOGRAM) {
+	cout << "\t" << i << "-th phase is of histogram format" << endl;
+      } else if (type_of_phases[i] == D2_EUCLIDEAN_L2) {
+	cout << "\t" << i << "-th phase is of discrete distribution format" << endl;
+      } else if (type_of_phases[i] == D2_WORD_EMBED) {
+	cout << "\t" << i << "-th phase is of word embedding format" << endl;
+      }
     }
     assert(dimension_of_phases[i] >= 0 && avg_strides[i] > 0);
   }     
@@ -143,7 +153,8 @@ int main(int argc, char *argv[])
 			size_of_phases,
 			size_of_samples,
 			&avg_strides[0],
-			&dimension_of_phases[0]);
+			&dimension_of_phases[0],
+			&type_of_phases[0]);
 
 
   if (err == 0 && num_of_batches == 0) {  

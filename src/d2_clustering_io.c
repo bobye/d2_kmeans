@@ -36,7 +36,7 @@ int d2_read(const char* filename, mph *p_data) {
 
 
   for (n=0; n<s_ph; ++n) {
-    if (p_data->ph[n].dim == 0) {
+    if (p_data->ph[n].metric_type == D2_HISTOGRAM) {
       char filename_extra[255];
       FILE *fp_new; // local variable
       int str, c, i;
@@ -65,7 +65,7 @@ int d2_read(const char* filename, mph *p_data) {
       str = *(p_str[n]); assert(str > 0);
 
       if (p_data->ph[n].col + str >= p_data->ph[n].max_col) {
-	VPRINTF("Warning: preallocated memory for phase %d is insufficient! Reallocated.\n", n);
+	printf("rank %d warning: preallocated memory for phase %d is insufficient! Reallocated.\n", world_rank, n);
 	p_data->ph[n].p_supp = (double *) realloc(p_data->ph[n].p_supp, 2 * dim * p_data->ph[n].max_col * sizeof(double));
 	p_data->ph[n].p_w = (double *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(double));
 	assert(p_data->ph[n].p_supp != NULL && p_data->ph[n].p_w != NULL);

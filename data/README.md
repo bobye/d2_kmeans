@@ -3,7 +3,7 @@ We provides two kinds of input formats for programs to read and write d2 data.
 No generic IO is supported for n-gram data, but examples of protein n-gram can
 be found at directory protein_seq/ .
 
-1. [Discrete Distributions Over Vector Space].
+1. [Discrete Distributions over Vector Space].
    We implement multi-phases D2, which means each object can be represented
    by multiple D2. For example, an image can be represented by a D2 in color
    space and a D2 in texture space. The format of .d2 data is as follows:
@@ -36,7 +36,20 @@ be found at directory protein_seq/ .
    ```bash
    $ time ./d2 -i data/mountaindat.d2 -p 2 -n 1000 -d 3,3 -s 6,11
    ```
-2. [Dense Histograms].
+2. [Discrete Distribution over Vocabulary Space]
+   When the values of each supports are screened from a vocabulary with
+   Euclidean embeddings, it would be convenient to represent D2 using
+   their symbolic ids (starting from one, zero id saved for empty document).
+   ```emacs-lisp
+   ;; file ext: .d2s.vocab
+   <n x m matrix> ;; n is the size of vocabulary, m is the dimension of embeddings
+   ;; file ext: .d2s
+   0
+   n
+   w{1} w{2} ... w{n}
+   id{1} id{2} ... id{n}
+   ```
+3. [Dense Histograms].
    In some cases, it would be useful to work with histograms (where the sum
    of bins is equal to one). For example, a histogram representation of two
    phases can be as follows:

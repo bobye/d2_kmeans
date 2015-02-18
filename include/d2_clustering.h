@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include "common.h"
-
+#include "d2_param.h"
   /**
    * data structure to store d2 of one phase
    */
@@ -18,6 +18,7 @@ extern "C" {
      *
      * @param(metric_type)
      * D2_EUCLIDEAN_L2 : @param(dim) is the dimension of vector space
+     * D2_WORD_EMBED   : @param(dim) is the dimension of embedding space
      * D2_CITYBLOCK_L1 : same above
      * D2_HISTOGRAM    : @param(dim=0)
      * D2_N_GRAM       : @param(dim) is the size of grams.
@@ -38,6 +39,7 @@ extern "C" {
      * what: metric space of supports 
      * @param(metric_type)
      * D2_EUCLIDEAN_L2 : Euclidean space at @param(p_supp,p_w)
+     * D2_WORD_EMBED   : Word embedding space (Euclidean)
      * D2_CITYBLOCK_L1 : cityblock metric space @param(p_supp,p_w) => to be implemented
      * D2_HISTOGRAM    : Histogram space at @param(p_w,dist_mat)
      * D2_N_GRAM       : N-gram space at @param(p_supp_sym,dist_mat,vocab_size) 
@@ -51,6 +53,7 @@ extern "C" {
     SCALAR *p_supp; 
     
     /**
+       Older comments:
        For data of D2 with symbolic supports, 
        there is no universal data format specifications.
        One has to write their own IO code for reading/writing such 
@@ -60,16 +63,21 @@ extern "C" {
        where the distance is specified in 2d array @param(dist_mat).
        @param(p_supp_sym) gives the symbolic indices for each dimension. 
 
-       See folder data/dna_seq/ for an example. */
+       See folder data/dna_seq/ for an example. 
+       
+       Comments 2015-02-17
+       @param(p_supp_sym) has been used for D2_WORD_EMBED
+    */
     int *p_supp_sym; 
 
     /**
-     * For data of histograms or D2 with symbolic supports */
+     * Optional: for data of histograms or D2 with symbolic supports */
     SCALAR *dist_mat; 
 
     /**
-     * For data with symbolic supports */
+     * Optional: for data with symbolic supports */
     int vocab_size;
+    SCALAR *vocab_vec;
   } sph; 
 
 
@@ -105,13 +113,15 @@ extern "C" {
 		      const int d,
 		      const int stride,
 		      const size_t num,
-		      const double semicol);
+		      const double semicol,
+		      const int type);
 
   int d2_allocate(__OUT__ mph *p_data,
 		  const int size_of_phases,
 		  const size_t size_of_samples,
 		  const int *avg_strides,
-		  const int *dimension_of_phases);
+		  const int *dimension_of_phases,
+		  const int *type_of_phases);
 
   int d2_read(const char* filename, __OUT__ mph *p_data);
   int d2_write(const char* filename, mph *p_data);

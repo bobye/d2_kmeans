@@ -23,5 +23,6 @@ typedef struct {
 #define D2_CITYBLOCK_L1      (1)
 #define D2_HISTOGRAM         (5)
 #define D2_N_GRAM            (6)
+#define D2_WORD_EMBED        (7)
 
 #endif /* _D2_PARAM_H_ */
