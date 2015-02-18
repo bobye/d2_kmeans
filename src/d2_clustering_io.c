@@ -11,30 +11,39 @@ struct timespec io_time;
 
 /** Load Data Set: see specification of format at README.md */
 int d2_read(const char* filename, mph *p_data) {
+  char filename_main[255];
   nclock_start_p(&io_time);
 
-  FILE *fp = fopen(filename, "r+");
+  if (nprocs > 1) {
+    sprintf(filename_main, "%s.%d", filename, world_rank);
+  } else {
+    sprintf(filename_main, "%s", filename);
+  }
+  FILE *fp = fopen(filename_main, "r+");
   assert(fp);
 
   size_t i;
   int n;
-  int **p_str, str;
+  int **p_str, **p_supp_sym, str;
   double **p_supp, **p_w;
   int s_ph = p_data->s_ph;
   size_t size = p_data->size;
 
   p_str  = (int **) malloc(s_ph * sizeof(int *));
+  p_supp_sym=(int**) malloc(s_ph * sizeof(int *));
   p_supp = (double **) malloc(s_ph * sizeof(double *));
   p_w    = (double **) malloc(s_ph * sizeof(double *));
   
   for (n=0; n<s_ph; ++n) {
     p_str[n]  = p_data->ph[n].p_str;
+    p_supp_sym[n]  = p_data->ph[n].p_supp_sym;
     p_supp[n] = p_data->ph[n].p_supp;
     p_w[n]    = p_data->ph[n].p_w;
     p_data->ph[n].col = 0;
   }
 
 
+  // Load header information if available
   for (n=0; n<s_ph; ++n) {
     if (p_data->ph[n].metric_type == D2_HISTOGRAM) {
       char filename_extra[255];
@@ -43,15 +52,30 @@ int d2_read(const char* filename, mph *p_data) {
       sprintf(filename_extra, "%s.hist%d", filename, n);
       fp_new = fopen(filename_extra, "r+"); assert(fp_new);
       c=fscanf(fp_new, "%d", &str); assert(c>0 && str == p_data->ph[n].str);
-      for (i=0; i< str*str; ++i) fscanf(fp_new, SCALAR_STDIO_TYPE, &(p_data->ph[n].dist_mat[i]));
+      for (i=0; i< str*str; ++i) 
+	fscanf(fp_new, SCALAR_STDIO_TYPE, &(p_data->ph[n].dist_mat[i]));
+      fclose(fp_new);
+    }
+    else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {
+      char filename_extra[255];
+      FILE *fp_new; // local variable
+      int dim, c, i;
+      sprintf(filename_extra, "%s.vocab%d", filename, n);
+      fp_new = fopen(filename_extra, "r+"); assert(fp_new);
+      c=fscanf(fp_new, "%d", &dim); assert(c>0 && dim == p_data->ph[n].dim);
+      c=fscanf(fp_new, "%d", &p_data->ph[n].vocab_size);
+      p_data->ph[n].vocab_vec = _D2_MALLOC_SCALAR(dim * p_data->ph[n].vocab_size);
+      for (i=0; i<p_data->ph[n].vocab_size; ++i) 
+	fscanf(fp_new, SCALAR_STDIO_TYPE, &(p_data->ph[n].vocab_vec[i]));
       fclose(fp_new);
     }
   }
 
-  
+  // Read main data file
   for (i=0; i<size; ++i) {
     for (n=0; n<s_ph; ++n) {      
       double *p_supp_sph, *p_w_sph, w_sum;
+      int *p_supp_sym_sph;
       int dim, strxdim, c, j;
       // read dimension and stride    
       c=fscanf(fp, "%d", &dim); 
@@ -66,15 +90,28 @@ int d2_read(const char* filename, mph *p_data) {
 
       if (p_data->ph[n].col + str >= p_data->ph[n].max_col) {
 	printf("rank %d warning: preallocated memory for phase %d is insufficient! Reallocated.\n", world_rank, n);
-	p_data->ph[n].p_supp = (double *) realloc(p_data->ph[n].p_supp, 2 * dim * p_data->ph[n].max_col * sizeof(double));
-	p_data->ph[n].p_w = (double *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(double));
-	assert(p_data->ph[n].p_supp != NULL && p_data->ph[n].p_w != NULL);
+	if (p_data->ph[n].metric_type == D2_EUCLIDEAN_L2) {
+	  p_data->ph[n].p_supp = (double *) realloc(p_data->ph[n].p_supp, 2 * dim * p_data->ph[n].max_col * sizeof(double));
+	  p_data->ph[n].p_w = (double *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(double));
+	  assert(p_data->ph[n].p_supp != NULL && p_data->ph[n].p_w != NULL);
+	  p_supp[n] = p_data->ph[n].p_supp + p_data->ph[n].col * dim;
+	  p_w[n]    = p_data->ph[n].p_w + p_data->ph[n].col;
+	} else if (p_data->ph[n].metric_type == D2_HISTOGRAM) {
+	  p_data->ph[n].p_w = (double *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(double));
+	  assert(p_data->ph[n].p_w != NULL);
+	  p_w[n]    = p_data->ph[n].p_w + p_data->ph[n].col;
+	} else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {
+	  p_data->ph[n].p_supp_sym = (int *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(int));
+	  p_data->ph[n].p_w = (SCALAR *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(SCALAR));
+	  assert(p_data->ph[n].p_supp_sym != NULL && p_data->ph[n].p_w != NULL);
+	  p_supp_sym[n] = p_data->ph[n].p_supp_sym + p_data->ph[n].col;
+	  p_w[n]    = p_data->ph[n].p_w + p_data->ph[n].col;
+	}
+
 	p_data->ph[n].max_col *= 2;		// resize
-	if (dim > 0) p_supp[n] = p_data->ph[n].p_supp + p_data->ph[n].col * dim;
-	p_w[n]    = p_data->ph[n].p_w + p_data->ph[n].col;
       }
 
-      p_data->ph[n].col += str; 
+      p_data->ph[n].col += str; //incr
 
       // read weights      
       p_w_sph = p_w[n]; w_sum = 0.;
@@ -89,11 +126,16 @@ int d2_read(const char* filename, mph *p_data) {
       p_w[n] = p_w[n] + str;
 
       // read support vec
-      if (dim > 0) {
+      if (p_data->ph[n].metric_type == D2_EUCLIDEAN_L2) {
 	p_supp_sph = p_supp[n];strxdim = str*dim;
 	for (j=0; j<strxdim; ++j)
 	  fscanf(fp, SCALAR_STDIO_TYPE, &p_supp_sph[j]); 
 	p_supp[n] = p_supp[n] + strxdim;
+      } else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {	
+	p_supp_sym_sph = p_supp_sym[n]; 
+	for (j=0; j<str; ++j)
+	  fscanf(fp, "%d", &p_supp_sym_sph[j]);
+	p_supp_sym[n] = p_supp_sym[n] + str;
       }
       p_str[n] ++;
     }
@@ -109,7 +151,7 @@ int d2_read(const char* filename, mph *p_data) {
   }
 
   // free the pointer space
-  free(p_w); free(p_supp); free(p_str); 
+  free(p_w); free(p_supp); free(p_str); free(p_supp_sym);
   fclose(fp);
 
 #ifdef __USE_MPI__
