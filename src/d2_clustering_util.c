@@ -19,7 +19,8 @@ int d2_allocate_sph(sph *p_data_sph,
 		    const int d,
 		    const int stride,
 		    const size_t num,
-		    double semicol) {
+		    const double semicol,
+		    const int type) {
 
   size_t n, m;
   assert(stride >0 && num >0 && semicol >= 0);
@@ -37,11 +38,11 @@ int d2_allocate_sph(sph *p_data_sph,
   p_data_sph->p_w    = _D2_MALLOC_SCALAR(m);
 
   // consider different data format
-  if (d>0) {
+  if (type == D2_EUCLIDEAN_L2) {
     p_data_sph->p_supp = _D2_MALLOC_SCALAR(n);
     p_data_sph->metric_type = D2_EUCLIDEAN_L2;
   }
-  else if (d==0) { 
+  else if (type == D2_HISTOGRAM) { 
     p_data_sph->dist_mat = _D2_MALLOC_SCALAR( stride * stride );
     p_data_sph->metric_type = D2_HISTOGRAM;
   }
@@ -86,8 +87,12 @@ int d2_allocate(mph *p_data,
 					   It articulates how sparse the centroid could be. 
 					   By default, it should be the average number
 					   of bins of data objects.
+					   
+					   Update 2012-02-17:
+					   But it is possible to specify a smaller number
 					*/
-		const int *dimension_of_phases) {
+		const int *dimension_of_phases,
+		const int *type_of_phases) {
   size_t i;
   int success = 0;
 
@@ -105,7 +110,8 @@ int d2_allocate(mph *p_data,
 			      dimension_of_phases[i], 
 			      avg_strides[i], 
 			      size_of_samples, 
-			      0.6);
+			      0.6,
+			      type_of_phases[i]);
     if (success != 0) break;
   }
 

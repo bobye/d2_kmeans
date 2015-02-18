@@ -223,7 +223,7 @@ int d2_copy(mph* a, mph *b) {
     if (a->ph[n].col > 0) {
       // check whether b->ph[n] is allocated; if not, allocate first
       if (new_init_tag)  {
-	d2_allocate_sph(b->ph + n, a->ph[n].dim, a->ph[n].str, a->size, 0.);
+	d2_allocate_sph(b->ph + n, a->ph[n].dim, a->ph[n].str, a->size, 0., a->ph[n].metric_type);
 	b->ph[n].col = a->ph[n].col;
       }
       memcpy(b->ph[n].p_str, a->ph[n].p_str, a->size * sizeof(int));
@@ -371,7 +371,7 @@ int d2_clustering(int num_of_clusters,
   for (i=0; i<s_ph; ++i) 
     if (selected_phase < 0 || i == selected_phase) {
       /* allocate mem for centroids */
-      d2_allocate_sph(&centroids->ph[i],  p_data->ph[i].dim, p_data->ph[i].str, p_data->num_of_labels, 0.);
+      d2_allocate_sph(&centroids->ph[i],  p_data->ph[i].dim, p_data->ph[i].str, p_data->num_of_labels, 0., p_data->ph[i].metric_type % D2_WORD_EMBED); // yet a trick here
       /* initialize centroids from random samples */
       d2_centroid_rands(p_data, i, &centroids->ph[i]);
       broadcast_centroids(centroids, i);
