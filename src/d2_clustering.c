@@ -42,7 +42,24 @@ double d2_compute_distance(mph *a, size_t i,
 			 b_sph->p_supp + b_sph->p_str_cum[j]*dim, 
 			 a_sph->p_supp + a_sph->p_str_cum[i]*dim, 
 			 var_work->g_var[n].C + idx);
-
+	val = d2_match_by_distmat(b_sph->p_str[j], 
+				  a_sph->p_str[i], 				  
+				  var_work->g_var[n].C + idx,
+				  b_sph->p_w + b_sph->p_str_cum[j], 
+				  a_sph->p_w + a_sph->p_str_cum[i], 
+				  NULL, // x and lambda are implemented later
+				  NULL,
+				  index);
+	d += val;
+	break;
+      case D2_WORD_EMBED :
+	_D2_FUNC(pdist2_sym)(dim,
+			     b_sph->p_str[j],
+			     a_sph->p_str[i],
+			     b_sph->p_supp + b_sph->p_str_cum[j]*dim,
+			     a_sph->p_supp_sym + a_sph->p_str_cum[i],
+			     var_work->g_var[n].C + idx,
+			     a_sph->vocab_vec);
 	val = d2_match_by_distmat(b_sph->p_str[j], 
 				  a_sph->p_str[i], 				  
 				  var_work->g_var[n].C + idx,
@@ -137,7 +154,6 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
     MPI_Allreduce(MPI_IN_PLACE, p_tr->c, num_of_labels*num_of_labels, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     MPI_Allreduce(MPI_IN_PLACE, p_tr->s, num_of_labels, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 #endif
-
 
   /* initialization */
   for (i=0; i<size; ++i) 
@@ -378,7 +394,7 @@ int d2_clustering(int num_of_clusters,
     } else {
       centroids->ph[i].col = 0;
     }
-  //  d2_write(NULL, centroids); 
+  // d2_write(NULL, centroids);     getchar();
   VPRINTF("[done]\n");
   }
 
@@ -386,7 +402,6 @@ int d2_clustering(int num_of_clusters,
 
   // allocate initialize auxiliary variables
   d2_allocate_work(p_data, &var_work, use_triangle);
-
 
 
 
@@ -406,6 +421,7 @@ int d2_clustering(int num_of_clusters,
     else 
       label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
 
+    getchar();
 
     /*********************************************************
      * Termination criterion                                 *

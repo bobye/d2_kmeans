@@ -167,7 +167,7 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   int strxdim = str*dim;
 
   SCALAR *m_supp, *m_w;
-  int *m_supp_sym;
+  int *m_supp_sym, d;
 
   assert(c->str == str);
 
@@ -193,10 +193,10 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
 
   // set to zero
   for (i=0; i<c->col; ++i) c->p_w[i] = 0;
-  if (data_ph->metric_type == D2_EUCLIDEAN_L2) {
+  if (c->metric_type == D2_EUCLIDEAN_L2) {
     for (i=0; i<c->col * c->dim; ++i) c->p_supp[i] = 0;
   }
-  else if (data_ph->metric_type == D2_N_GRAM) {
+  else if (c->metric_type == D2_N_GRAM) {
     for (i=0; i<c->col * c->dim; ++i) c->p_supp_sym[i] = 0;
   }
 
@@ -205,32 +205,58 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   i = 0; j = world_rank;
 
   while (i<size && j<num_of_labels) {
+    int the_str;
+    size_t the_str_cum;
+
     while (i<size && data_ph->p_str[array[i]] < str)  { ++i; }
     if (i == size) break;
+    the_str = data_ph->p_str[array[i]];
+    the_str_cum = data_ph->p_str_cum[array[i]];
+
     switch (data_ph->metric_type) {
     case D2_EUCLIDEAN_L2:
     case D2_HISTOGRAM:
-      m_supp = data_ph->p_supp + data_ph->p_str_cum[array[i]]*dim; 
-      m_w = data_ph->p_w + data_ph->p_str_cum[array[i]];
+      m_supp = data_ph->p_supp + the_str_cum*dim; 
+      m_w = data_ph->p_w + the_str_cum;
 
-      if (data_ph->p_str[array[i]] == str) {
+      if (the_str == str) {
 	_D2_CBLAS_FUNC(copy)(strxdim, m_supp, 1, c->p_supp + j*strxdim , 1);
 	_D2_CBLAS_FUNC(copy)(str, m_w, 1, c->p_w + j*str , 1);
       } else {
 	merge(dim, 
-	      m_supp, m_w, data_ph->p_str[array[i]], 
+	      m_supp, m_w, the_str, 
 	      c->p_supp + j*strxdim, c->p_w + j*str, str);
       }
       break;
+    case D2_WORD_EMBED:
+      m_supp_sym = data_ph->p_supp_sym + the_str_cum;
+      m_w = data_ph->p_w + the_str_cum;
+      if (the_str == str) {
+	for (k=0; k<str; ++k) {
+	  for (d=0; d<dim; ++d) 
+	    c->p_supp[j*strxdim + k*dim + d] = data_ph->vocab_vec[m_supp_sym[k]*dim + d];
+	  c->p_w[j*str + k] = m_w[k];
+	}
+      } else {
+	SCALAR *supp = (SCALAR*) _D2_MALLOC_SCALAR(the_str*dim);
+	for (k=0; k<the_str; ++k)
+	  for (d=0; d<dim; ++d)
+	    supp[k*dim + d] = data_ph->vocab_vec[m_supp_sym[k]*dim + d];
+	merge(dim,
+	      supp, m_w, the_str,
+	      c->p_supp + j*strxdim, c->p_w + j*str, str);
+	_D2_FREE(supp);
+      }
+      break;
     case D2_N_GRAM: 
-      m_supp_sym = data_ph->p_supp_sym + data_ph->p_str_cum[array[i]]*dim;
-      m_w = data_ph->p_w + data_ph->p_str_cum[array[i]];
-      if (data_ph->p_str[array[i]] == str) {
+      m_supp_sym = data_ph->p_supp_sym + the_str_cum*dim;
+      m_w = data_ph->p_w + the_str_cum;
+      if (the_str == str) {
 	for (k=0; k<strxdim; ++k) c->p_supp_sym[j*strxdim + k] = m_supp_sym[k];
 	for (k=0; k<str; ++k) c->p_w[j*str + k] = m_w[k];
       } else {
 	merge_symbolic(dim, 
-		       m_supp_sym, m_w, data_ph->p_str[array[i]], 
+		       m_supp_sym, m_w, the_str, 
 		       c->p_supp_sym + j*strxdim, c->p_w + j*str, str,
 		       c->vocab_size, c->dist_mat);
       }
@@ -241,6 +267,7 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
     }
     ++i; j+= nprocs;
   }
+  assert(j>=num_of_labels);
 
   free(array);
   return 0;
