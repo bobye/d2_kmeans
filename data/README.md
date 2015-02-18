@@ -43,6 +43,7 @@ be found at directory protein_seq/ .
 
    ```emacs-lisp
    ;; file ext: .d2s.vocab
+   m n
    <n x m matrix> ;; n is the size of vocabulary, m is the dimension of embeddings
    ;; file ext: .d2s
    0

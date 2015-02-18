@@ -42,6 +42,7 @@ extern "C" {
    * n, m: number of data entry
    */
   void _dpdist2(int d, size_t n, size_t m, double * A, double * B, double *C);
+  void _dpdist2_sym(int d, size_t n, size_t m, double *A, int *B, double *C, const double *vocab);
   void _dpdist_symbolic(int d, size_t n, size_t m, int * A, int * B, double *C, 
 			const int vocab_size, const double* dist_mat);
   

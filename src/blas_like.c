@@ -207,6 +207,23 @@ void _dpdist2(int d, size_t n, size_t m, double * A, double * B, double *C) {
 	C[i*n + j] += A[j*d + k] * A[j*d + k] + B[i*d + k] * B[i*d + k];
 }
 
+void _dpdist2_sym(int d, size_t n, size_t m, double *A, int *Bi, double *C, const double *vocab) {
+  size_t i, j; int k;
+  for (i=0; i<m*n; ++i) C[i] = 0;
+  for (i=0; i<m; ++i)
+    for (j=0; j<n; ++j) {
+      double diff;
+      for (k=0; k<d; ++k) 
+	if (Bi[i] < 0) {
+	  C[i*n +j] += A[j*d+k]*A[j*d+k];
+	}	  
+	else {
+	  diff = A[j*d + k] - vocab[Bi[i]*d + k];
+	  C[i*n+j] += diff * diff;
+	}
+    }
+}
+
 void _dpdist_symbolic(int d, size_t n, size_t m, int * A, int * B, double *C, 
 		      const int vocab_size, const double* dist_mat) {
   size_t i,j; int k;
