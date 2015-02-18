@@ -171,6 +171,7 @@ int main(int argc, char *argv[])
   } else if (err != 0) {
     cerr << "Allocation Failed!" << endl;
   }
+  getchar();
   
   /* data structure storing information about centroids of clusters */
   mph c; 
