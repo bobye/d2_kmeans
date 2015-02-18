@@ -1,5 +1,5 @@
-#ifndef _GLOBAL_H_
-#define _GLOBAL_H_
+#ifndef _COMMON_H_
+#define _COMMON_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,4 +104,4 @@ static inline double nclock_end_p(struct timespec * p_time) {
 }
 #endif
 
-#endif /* _GLOBAL_H_ */
+#endif /* _COMMON_H_ */
