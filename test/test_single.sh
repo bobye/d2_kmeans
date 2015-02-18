@@ -37,7 +37,9 @@ time ./protein protein -1 1 0 > /dev/null
 echo 'Clustering proteins: n=10742 1-gram with 2 cluster, it takes tens of seconds'
 time ./protein protein 0 2 0
 
+
+echo 'Profiling bag of word vectors: n=100 k=1'
+time ./d2 -i data/20news-bydate/matlab/20newsgroups_clean/20newsgroups.d2s -n 100 -d 300 -s 128 --clusters 1 --type 7 > /dev/null
+
 echo 'End the test of serial version [Success]'
-
-
 
