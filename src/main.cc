@@ -158,16 +158,7 @@ int main(int argc, char *argv[])
 
 
   if (err == 0 && num_of_batches == 0) {  
-#ifdef __USE_MPI__
-    if (nprocs > 1) {
-    string fn(filename);
-    d2_read((fn + '.' + to_string(world_rank)).c_str(), &data);  
-    } else {
-    d2_read(filename, &data);
-    }
-#else
     d2_read(filename, &data);  
-#endif
   } else if (num_of_batches > 0 && world_rank == 0) {
     d2_read(filename, &data);      
     d2_write_split(filename, &data, num_of_batches);    
