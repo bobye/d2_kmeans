@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
       break;
     case 'E':
       ss3_c_str = optarg;
+      break;
     case 't':
       selected_phase = atoi(optarg); assert(selected_phase >= 0);
       break;
@@ -171,7 +172,6 @@ int main(int argc, char *argv[])
   } else if (err != 0) {
     cerr << "Allocation Failed!" << endl;
   }
-  getchar();
   
   /* data structure storing information about centroids of clusters */
   mph c; 
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
   if (world_rank == 0) {
   if (selected_phase >= 0 && size_of_phases > 1) {
     cout << "Clustering upon " << selected_phase <<"-th phase" << endl;
-  } else if (selected_phase < 0 && size_of_phases == 1) {
+  } else if (selected_phase < 0 && size_of_phases > 1) {
     cout << "Clustering upon all phases (more than one)" << endl;
   }
   }
