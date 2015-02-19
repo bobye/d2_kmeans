@@ -225,6 +225,37 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	/* rho is an important hyper-parameter */
 	for (i=0; i<str*col; ++i) C[i] /= rho; // normalize C and Y
 	break;
+      case D2_WORD_EMBED :
+	assert(num_of_labels < size);
+	for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0.f;
+	for (i=0; i<c->col; ++i) Zr[i] = 0.f; //reset Zr to temporarily storage
+	for (i=0; i<size; ++i) {
+	  int *m_supp_sym = p_supp_sym + p_str_cum[i];
+	  SCALAR *c_supp = c->p_supp + label[i]*strxdim;
+	  SCALAR *Xm = X + str*p_str_cum[i];
+	  int j, k, d;
+	  for (k=0; k<str; ++k)
+	    for (j=0; j<p_str[i]; ++j) 
+	      for (d=0; d<dim; ++d)
+		c_supp[k*dim + d] += Xm[j*str + k] * data_ph->vocab_vec[m_supp_sym[j]*dim + d];
+	  _D2_FUNC(rsum2)(str, p_str[i], X + str*p_str_cum[i], Zr + label[i]*str);
+	}
+#ifdef __USE_MPI__
+	/* ALLREDUCE by SUM operator: vec(c->p_supp, c->col*dim) */
+	MPI_Allreduce(MPI_IN_PLACE, c->p_supp, c->col * dim, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	/* ALLREDUCE by SUM operator: vec(Zr, c->col) */
+	MPI_Allreduce(MPI_IN_PLACE, Zr, c->col, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+#endif
+	for (i=0; i<num_of_labels; ++i) {
+	  _D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, Zr + i*str);
+	}
+
+	// re-calculate C
+	calculate_distmat(data_ph, label, size, c, C);
+	/* rho is an important hyper-parameter */
+	for (i=0; i<str*col; ++i) C[i] /= rho; // normalize C and Y
+
+	break;
 
       case D2_HISTOGRAM :
 	break;
