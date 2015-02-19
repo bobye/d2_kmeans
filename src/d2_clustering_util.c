@@ -30,6 +30,7 @@ int d2_allocate_sph(sph *p_data_sph,
 
   p_data_sph->dim = d;  
   p_data_sph->str = stride;
+  p_data_sph->max_str = stride;
   //  p_data_sph->size = num;
 
 
@@ -157,6 +158,7 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
   for (i=0; i<p_data->s_ph; ++i) {
     int str = p_data->ph[i].str;
     int col = p_data->ph[i].col;
+    int max_str = p_data->ph[i].max_str;
 
     var_work->g_var[i].C = NULL;
     var_work->g_var[i].X = NULL;
@@ -175,7 +177,7 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
     }
     if (d2_alg_type == D2_CENTROID_GRADDEC) {
       var_work->g_var[i].X = _D2_MALLOC_SCALAR(str * (col + num_of_labels * str));
-      var_work->g_var[i].L = _D2_MALLOC_SCALAR(str * (size + num_of_labels));
+      var_work->g_var[i].L = _D2_MALLOC_SCALAR(str * (size + num_of_labels) + max_str);
       assert(var_work->g_var[i].X);
       assert(var_work->g_var[i].L);
     }
