@@ -84,10 +84,12 @@ int d2_read(const char* filename, mph *p_data) {
 	p_data->size = i;
 	size = i; break;
       }
-      assert(dim == p_data->ph[n].dim);
+      assert(dim == p_data->ph[n].dim);    
       fscanf(fp, "%d", p_str[n]); 
       str = *(p_str[n]); assert(str > 0);
+      if (str >p_data->ph[n].max_str) p_data->ph[n].max_str = str;
 
+      // check if needed to reallocate
       if (p_data->ph[n].col + str >= p_data->ph[n].max_col) {
 	printf("rank %d warning: preallocated memory for phase %d is insufficient! Reallocated.\n", world_rank, n);
 	if (p_data->ph[n].metric_type == D2_EUCLIDEAN_L2) {

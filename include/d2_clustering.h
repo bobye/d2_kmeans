@@ -23,7 +23,7 @@ extern "C" {
      * D2_HISTOGRAM    : @param(dim=0)
      * D2_N_GRAM       : @param(dim) is the size of grams.
      */
-    int dim, str;
+    int dim, str, max_str;
     size_t col, max_col;
     int *p_str;
     size_t *p_str_cum;
