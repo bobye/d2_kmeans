@@ -421,14 +421,13 @@ int d2_clustering(int num_of_clusters,
     else 
       label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
 
-    getchar();
 
     /*********************************************************
      * Termination criterion                                 *
      * For performance profile: comment this part out and    *
      * use --max_iter parameter of main.                     *
      *********************************************************/        
-    if (label_change_count < 0.001 * p_data->global_size) {
+    if (iter >= 10 && label_change_count < 0.001 * p_data->global_size) {
       VPRINTF("Terminate!\n");        
       break;
     }
