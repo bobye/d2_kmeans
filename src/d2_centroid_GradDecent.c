@@ -39,7 +39,7 @@ int d2_centroid_sphGradDecent(mph *p_data,
   SCALAR *L = var_work->g_var[idx_ph].L;
   SCALAR *C = var_work->g_var[idx_ph].C;
   size_t *label_count;
-  SCALAR *p_grad, *Zr, tmp;
+  SCALAR *p_grad, *Zr=NULL, tmp;
   double step_size = p_graddec_options->stepSize;
 
   assert(dim > 0); // current only support the D2 format
@@ -56,7 +56,8 @@ int d2_centroid_sphGradDecent(mph *p_data,
       it could be possible that some clusters might not 
       have any instances
    */
-  label_count = _D2_CALLOC_SIZE_T(num_of_labels);    
+  label_count = _D2_MALLOC_SIZE_T(num_of_labels);    
+  for (i=0; i<num_of_labels; ++i) label_count[i] = 0;
   for (i=0; i<size; ++i) ++label_count[label[i]];
   for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
   
@@ -65,16 +66,17 @@ int d2_centroid_sphGradDecent(mph *p_data,
   p_grad = _D2_MALLOC_SCALAR(num_of_labels * str);
 
   // conditonal allocation
-  Zr = _D2_MALLOC_SCALAR(str * num_of_labels * (strxdim * data_ph->vocab_size + 1));
+  if (data_ph->metric_type == D2_N_GRAM) 
+    Zr = _D2_MALLOC_SCALAR(str * num_of_labels * (strxdim * data_ph->vocab_size + 1));
 
+  /* compute exact distances */
+  calculate_distmat(data_ph, label, size, c, C);
   nclock_start();  
   for (iter = 0; iter <= nIter; ++iter) {
 
     fval0 = fval;
     fval = 0;
 
-    /* compute exact distances */
-    calculate_distmat(data_ph, label, size, c, C);
     for (i=0; i<size; ++i) {
       fval += d2_match_by_distmat(str, p_str[i],
 				  C + str*p_str_cum[i],
@@ -104,7 +106,11 @@ int d2_centroid_sphGradDecent(mph *p_data,
       for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0; // reset c->p_supp
       for (i=0; i < size;  ++i) {
 	_D2_CBLAS_FUNC(gemm)(CblasColMajor, CblasNoTrans, CblasTrans, 
-			     dim, str, p_str[i], 1, p_supp + dim*p_str_cum[i], dim, X + str*p_str_cum[i], str, 1, 
+			     dim, str, p_str[i], 
+			     1, 
+			     p_supp + dim*p_str_cum[i], dim, 
+			     X + str*p_str_cum[i], str, 
+			     1, 
 			     c->p_supp + label[i]*strxdim, dim);
       }
       for (i=0; i<num_of_labels; ++i) {
@@ -112,6 +118,34 @@ int d2_centroid_sphGradDecent(mph *p_data,
 	_D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, c->p_w + i*str);
       }
     
+      /* compute exact distances */
+      calculate_distmat(data_ph, label, size, c, C);
+
+      break;
+    case D2_WORD_EMBED :
+      assert(num_of_labels < size);
+      for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0.f;
+      for (i=0; i<size; ++i) {
+	int *m_supp_sym = p_supp_sym + p_str_cum[i];
+	SCALAR *c_supp = c->p_supp + label[i]*strxdim;
+	SCALAR *Xm = X + str*p_str_cum[i];
+	int j, k, d;
+
+	for (k=0; k<str; ++k)
+	  for (j=0; j<p_str[i]; ++j) 
+	    if (Xm[j*str + k] > 1.E-9) {
+	      for (d=0; d<dim; ++d)
+		c_supp[k*dim + d] += Xm[j*str + k] * data_ph->vocab_vec[m_supp_sym[j]*dim + d];
+	    }
+      }
+      for (i=0; i<num_of_labels; ++i) {
+	_D2_CBLAS_FUNC(scal)(str*dim, 1./label_count[i], c->p_supp + i*strxdim, 1);
+	_D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, c->p_w + i*str);
+      }
+
+      /* compute exact distances */
+      calculate_distmat(data_ph, label, size, c, C);
+
       break;
     case D2_N_GRAM :
       if (iter == nIter) {
@@ -130,8 +164,9 @@ int d2_centroid_sphGradDecent(mph *p_data,
 	minimize_symbolic(dim, str, c->p_supp_sym + i*strxdim, Zr + i*strxdim*data_ph->vocab_size, data_ph->vocab_size, data_ph->dist_mat, Zr + num_of_labels*strxdim*data_ph->vocab_size);
       }
 
-      // re-calculate C
+      /* compute exact distances */
       calculate_distmat(data_ph, label, size, c, C);
+
       }
       break;    
     }
@@ -151,6 +186,7 @@ int d2_centroid_sphGradDecent(mph *p_data,
   }
 
   _D2_FREE(label_count);
-  _D2_FREE(p_grad); _D2_FREE(Zr);
+  _D2_FREE(p_grad); 
+  if (Zr) _D2_FREE(Zr);
   return 0;
 }
