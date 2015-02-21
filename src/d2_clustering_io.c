@@ -245,6 +245,7 @@ int d2_write_split(const char* filename, mph *p_data, int splits) {
   fp = fopen(local_filename, "w+"); assert(fp);
   for (n = 0; n < size; ++n) fprintf(fp, "%d\n", indices[n]);
   fclose(fp);
+  VPRINTF("\twrite %zd indices to %s\n", size, local_filename);
 
   // output reads in several segments
   batch_size = 1 + (size-1) / splits;
@@ -272,9 +273,17 @@ int d2_write_split(const char* filename, mph *p_data, int splits) {
 	  fprintf(fp, "%d\n", str);
 	  for (k=0; k<str; ++k) fprintf(fp, "%lf ", p_data->ph[j].p_w[pos + k]);
 	  fprintf(fp, "\n");
-	  for (k=0; k<str; ++k) {
-	    for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
-	    fprintf(fp, "\n"); 
+	  if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2) {
+	    for (k=0; k<str; ++k) {
+	      for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
+	      fprintf(fp, "\n"); 
+	    }
+	  }
+	  else if (p_data->ph[j].metric_type == D2_WORD_EMBED) {
+	    for (k=0; k<str; ++k) {
+	      fprintf(fp, "%d ", p_data->ph[j].p_supp_sym[pos + k]);
+	    }
+	    fprintf(fp, "\n");
 	  }
 	}
     }
