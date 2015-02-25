@@ -135,7 +135,8 @@ extern "C" {
 		    mph *p_data, 
 		    __OUT__ mph *centroids,
 		    int selected_phase,
-		    char use_triangle);  
+		    char use_triangle,
+		    const char* log_file);  
 
   /**
    * working variables that are visible in all algorithms
