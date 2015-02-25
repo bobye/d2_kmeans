@@ -137,6 +137,7 @@ int d2_read(const char* filename, mph *p_data) {
 	p_supp_sym_sph = p_supp_sym[n]; 
 	for (j=0; j<str; ++j) {
 	  fscanf(fp, "%d", &p_supp_sym_sph[j]); p_supp_sym_sph[j] --; // index started at one
+	  if (p_supp_sym_sph[j] < 0) p_supp_sym_sph[j] = p_data->ph[n].vocab_size - 1;
 	}
 	p_supp_sym[n] = p_supp_sym[n] + str;
       }
