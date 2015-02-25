@@ -220,8 +220,8 @@ int d2_read_protein(const char* name,
   }
 
 #ifdef __USE_MPI__
-  assert(sizeof(size_t)  == sizeof(uint64_t));
-  MPI_Allreduce(&p_data->size, &p_data->global_size, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+  assert(sizeof(size_t)  == sizeof(unsigned long long));
+  MPI_Allreduce(&p_data->size, &p_data->global_size, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 #else
   p_data->global_size = p_data->size;
 #endif
@@ -323,7 +323,7 @@ int d2_write_protein_split(const char* filename, mph *p_data, int splits) {
  */
 int main(int argc, char *argv[]) {
 #ifdef __USE_MPI__
-  MPI_Init(NULL, NULL);
+  MPI_init(NULL, NULL);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 #endif
