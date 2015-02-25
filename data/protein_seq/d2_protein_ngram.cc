@@ -387,7 +387,8 @@ int main(int argc, char *argv[]) {
 		&data, 
 		&c, 
 		selected_phase,
-		use_triangle);
+		use_triangle,
+		NULL);
 
 
   // MPI note: to be done only on one node
