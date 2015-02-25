@@ -323,7 +323,7 @@ int d2_write_protein_split(const char* filename, mph *p_data, int splits) {
  */
 int main(int argc, char *argv[]) {
 #ifdef __USE_MPI__
-  MPI_init(NULL, NULL);
+  MPI_Init(NULL, NULL);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 #endif
