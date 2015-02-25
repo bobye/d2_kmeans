@@ -137,8 +137,8 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   label_count = _D2_CALLOC_SIZE_T(num_of_labels);    
   for (i=0; i<size; ++i) ++label_count[label[i]];
 #ifdef __USE_MPI__
-  assert(sizeof(size_t) == sizeof(uint64_t));
-  MPI_Allreduce(MPI_IN_PLACE, label_count, num_of_labels, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+  assert(sizeof(size_t) == sizeof(unsigned long long));
+  MPI_Allreduce(MPI_IN_PLACE, label_count, num_of_labels, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 #endif  
   for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
 
