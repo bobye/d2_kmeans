@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
   /* default settings */
   int selected_phase = -1; 
   int number_of_clusters = 3; 
-  int max_iters = 100; 
+  int max_iters = 50; 
   size_t num_of_batches = 0; // default not used, for prepare data only
 
   /* IO specification */
