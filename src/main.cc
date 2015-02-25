@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <assert.h>
+#include <time.h>       /* time_t, struct tm, time, localtime */
 
 #include "d2_clustering.h"
 #include "util.hh"
@@ -36,12 +37,12 @@ int main(int argc, char *argv[])
   int size_of_phases = 1;
   long size_of_samples;
   char *ss1_c_str = 0, *ss2_c_str = 0, *ss3_c_str = 0,
-    *filename = 0, *ofilename = 0;
+    *filename = 0;
   char use_triangle = true;
   /* default settings */
   int selected_phase = -1; 
   int number_of_clusters = 3; 
-  int max_iters = 50; 
+  int max_iters = 100; 
   size_t num_of_batches = 0; // default not used, for prepare data only
 
   /* IO specification */
@@ -50,7 +51,6 @@ int main(int argc, char *argv[])
     {"strides", 1, 0, 's'},
     {"phase", 1, 0, 'p'},
     {"ifile", 1, 0, 'i'},
-    {"ofile", 1, 0, 'o'},
     {"phase_only", 1, 0, 't'},
     {"clusters", 1, 0, 'c'},
     {"max_iters", 1, 0, 'm'},
@@ -67,9 +67,6 @@ int main(int argc, char *argv[])
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
-      break;
-    case 'o': /* output filename */
-      ofilename = optarg;
       break;
     case 'p': 
       size_of_phases = atoi(optarg);
@@ -192,16 +189,15 @@ int main(int argc, char *argv[])
 		selected_phase,
 		use_triangle);
 
+  
+  time_t rawtime; struct tm * timeinfo;  time (&rawtime); timeinfo = localtime (&rawtime);
+  std::string hashValue(std::to_string( std::hash<std::string>()(asctime(timeinfo)) % 1000000 ));
+
   if (world_rank == 0) {
-    if (ofilename) {
-      cout << "Write computed centroids to " << ofilename << endl;
-      d2_write(ofilename, &c);
-    } else {
-      d2_write(NULL, &c);
-    }
+      d2_write((string(filename) + "_" + hashValue + "_c.d2").c_str(), &c);
   }
 
-  d2_write_labels((string(filename) + ".label").c_str(), &data);
+  d2_write_labels((string(filename) + "_" + hashValue + ".label").c_str(), &data);
 
   d2_free(&data);
   d2_free(&c);
