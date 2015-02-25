@@ -158,8 +158,8 @@ int d2_read(const char* filename, mph *p_data) {
   fclose(fp);
 
 #ifdef __USE_MPI__
-  assert(sizeof(size_t)  == sizeof(uint64_t));
-  MPI_Allreduce(&p_data->size, &p_data->global_size, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+  assert(sizeof(size_t)  == sizeof(unsigned long long));
+  MPI_Allreduce(&p_data->size, &p_data->global_size, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 #else
   p_data->global_size = p_data->size;
 #endif
@@ -205,7 +205,6 @@ int d2_write(const char* filename, mph *p_data) {
 int d2_write_labels(const char* filename, mph *p_data) {
   FILE *fp = NULL;
   size_t i;
-  const size_t size = p_data->global_size;
   int k;
 
   assert(filename);
@@ -241,9 +240,9 @@ int d2_write_split(const char* filename, mph *p_data, int splits) {
   for (n = 0; n < size; ++n) indices[n] = n; shuffle(indices, size);
 
   // output indices
-  sprintf(local_filename, "%s.ind", filename, k);
+  sprintf(local_filename, "%s.ind", filename);
   fp = fopen(local_filename, "w+"); assert(fp);
-  for (n = 0; n < size; ++n) fprintf(fp, "%d\n", indices[n]);
+  for (n = 0; n < size; ++n) fprintf(fp, "%zd\n", indices[n]);
   fclose(fp);
   VPRINTF("\twrite %zd indices to %s\n", size, local_filename);
 
