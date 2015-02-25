@@ -362,7 +362,8 @@ int d2_clustering(int num_of_clusters,
 					     initialization will start before 
 					     iterations. */
 		  int selected_phase,
-		  char use_triangle){
+		  char use_triangle,
+		  const char* log_file){
   int i;
   int iter;
   int s_ph = p_data->s_ph;
@@ -422,6 +423,13 @@ int d2_clustering(int num_of_clusters,
       label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
 
 
+    if (log_file && ((iter+1) % 10 == 0) ){
+      char centroid_filename[255], label_filename[255];
+      sprintf(centroid_filename, "%s_c.d2", log_file);
+      sprintf(label_filename, "%s.label", log_file);
+      d2_write(centroid_filename, centroids);
+      d2_write_labels(label_filename, p_data);
+    }
     /*********************************************************
      * Termination criterion                                 *
      * For performance profile: comment this part out and    *

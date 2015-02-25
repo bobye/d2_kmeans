@@ -182,22 +182,24 @@ int main(int argc, char *argv[])
   }
   }
 
+
+  time_t rawtime; struct tm * timeinfo;  time (&rawtime); timeinfo = localtime (&rawtime);
+  std::string name_hashValue(string(filename) + "_" + std::to_string( std::hash<std::string>()(asctime(timeinfo)) % 1000000 ));
+
   d2_clustering(number_of_clusters, 
 		max_iters, 
 		&data, 
 		&c, 
 		selected_phase,
-		use_triangle);
-
+		use_triangle,
+		name_hashValue.c_str());
   
-  time_t rawtime; struct tm * timeinfo;  time (&rawtime); timeinfo = localtime (&rawtime);
-  std::string hashValue(std::to_string( std::hash<std::string>()(asctime(timeinfo)) % 1000000 ));
 
   if (world_rank == 0) {
-      d2_write((string(filename) + "_" + hashValue + "_c.d2").c_str(), &c);
+    d2_write((name_hashValue + "_c.d2").c_str(), &c);
   }
 
-  d2_write_labels((string(filename) + "_" + hashValue + ".label").c_str(), &data);
+  d2_write_labels((name_hashValue + ".label").c_str(), &data);
 
   d2_free(&data);
   d2_free(&c);
