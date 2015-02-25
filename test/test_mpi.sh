@@ -12,23 +12,23 @@ num_of_nodes=8
 batch_size=`./d2 -i data/icip14_data/total.d2 -p 2 -n 5000 -d 3,3 -s 6,8 --prepare_batches $num_of_nodes | grep batch_size | sed 's/^.*batch_size://g'`
 
 echo "[$num_of_nodes processes] Profiling image centroids: test single phase #0 with one cluster"
-time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --phase_only 0 --clusters 1 -o centroids.d2 > /dev/null
+time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --phase_only 0 --clusters 1 > /dev/null
 
 
 echo "[$num_of_nodes processes] Profiling image centroids: test single phase #1 with one cluster"
-time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --phase_only 1 --clusters 1 -o centroids.d2 > /dev/null
+time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --phase_only 1 --clusters 1 > /dev/null
 
 
 echo "[$num_of_nodes processes] Clustering images: n=2000 and k=10 with #0 phase"
-time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --phase_only 0 --clusters 10 --max_iter 20 -o centroids.d2 > /dev/null
+time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --phase_only 0 --clusters 10 --max_iter 20 > /dev/null
 
 
 echo "[$num_of_nodes processes] Clustering images: n=2000 and k=10 with #1 phase"
-time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --phase_only 1 --clusters 10 --max_iter 20 -o centroids.d2 > /dev/null
+time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --phase_only 1 --clusters 10 --max_iter 20 > /dev/null
 
 
 echo "[$num_of_nodes processes] Clustering images: n=2000 and k=10 with both phases"
-time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --clusters 10 --max_iter 20 -o centroids.d2 > /dev/null
+time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --clusters 10 --max_iter 20 > /dev/null
 
 cd data/protein_seq
 
@@ -48,7 +48,7 @@ num_of_nodes=4
 echo "[$num_of_nodes processes] Clustering images: n=10000 and k=3 with both phases"
 batch_size=`./d2 -i data/20news-bydate/20newsgroups_clean/20newsgroups.d2s -n 1000 -d 300 -s 128 --type 7 --prepare_batches $num_of_nodes | grep batch_size | sed 's/^.*batch_size://g'`
 
-time mpirun -n $num_of_nodes ./d2 -i data/20news-bydate/20newsgroups_clean/20newsgroups.d2s -n $batch_size -d 300 -s 128 --clusters 3  --type 7 -o centroid.d2s
+time mpirun -n $num_of_nodes ./d2 -i data/20news-bydate/20newsgroups_clean/20newsgroups.d2s -n $batch_size -d 300 -s 128 --clusters 3  --type 7
 
 echo 'End the test of parallel version [Success]'
 
