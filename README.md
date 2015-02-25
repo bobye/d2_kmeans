@@ -44,7 +44,7 @@ Run unit tests:
 
 ## Guides and Tutorials
  - [data format supported](data)
- - [clustering documents as bags of word-vectors](https://github.com/bobye/d2_kmeans/wiki/Document-Clustering)
+ - [clustering documents as bags of word-vectors](https://github.com/bobye/20newsgroups/wiki)
 
 ## Port to Interfaces
  - Matlab [to appear]
