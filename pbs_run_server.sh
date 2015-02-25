@@ -6,14 +6,26 @@
 cd $PBS_O_WORKDIR
 
 module load openmpi/gnu
+main_dir=${PWD}
 
-#num_of_nodes=4
-#batch_size=`./d2 -i data/icip14_data/total.d2 -p 2 -n 5000 -d 3,3 -s 8,8 --prepare_batches $num_of_nodes | grep batch_size | sed 's/^.*batch_size://g'`
-#time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --phase_only 0 --clusters 10 -o centroids.d2 --centroid_method 0  --max_iter 20
+# download data
+cd data && git clone -o 20news_bydate https://github.com/bobye/20newsgroups.git 
+cd 20news_bydate/20newsgroups_clean
+bunzip2 20newsgroups.d2s.bz2
+bunzip2 20newsgroups.d2s.vocab0.bz2
 
+
+# run d2 clustering
+cd $main_dir
 num_of_nodes=16
 data_files=data/20news_bydate/20newsgroups_clean/20newsgroups.d2s
-k=10
-batch_size=`./d2 -i $data_files -n 20000 -d 300 -s 128 --type 7 --prepare_batches $num_of_nodes | grep batch_size | sed 's/^.*batch_size://g'`
-nohup mpirun -n $num_of_nodes ./d2 -i $data_files -n $batch_size -d 300 -s 64 --type 7 --clusters $k -o centroids.d2 > nohup.$num_of_nodes-$k.out
 
+# make sure split data only once
+batch_size=`./d2 -i $data_files -n 20000 -d 300 -s 128 --type 7 --prepare_batches $num_of_nodes | grep batch_size | sed 's/^.*batch_size://g'`
+
+
+# run with different cluster numbers, use nohup to forward stdout
+# results will save to different files with multiple runs
+k=10 # 20 30 40 60 80
+s=64 # 8 16 32
+nohup mpirun -n $num_of_nodes ./d2 -i $data_files -n $batch_size -d 300 -s $s --type 7 --clusters $k -o centroids.d2 > nohup.$k.out 
