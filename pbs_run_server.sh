@@ -29,3 +29,5 @@ batch_size=`./d2 -i $data_files -n 20000 -d 300 -s 128 --type 7 --prepare_batche
 k=10 # 20 30 40 60 80
 s=64 # 8 16 32
 nohup mpirun -n $num_of_nodes ./d2 -i $data_files -n $batch_size -d 300 -s $s --type 7 --clusters $k -o centroids.d2 > nohup.$k.out 
+
+# save nohup.*.out for convergence analysis
