@@ -125,7 +125,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   // allocate buffer of Z
   Z0 = _D2_MALLOC_SCALAR(str*col);
   for (i=0; i<str*col; ++i) Y[i] = 0; // set Y to zero
-  if (num_of_labels * (strxdim * data_ph->vocab_size + 1) < size && data_ph->metric_type == D2_N_GRAM) {
+  if (str * num_of_labels * (strxdim * data_ph->vocab_size + 1) > size*str - c->col && data_ph->metric_type == D2_N_GRAM) {
     Zr2 = _D2_MALLOC_SCALAR(str * num_of_labels * (strxdim * data_ph->vocab_size + 1));    
     hasZr2 = 1;
   }
@@ -146,7 +146,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   VPRINTF("\titer\tobj\t\tprimres\t\tdualres\t\tseconds\n");
   VPRINTF("\t----------------------------------------------------------------\n");
   nclock_start();
-  for (iter=0; iter <= max_niter; ++iter) {
+  for (iter=0; iter < max_niter; ++iter) {
     /*************************************************************************/
     // step 1: update X
 
@@ -231,14 +231,20 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	for (i=0; i<c->col; ++i) Zr[i] = 0.f; //reset Zr to temporarily storage
 	for (i=0; i<size; ++i) {
 	  int *m_supp_sym = p_supp_sym + p_str_cum[i];
-	  SCALAR *c_supp = c->p_supp + label[i]*strxdim;
 	  SCALAR *Xm = X + str*p_str_cum[i];
+	  SCALAR *Zrm = Zr + label[i]*str;
+	  SCALAR *Cm =C + p_str_cum[i]*str;
 	  int j, k, d;
-	  for (k=0; k<str; ++k)
-	    for (j=0; j<p_str[i]; ++j) 
-	      for (d=0; d<dim; ++d)
-		c_supp[k*dim + d] += Xm[j*str + k] * data_ph->vocab_vec[m_supp_sym[j]*dim + d];
-	  _D2_FUNC(rsum2)(str, p_str[i], X + str*p_str_cum[i], Zr + label[i]*str);
+	  double weight;
+	  for (j=0; j<p_str[i]; ++j) {
+	    SCALAR *c_supp = c->p_supp + label[i]*strxdim;
+	    SCALAR *vocab_vec=&data_ph->vocab_vec[m_supp_sym[j]*dim];
+	    for (k=0; k<str; ++k, ++Xm) {
+	      for (d=0; d<dim; ++d, ++c_supp)		
+		*c_supp += *Xm *  vocab_vec[d];
+	      Zrm[k] += *Xm;
+	    }
+	  }
 	}
 #ifdef __USE_MPI__
 	/* ALLREDUCE by SUM operator: vec(c->p_supp, c->col*dim) */
@@ -291,7 +297,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
     /*************************************************************************/
     // step 6: check residuals
-    if (iter%100 == 0 || (iter < 100 && iter%20 == 0) ) {
+    if ((iter%100==99 ) || (iter < 100 && iter%20 == 19))  {
       obj = _D2_CBLAS_FUNC(dot)(str*col, C, 1, X, 1);
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, X, 1);
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, Z0,1);
@@ -306,7 +312,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
       obj     *= rho / p_data->global_size;
       primres /= p_data->global_size;
       dualres /= p_data->global_size;
-      VPRINTF("\t%d\t%f\t%f\t%f\t%f\n", iter, obj, primres, dualres, nclock_end());
+      VPRINTF("\t%d\t%f\t%f\t%f\t%f\n", iter+1, obj, primres, dualres, nclock_end());
     }
 
     if (nclock_end() > time_budget) {break;}
