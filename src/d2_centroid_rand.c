@@ -122,11 +122,13 @@ void merge         (const int dim,
     SCALAR min = DBL_MAX; // a very large number
     int min_idx = -1;
     for (i=0; i<m; ++i) 
-      for (j=i+1; j<m; ++j) 
-	if (w[i] > 0 && w[j] > 0 && min > D[i*m + j]) {
-	  min = D[i*m + j];
+      for (j=i+1; j<m; ++j) {
+	SCALAR cost=w[i]*w[j]*D[i*m + j]/(w[i] + w[j]);
+	if (w[i] > 0 && w[j] > 0 && min > cost) {
+	  min = cost;
 	  min_idx = i*m + j;
 	}
+      }
     i = min_idx / m;
     j = min_idx % m;
     // printf("%d %d\n", i, j);

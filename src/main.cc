@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
   /* default settings */
   int selected_phase = -1; 
   int number_of_clusters = 3; 
-  int max_iters = 50; 
+  int max_iters = 100; 
   size_t num_of_batches = 0; // default not used, for prepare data only
 
   /* IO specification */
@@ -69,10 +69,10 @@ int main(int argc, char *argv[])
       filename = optarg;
       break;
     case 'p': 
-      size_of_phases = atoi(optarg);
+      size_of_phases = atoi(optarg); assert(size_of_phases > 0);
       break;
     case 'n': /* size of samples expected to be loaded */
-      size_of_samples = atol(optarg);
+      size_of_samples = atol(optarg); assert(size_of_samples > 0);
       break;
     case 'd': 
       ss1_c_str = optarg;
