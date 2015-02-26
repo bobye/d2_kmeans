@@ -51,6 +51,8 @@ be found at directory protein_seq/ .
    w{1} w{2} ... w{n}
    id{1} id{2} ... id{n}
    ```
+   The last row of vocabulary embedding matrix is zero, serving as default
+   embedding (in case where id{}<1).
 3. [Dense Histograms].
    In some cases, it would be useful to work with histograms (where the sum
    of bins is equal to one). For example, a histogram representation of two
