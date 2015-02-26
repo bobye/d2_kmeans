@@ -233,9 +233,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	  int *m_supp_sym = p_supp_sym + p_str_cum[i];
 	  SCALAR *Xm = X + str*p_str_cum[i];
 	  SCALAR *Zrm = Zr + label[i]*str;
-	  SCALAR *Cm =C + p_str_cum[i]*str;
 	  int j, k, d;
-	  double weight;
 	  for (j=0; j<p_str[i]; ++j) {
 	    SCALAR *c_supp = c->p_supp + label[i]*strxdim;
 	    SCALAR *vocab_vec=&data_ph->vocab_vec[m_supp_sym[j]*dim];
