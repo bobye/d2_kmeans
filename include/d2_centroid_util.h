@@ -80,4 +80,9 @@ inline void broadcast_centroids(mph *centroids, int i) {
 #endif
 }
 
+
+void merge         (const int dim, 
+		    const SCALAR * m_supp, const SCALAR * m_w, const int m, 
+		    SCALAR * c_supp, SCALAR * c_w, const int n);
+
 #endif /* _D2_CENTROID_UTIL_H_ */

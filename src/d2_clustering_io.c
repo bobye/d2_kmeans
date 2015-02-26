@@ -3,6 +3,7 @@
 #include <assert.h>
 #include "d2_clustering.h"
 #include "d2_math.h"
+#include "d2_centroid_util.h"
 #ifdef __USE_MPI__
 #include <mpi.h>
 #endif
@@ -226,6 +227,9 @@ int d2_write_labels(const char* filename, mph *p_data) {
   return 0;
 }
 
+/**
+   Serial function to split data
+ */
 int d2_write_split(const char* filename, mph *p_data, int splits) {
   const int s_ph = p_data->s_ph;
   const size_t size = p_data->size; 
@@ -245,7 +249,7 @@ int d2_write_split(const char* filename, mph *p_data, int splits) {
   fp = fopen(local_filename, "w+"); assert(fp);
   for (n = 0; n < size; ++n) fprintf(fp, "%zd\n", indices[n]);
   fclose(fp);
-  VPRINTF("\twrite %zd indices to %s\n", size, local_filename);
+  fprintf(stderr, "\twrite %zd indices to %s\n", size, local_filename);
 
   // output reads in several segments
   batch_size = 1 + (size-1) / splits;
@@ -269,6 +273,7 @@ int d2_write_split(const char* filename, mph *p_data, int splits) {
 	  int dim = p_data->ph[j].dim;
 	  int str = p_data->ph[j].p_str[i];
 	  size_t pos = p_data->ph[j].p_str_cum[i];
+	  if (0) { // non pre-processed
 	  fprintf(fp, "%d\n", dim);
 	  fprintf(fp, "%d\n", str);
 	  for (k=0; k<str; ++k) fprintf(fp, "%lf ", p_data->ph[j].p_w[pos + k]);
@@ -285,11 +290,57 @@ int d2_write_split(const char* filename, mph *p_data, int splits) {
 	    }
 	    fprintf(fp, "\n");
 	  }
+	  } else {
+	    /** Pre-processed
+	     */
+	    SCALAR *supp=NULL, *c_supp=NULL;
+	    SCALAR *w=NULL, *c_w = NULL;
+	    char renew=0;
+	    if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2) {
+	      supp=p_data->ph[j].p_supp + pos*dim;
+	      w=p_data->ph[j].p_w + pos;
+	    }
+	    else if (p_data->ph[j].metric_type == D2_WORD_EMBED) {
+	      renew = 1;
+	      supp = (SCALAR*) _D2_MALLOC_SCALAR(str*dim);	 
+	      w = (SCALAR*) _D2_MALLOC_SCALAR(str);
+	      for (k=0; k<str; ++k) {
+		for (d=0; d<dim; ++d) 
+		  supp[k*dim + d] = p_data->ph[j].vocab_vec[p_data->ph[j].p_supp_sym[pos + k]*dim + d];
+		w[k] = p_data->ph[j].p_w[pos + k];
+	      }
+	    }
+
+	    if (str > p_data->ph[j].str) {	      
+	      c_supp = (SCALAR*) _D2_MALLOC_SCALAR(p_data->ph[j].str*dim);
+	      c_w = (SCALAR*) _D2_MALLOC_SCALAR(p_data->ph[j].str);
+	      merge(dim, supp, w, str, c_supp, c_w, p_data->ph[j].str);
+	      str=p_data->ph[j].str;
+	    } else {
+	      c_supp = supp;
+	      c_w = w;
+	    }
+
+	    fprintf(fp, "%d\n", dim);
+	    fprintf(fp, "%d\n", str);
+	    for (k=0; k<str; ++k) fprintf(fp, "%lf ", c_w[k]);
+	    fprintf(fp, "\n");	  
+	    for (k=0; k<str; ++k) {
+	      for (d=0; d<dim; ++d) fprintf(fp, "%lf ", c_supp[k*dim + d]);
+	      fprintf(fp, "\n"); 
+	    }
+
+	    
+	    if (renew) _D2_FREE(supp); 
+	    if (renew) _D2_FREE(w); 
+	    if (c_supp!=supp) _D2_FREE(c_supp);
+	    if (c_w!=w) _D2_FREE(c_w);
+	  }
 	}
     }
 
     fclose(fp);
-    VPRINTF("\twrite %zd objects to %s\n", idx - batch_size * k, local_filename);
+    fprintf(stderr, "\twrite %zd objects to %s\n", idx - batch_size * k, local_filename);
   }
   return 0;
 }
