@@ -369,7 +369,7 @@ int d2_clustering(int num_of_clusters,
   int s_ph = p_data->s_ph;
   size_t size = p_data->size;
   // int *label = p_data->label;
-  size_t label_change_count;
+  size_t label_change_count, *label_count;
   var_mph var_work = {.tr = {NULL, NULL, NULL, NULL, NULL}};
   mph the_centroids_copy = {0, 0, 0, NULL, 0, NULL};
 
@@ -472,6 +472,15 @@ int d2_clustering(int num_of_clusters,
   d2_free_work(&var_work);
   if (use_triangle) d2_free(&the_centroids_copy);
 
+
+  label_count = _D2_CALLOC_SIZE_T(num_of_clusters);    
+  for (i=0; i<size; ++i) ++label_count[p_data->label[i]];
+#ifdef __USE_MPI__
+  assert(sizeof(size_t) == sizeof(unsigned long long));
+  MPI_Allreduce(MPI_IN_PLACE, label_count, num_of_clusters, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+#endif  
+  for (i=0; i<num_of_clusters; ++i) VPRINTF("%d ", label_count[i]); VPRINTF("\n");
+  _D2_FREE(label_count);
   return 0;
 }
 
