@@ -140,7 +140,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   assert(sizeof(size_t) == sizeof(unsigned long long));
   MPI_Allreduce(MPI_IN_PLACE, label_count, num_of_labels, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 #endif  
-  for (i=0; i<num_of_labels; ++i) assert(label_count[i] != 0);
+  VPRINTF("\tlabel counts:"); for (i=0; i<num_of_labels; ++i) {assert(label_count[i] != 0); VPRINTF("%d ", label_count[i]);} VPRINTF("\n");
 
   // main loop
   VPRINTF("\titer\tobj\t\tprimres\t\tdualres\t\tseconds\n");

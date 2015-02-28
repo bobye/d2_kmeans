@@ -183,8 +183,12 @@ int main(int argc, char *argv[])
   }
 
 
-  time_t rawtime; struct tm * timeinfo;  time (&rawtime); timeinfo = localtime (&rawtime);
-  std::string name_hashValue(string(filename) + "_" + std::to_string( std::hash<std::string>()(asctime(timeinfo)) % 1000000 ));
+  srand (time(NULL));
+  int hashNumber=rand() % 1000000;
+#ifdef __USE_MPI__
+  MPI_Bcast(&hashNumber, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
+  std::string name_hashValue(string(filename) + "_" + std::to_string(hashNumber));
 
   d2_clustering(number_of_clusters, 
 		max_iters, 
