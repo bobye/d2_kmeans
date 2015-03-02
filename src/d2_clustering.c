@@ -439,6 +439,7 @@ int d2_clustering(int num_of_clusters,
     if (use_triangle) 
       d2_labeling_post(p_data, &the_centroids_copy, centroids, &var_work, selected_phase);
   }
+  VPRINTF("Iteration time: %lf\n", nclock_end_p(&n_time));
 
   if (use_triangle)  label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
   d2_solver_release();
@@ -446,7 +447,6 @@ int d2_clustering(int num_of_clusters,
   d2_free_work(&var_work);
   if (use_triangle) d2_free(&the_centroids_copy);
 
-  VPRINTF("Iteration time: %lf\n", nclock_end_p(&n_time));
   return 0;
 }
 
