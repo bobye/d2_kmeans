@@ -124,8 +124,7 @@ int d2_read(const char* filename, mph *p_data) {
       }
       //assert(fabs(w_sum - 1.0) <= 1E-6);
       for (j=0; j<str; ++j) {
-	//	p_w_sph[j] /= w_sum; // re-normalize all weights
-	p_w_sph[j] = 1.f / str; // for each term using equal weights
+	p_w_sph[j] /= w_sum; // re-normalize all weights
       }
       p_w[n] = p_w[n] + str;
 
