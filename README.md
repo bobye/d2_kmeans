@@ -1,9 +1,9 @@
-d2_kmeans: accelerated and parallel clustering of discrete distributions
+Accelerated and Parallel Clustering of Discrete Distributions
 =============
 
-D2-Kmeans is a clustering algorithm for **D**iscrete **D**istributions,
+AD2-clustering is a parallel clustering algorithm for **D**iscrete **D**istributions,
 including normalized histogram and correlated n-gram as special cases,
-under the [Wasserstein metric](http://en.wikipedia.org/wiki/Wasserstein_metric).
+under the *exact* [Wasserstein metric](http://en.wikipedia.org/wiki/Wasserstein_metric).
 It follows the Elkan's algorithm [1] of k-means to save unnecessary
 computation of instance re-labeling, and uses a modifed version of
 Bregman ADMM [2] to accelerate and scale-up the computation of cluster centroids.
@@ -13,7 +13,7 @@ Please see [3] for technical details.
 There are three data types of discrete distribution that have been covered
 in this project:
  - (*default*) discrete distribution over vector space endowed with Euclidean distance
- - Same type as the default one, but with d2 over word embeddings
+ - Same type as the default one, but over embeddings space with a finite vocabulary size
    (e.g. document represented by tf-idf over word vectors)
  - normalized (dense) histograms with bin-to-bin distance
  - d2 over [n-gram](http://en.wikipedia.org/wiki/N-gram) provided
@@ -23,19 +23,22 @@ An object/instance can be represented as the joint of multiple discrete
 distributions (of any aforementioned type), called phases. For example, an image can be
 represented in two phases: color distribution and texture distribution; a protein
 sequence can be represented as distributions in three phases, aka,
-1-gram,2-gram,3-gram of amino acid.
+1-gram, 2-gram, 3-gram of amino acid.
 The co-clustering is then performed jointly over multiple phases.
 
 ## How to compile and run tests
+Though one can build a serial version to solve small-to-moderate scale problems with speed,
+the strength of AD-clustering is its scalability to large dataset with parallelization of 
+high-efficiency (over 80% on hundreds of cores). 
 
 Build dependencies:
  - MPI
- - CBLAS: OpenBLAS or MKL or Accelerate(Mac)
+ - CBLAS
  - [Mosek](https://mosek.com) 7.0+
  
 ```
  $ make MPI=0 # build sequential version, or
- $ make MPI=1 # build MPI version
+ $ make MPI=1 # build MPI version (default)
 ```
 
 Run unit tests:
