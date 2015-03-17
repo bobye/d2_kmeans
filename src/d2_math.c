@@ -2,7 +2,7 @@
 
 #include <math.h>
 #include "d2_math.h"
-#include "stdio.h"
+#include <stdio.h>
 #include <time.h>       /* time */
 
 double randn () {
@@ -38,7 +38,7 @@ double randn () {
    number generator. */
 void shuffle(size_t *array, size_t n)
 {
-  // srand (time(NULL));
+    srand (time(NULL) * world_rank);
     if (n > 1) 
     {
       int k;
