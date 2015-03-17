@@ -1,7 +1,7 @@
 d2_kmeans: accelerated and parallel clustering of discrete distributions
 =============
 
-D2-Kmeans is a clustering algorithm for __D__iscrete __D__istributions,
+D2-Kmeans is a clustering algorithm for **D**iscrete **D**istributions,
 including normalized histogram and correlated n-gram as special cases,
 under the [Wasserstein metric](http://en.wikipedia.org/wiki/Wasserstein_metric).
 It follows the Elkan's algorithm [1] of k-means to save unnecessary
