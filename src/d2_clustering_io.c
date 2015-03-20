@@ -274,9 +274,12 @@ int d2_write_split(const char* filename, mph *p_data, int splits) {
 	  int dim = p_data->ph[j].dim;
 	  int str = p_data->ph[j].p_str[i];
 	  size_t pos = p_data->ph[j].p_str_cum[i];
-	  if (0) { // non pre-processed
-	  fprintf(fp, "%d\n", dim);
-	  fprintf(fp, "%d\n", str);
+	  if (1) { // non pre-processed
+	    if (p_data->ph[j].metric_type == D2_HISTOGRAM) {
+	      fprintf(fp, "%d %d ", dim, str);
+	    } else {
+	      fprintf(fp, "%d\n%d\n", dim, str);
+	    }
 	  for (k=0; k<str; ++k) fprintf(fp, "%lf ", p_data->ph[j].p_w[pos + k]);
 	  fprintf(fp, "\n");
 	  if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2) {
