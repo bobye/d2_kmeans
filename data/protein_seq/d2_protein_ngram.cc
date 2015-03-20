@@ -267,11 +267,17 @@ int d2_write_protein_split(const char* filename, mph *p_data, int splits) {
   size_t *indices, batch_size, n;
   int **p_supp; double **p_w; 
   int m, j;
+  FILE *ind_file;
+  char ind_filename[255];
   
   assert(filename != NULL && splits > 1);
 
   indices = _D2_MALLOC_SIZE_T(size);
   for (n = 0; n < size; ++n) indices[n] = n; shuffle(indices, size);
+  sprintf(ind_filename,"%s.ind", filename);
+  ind_file=fopen(ind_filename, "w+");
+  for (n = 0; n < size; ++n) fprintf(ind_file, "%zd\n", indices[n]);
+  fclose(ind_file);
   batch_size = 1 + (size-1) / splits;
   VPRINTF("batch_size: %zd\n", batch_size);
 
@@ -332,7 +338,7 @@ int main(int argc, char *argv[]) {
   int size_of_phases = 3;
   int number_of_clusters = atoi(argv[3]);
   int selected_phase = atoi(argv[2]);
-  char use_triangle = false;
+  char use_triangle = false, label_filename[255];
   int i;
 
   mph data;
@@ -377,7 +383,7 @@ int main(int argc, char *argv[]) {
   
   VPRINTF("Centroid initialization done; start clustering ... \n");
 
-  BADMM_options ad_hoc_op_badmm = {.maxIters = 40, .rhoCoeff = 1.f, .updatePerLoops = 40};
+  BADMM_options ad_hoc_op_badmm = {.maxIters = 60, .rhoCoeff = 1.f, .updatePerLoops = 60};
   GRADDEC_options ad_hoc_op_graddec = {.maxIters = 5, .stepSize = 0.5};
   p_badmm_options = &ad_hoc_op_badmm;
   p_graddec_options = &ad_hoc_op_graddec;
@@ -395,6 +401,9 @@ int main(int argc, char *argv[]) {
   if (world_rank == 0) d2_write_protein(NULL, &c); // output centroids
   d2_free(&c);
   }
+
+  sprintf(label_filename, "%s.label", argv[1]);
+  d2_write_labels(label_filename, &data);
 
   d2_free(&data);
 
