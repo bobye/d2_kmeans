@@ -146,7 +146,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   VPRINTF("\titer\tobj\t\tprimres\t\tdualres\t\tseconds\n");
   VPRINTF("\t----------------------------------------------------------------\n");
   nclock_start();
-  for (iter=0; iter < max_niter; ++iter) {
+  for (iter=0; iter <= max_niter; ++iter) {
     /*************************************************************************/
     // step 1: update X
 
