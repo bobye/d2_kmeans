@@ -193,7 +193,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     if (iter % p_badmm_options->updatePerLoops == 0) {
       switch (data_ph->metric_type) {
       case D2_EUCLIDEAN_L2 :
-	assert(num_of_labels < size);
+	//	assert(num_of_labels < size);
 	for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0.f; // reset c->p_supp
 	for (i=0; i<c->col; ++i) Zr[i] = 0.f; //reset Zr to temporarily storage
 
