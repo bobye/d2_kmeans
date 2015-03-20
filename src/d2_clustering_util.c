@@ -128,6 +128,7 @@ int d2_free(mph *p_data) {
 /**
  * Allocate memory for working data
  */
+#define max(a,b) ((a) > (b)? (a) : (b))
 int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
   int i;
   size_t size = p_data->size;
@@ -152,7 +153,7 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
     assert(var_work->g_var[i].C);
 
     if (d2_alg_type == D2_CENTROID_BADMM) {
-      d2_allocate_work_sphBregman(p_data->ph +i, p_data->size, 
+      d2_allocate_work_sphBregman(p_data->ph +i, max(p_data->size, p_data->num_of_labels), 
 				  var_work->l_var_sphBregman+i);
     }
     if (d2_alg_type == D2_CENTROID_ADMM) {
