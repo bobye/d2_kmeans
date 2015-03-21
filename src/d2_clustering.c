@@ -241,6 +241,7 @@ int d2_copy(mph* a, mph *b) {
       if (new_init_tag)  {
 	d2_allocate_sph(b->ph + n, a->ph[n].dim, a->ph[n].str, a->size, 0., a->ph[n].metric_type);
 	b->ph[n].col = a->ph[n].col;
+	b->ph[n].vocab_size = a->ph[n].vocab_size;
       }
       memcpy(b->ph[n].p_str, a->ph[n].p_str, a->size * sizeof(int));
       memcpy(b->ph[n].p_str_cum, a->ph[n].p_str_cum, a->size * sizeof(size_t));
@@ -251,11 +252,11 @@ int d2_copy(mph* a, mph *b) {
 	memcpy(b->ph[n].p_supp, a->ph[n].p_supp, a->ph[n].col * a->ph[n].dim * sizeof(SCALAR));
 	break;
       case D2_HISTOGRAM:
-	memcpy(b->ph[n].dist_mat, a->ph[n].dist_mat, a->ph[n].str*a->ph[n].str);
+	if (new_init_tag) memcpy(b->ph[n].dist_mat, a->ph[n].dist_mat, a->ph[n].vocab_size*a->ph[n].vocab_size);
 	break;
       case D2_N_GRAM:
 	memcpy(b->ph[n].p_supp_sym, a->ph[n].p_supp_sym, a->ph[n].col * a->ph[n].dim * sizeof(int));
-	memcpy(b->ph[n].dist_mat, a->ph[n].dist_mat, a->ph[n].vocab_size*a->ph[n].vocab_size);
+	if (new_init_tag) memcpy(b->ph[n].dist_mat, a->ph[n].dist_mat, a->ph[n].vocab_size*a->ph[n].vocab_size);
 	break;
       }
     } else {
@@ -278,7 +279,7 @@ size_t d2_labeling_post(mph *p_data,
 
   for (i=0; i<num_of_labels; ++i) {
     double d;
-    d = d2_compute_distance(c_old, i, c_new, i, selected_phase, var_work, p_data->size + i);
+    d = d2_compute_distance(c_new, i, c_old, i, selected_phase, var_work, p_data->size + i);
     d_changes[i] = d;
   }
 
