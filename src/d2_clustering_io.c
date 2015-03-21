@@ -194,6 +194,7 @@ int d2_write(const char* filename, mph *p_data) {
 	fprintf(fp, "%d\n", str);
 	for (k=0; k<str; ++k) fprintf(fp, "%lf ", p_data->ph[j].p_w[pos + k]);
 	fprintf(fp, "\n");
+	if (p_data->ph[j].metric_type == D2_HISTOGRAM) continue;
 	for (k=0; k<str; ++k) {
 	  for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
 	  fprintf(fp, "\n"); 
