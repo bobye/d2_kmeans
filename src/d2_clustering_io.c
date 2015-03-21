@@ -55,6 +55,7 @@ int d2_read(const char* filename, mph *p_data) {
       c=fscanf(fp_new, "%d", &str); assert(c>0 && str == p_data->ph[n].str);
       for (i=0; i< str*str; ++i) 
 	fscanf(fp_new, SCALAR_STDIO_TYPE, &(p_data->ph[n].dist_mat[i]));
+      p_data->ph[n].vocab_size = str;
       fclose(fp_new);
     }
     else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {
