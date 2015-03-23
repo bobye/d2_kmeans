@@ -12,11 +12,11 @@ Please see [3] for technical details.
 ## Discrete Distributions
 There are three data types of discrete distribution that have been covered
 in this project:
- - (*default*) discrete distribution over vector space endowed with Euclidean distance
+ - [default] discrete distribution over vector space endowed with Euclidean distance
  - Same type as the default one, but over embeddings space with a finite vocabulary size
-   (e.g. document represented by tf-idf over word vectors)
+   (e.g. document represented by tf-idf over word vectors, sparsified histograms)
  - normalized (dense) histograms with bin-to-bin distance
- - d2 over [n-gram](http://en.wikipedia.org/wiki/N-gram) provided
+ - [**experimental] d2 over [n-gram](http://en.wikipedia.org/wiki/N-gram) provided
    with item-to-item similarity/distance (sparse histograms are represented as 1-gram)
 
 An object/instance can be represented as the joint of multiple discrete
