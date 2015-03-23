@@ -9,6 +9,10 @@ computation of instance re-labeling, and uses a modifed version of
 Bregman ADMM [2] to accelerate and scale-up the computation of cluster centroids.
 Please see [3] for technical details. 
 
+<img src="./data/mnist/mnist_centroid.png" width=400 />
+
+Example: the 30 clusters of MNIST digits (each "centroid" discrete distribution is visualized).
+
 ## Discrete Distributions
 There are three data types of discrete distribution that have been covered
 in this project:
