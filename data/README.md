@@ -46,13 +46,17 @@ be found at directory protein_seq/ .
    m n
    <n x m matrix> ;; n is the size of vocabulary, m is the dimension of embeddings
    ;; file ext: .d2s
-   0
+   m
    n
    w{1} w{2} ... w{n}
    id{1} id{2} ... id{n}
    ```
    The last row of vocabulary embedding matrix is zero, serving as default
-   embedding (in case where id{}<1).
+   embedding (in case where id{}<1). Starting from root directory, you may
+   type
+   ```bash
+   $ time ./d2 -i data/mnist/mnist60k.d2s -n 100 -d 2 -s 80 --types 7
+   ```
 3. [Dense Histograms].
    In some cases, it would be useful to work with histograms (where the sum
    of bins is equal to one). For example, a histogram representation of two
