@@ -38,16 +38,16 @@ high-efficiency (over 80% on hundreds of cores).
 Build dependencies:
  - MPI
  - CBLAS
- - [Mosek](https://mosek.com) 7.0+
+ - [Mosek](https://mosek.com) 7.0+: free individual academic license available.
  
 ```
  $ make MPI=0 # build sequential version, or
  $ make MPI=1 # build MPI version (default)
 ```
 
-Run unit tests:
+Run unit tests (it takes several minutes):
 ```
- $ make test # it takes several minutes. 
+ $ make test 
 ```
 
 ## Guides and Tutorials
