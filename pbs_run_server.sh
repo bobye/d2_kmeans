@@ -15,14 +15,19 @@ bunzip2 20newsgroups.d2s.bz2
 bunzip2 20newsgroups.d2s.vocab0.bz2
 
 
-# run d2 clustering
+# run d2 clustering of documents
+# make sure you change the line in d2_clusetering_io.c from 
+#>   if (1) { // non pre-processed
+# to 
+#>   if (0) { // non pre-processed
+
 cd $main_dir
 num_of_nodes=16
 s=16 # 2 4 8 16 32 64
 data_files=data/20news-bydate/20newsgroups_clean/20newsgroups.d2s
 
 # make sure split data only once
-batch_size=`./d2 -i $data_files -n 20000 -d 300 -s $s --type 7 --prepare_batches $num_of_nodes | grep batch_size | sed 's/^.*batch_size://g'`
+batch_size=`./d2 -i $data_files -n 20000 -d 300 -s $s --types 7 --prepare_batches $num_of_nodes | grep batch_size | sed 's/^.*batch_size://g'`
 
 
 # run with different cluster numbers, use nohup to forward stdout
