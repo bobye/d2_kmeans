@@ -6,7 +6,7 @@ including normalized histogram and correlated n-gram as special cases,
 under the *exact* [Wasserstein metric](http://en.wikipedia.org/wiki/Wasserstein_metric).
 Please see our paper for technical details. 
 
-Ye, Jianbo, Panruo Wu, James Z. Wang and Jia Li, "Fast Discrete Distribution Clustering under Wasserstein Distance" in submission to NIPS 2015.
+[Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and Jia Li, "Fast Discrete Distribution Clustering under Wasserstein Distance" in submission to NIPS 2015.
 
 ## Discrete Distributions
 There are three data types of discrete distribution that have been covered
