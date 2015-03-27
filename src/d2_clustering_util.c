@@ -182,7 +182,7 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
       assert(var_work->g_var[i].L);
     }
   }
-  var_work->label_switch = (char *) malloc(size * sizeof(char)); 
+  var_work->label_switch = (int *) malloc(size * sizeof(int)); 
 
   if (use_triangle) {
     size_t j;
