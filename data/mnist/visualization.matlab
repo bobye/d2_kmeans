@@ -1,4 +1,4 @@
-f=fopen('../usps/usps.d2s_575690_c.d2', 'r');
+f=fopen('../usps/usps_blankout05.d2s_120424_c.d2', 'r');
 
 figure;
 points=40

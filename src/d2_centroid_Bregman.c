@@ -56,7 +56,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   sph *data_ph = p_data->ph + idx_ph;
   int *label = p_data->label;
   size_t num_of_labels = p_data->num_of_labels;
-  char *label_switch = var_work->label_switch;
+  int *label_switch = var_work->label_switch;
   int dim = data_ph->dim;
   size_t col = data_ph->col;
   int str, strxdim;
@@ -113,7 +113,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
    * whose label are changed  
    */
     for (i=0; i<size; ++i) {
-      if (label_switch[i] == 1) {
+      if (label_switch[i] >= 0) {
 	SCALAR *p_scal = Z + str*p_str_cum[i];
 	SCALAR *data_w_scal  = p_w + p_str_cum[i];
 	SCALAR *c_w_scal = c->p_w + label[i]*str;

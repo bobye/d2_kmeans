@@ -158,7 +158,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
   /* initialization */
   for (i=0; i<size; ++i) 
     if (d2_alg_type == D2_CENTROID_BADMM)
-      { var_work->label_switch[i] = 0; }
+      { var_work->label_switch[i] = -1; }
 
   for (i=0; i<size; ++i) {
   /* step 2 */
@@ -202,7 +202,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
     if (jj != init_label) {
       label[i] = jj;
       if (d2_alg_type == D2_CENTROID_BADMM) 
-	{ var_work->label_switch[i] = 1;}
+	{ var_work->label_switch[i] = init_label;}
       count += 1;
     }
   }
@@ -325,13 +325,13 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 
     if (p_data->label[i] == jj) {
       if (d2_alg_type == D2_CENTROID_BADMM) {
-	var_work->label_switch[i] = 0;
+	var_work->label_switch[i] = -1;
       }
     } else {
-      p_data->label[i] = jj;
       if (d2_alg_type == D2_CENTROID_BADMM) {
-	var_work->label_switch[i] = 1;
+	var_work->label_switch[i] = p_data->label[i];
       }
+      p_data->label[i] = jj;
       count ++;
     }
   }

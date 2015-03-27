@@ -163,7 +163,7 @@ extern "C" {
     int s_ph;
     var_sph *g_var;
     var_sphBregman *l_var_sphBregman; // may not initialized, which depends on the actual centroid algorithm used.    
-    char *label_switch;
+    int *label_switch;
     trieq tr; /* data structure for relabeling */
   } var_mph; 
 
