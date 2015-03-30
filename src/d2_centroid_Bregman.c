@@ -51,8 +51,8 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 			   var_mph * var_work,
 			   int idx_ph, /* index of phases */
 			   sph *c0, /* initial gauss for the centroid */
-			   __OUT__ sph *c
-			   ) {
+			   __OUT__ sph *c,
+			   int outer_iter) {
   sph *data_ph = p_data->ph + idx_ph;
   int *label = p_data->label;
   size_t num_of_labels = p_data->num_of_labels;
@@ -112,19 +112,21 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
    * Indeed, we may only need to reinitialize for entries 
    * whose label are changed  
    */
-    for (i=0; i<size; ++i) {
-      if (label_switch[i] == 1) {
+    for (i=0; i<size; ++i)
+      if (outer_iter == 0 || label_switch[i] == 1) {
 	SCALAR *p_scal = Z + str*p_str_cum[i];
 	SCALAR *data_w_scal  = p_w + p_str_cum[i];
 	SCALAR *c_w_scal = c->p_w + label[i]*str;
-	for (j=0; j<str*p_str[i]; ++j, ++p_scal) 
-	  *p_scal =  data_w_scal[j/str] * c_w_scal[j%str];
+	SCALAR *y_scal = Y + str*p_str_cum[i];
+	for (j=0; j<str*p_str[i]; ++j) {
+	  p_scal[j] = data_w_scal[j/str] * c_w_scal[j%str];
+	  y_scal[j] = 0;
+	}
       }
-    }
   }
   // allocate buffer of Z
   Z0 = _D2_MALLOC_SCALAR(str*col);
-  for (i=0; i<str*col; ++i) Y[i] = 0; // set Y to zero
+  if (outer_iter % 5 == 0 || outer_iter < 20) for (i=0; i<str*col; ++i) Y[i] = 0; // set Y to zero
   if (str * num_of_labels * (strxdim * data_ph->vocab_size + 1) > size*str - c->col && data_ph->metric_type == D2_N_GRAM) {
     Zr2 = _D2_MALLOC_SCALAR(str * num_of_labels * (strxdim * data_ph->vocab_size + 1));    
     hasZr2 = 1;
