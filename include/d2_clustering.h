@@ -7,6 +7,13 @@ extern "C" {
 
 #include "common.h"
 #include "d2_param.h"
+  typedef struct {
+    int m, n, nnz; /* number of rows, number of colums, # of triplet entries */
+    int *p; /* column pointers (size n+1) */
+    int *i; /* row indices */
+    SCALAR *x; /* numerical values */
+  } sparse_matrix; // matrix in compressed-column 
+
   /**
    * data structure to store d2 of one phase
    */
@@ -154,6 +161,7 @@ extern "C" {
     SCALAR *X, *Z;
     SCALAR *Y;
     SCALAR *Xc, *Zr;
+    sparse_matrix *spmat;
   } var_sphBregman;
 
   /**
@@ -188,7 +196,7 @@ extern "C" {
   /**
    * interface of Bregman ADMM
    */
-  int d2_allocate_work_sphBregman(sph *ph, size_t size,
+  int d2_allocate_work_sphBregman(sph *ph, size_t nsize, int nlabel,
 				  __OUT__ var_sphBregman * var_phwork);
   int d2_free_work_sphBregman(var_sphBregman * var_phwork);
   int d2_centroid_sphBregman(mph *p_data, // data

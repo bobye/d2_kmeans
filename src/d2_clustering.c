@@ -31,9 +31,14 @@ double d2_compute_distance(mph *a, size_t i,
   for (n=0; n<a->s_ph; ++n) 
     if (selected_phase < 0 || n == selected_phase) {
       sph *a_sph = a->ph + n, *b_sph = b->ph + n;
-      int dim = a->ph[n].dim; assert(dim == b_sph->dim);      
+      int dim = a_sph->dim; assert(dim == b_sph->dim);      
+      int str = a_sph->str; assert(str == b_sph->str);
       size_t index = (selected_phase < 0 ? (index_task * a->s_ph + n) : index_task);
       size_t idx = b_sph->p_str[j] * a_sph->p_str_cum[i];
+      double *xx = NULL;
+      if (a == b && d2_alg_type == D2_CENTROID_BADMM) {
+	xx = var_work->g_var[n].X;
+      }
       switch (a_sph->metric_type) {
       case D2_EUCLIDEAN_L2 :
 	_D2_FUNC(pdist2)(dim, 
@@ -47,7 +52,7 @@ double d2_compute_distance(mph *a, size_t i,
 				  var_work->g_var[n].C + idx,
 				  b_sph->p_w + b_sph->p_str_cum[j], 
 				  a_sph->p_w + a_sph->p_str_cum[i], 
-				  NULL, // x and lambda are implemented later
+				  xx, // x and lambda are implemented later
 				  NULL,
 				  index);
 	d += val;
@@ -65,7 +70,7 @@ double d2_compute_distance(mph *a, size_t i,
 				  var_work->g_var[n].C + idx,
 				  b_sph->p_w + b_sph->p_str_cum[j], 
 				  a_sph->p_w + a_sph->p_str_cum[i], 
-				  NULL, // x and lambda are implemented later
+				  xx, // x and lambda are implemented later
 				  NULL,
 				  index);
 	d += val;
@@ -76,7 +81,7 @@ double d2_compute_distance(mph *a, size_t i,
 				  a_sph->dist_mat, 
 				  b_sph->p_w + b_sph->p_str_cum[j], 
 				  a_sph->p_w + a_sph->p_str_cum[i], 
-				  NULL, NULL,
+				  xx, NULL,
 				  index);
 	d += val;
 	break;	
@@ -95,14 +100,18 @@ double d2_compute_distance(mph *a, size_t i,
 				  var_work->g_var[n].C + idx,
 				  b_sph->p_w + b_sph->p_str_cum[j], 
 				  a_sph->p_w + a_sph->p_str_cum[i], 
-				  NULL, // x and lambda are implemented later
+				  xx, // x and lambda are implemented later
 				  NULL,
 				  index) / dim;
 
 	d += 2*val;	
 	break;
       }
+      if (a == b && d2_alg_type == D2_CENTROID_BADMM) { // a==b means centroids are computed
+	sparse(xx, str, str, var_work->l_var_sphBregman[n].spmat + (i*a->size + j), 2*str-1);
+      }
     }
+
 
   if (d <= 0) return 0.;
   return sqrt(d);
@@ -139,15 +148,16 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
     if (world_rank == i % nprocs) {
     size_t j;
 
-    for (j=i+1; j<num_of_labels; ++j) {
+    for (j=0; j<num_of_labels; ++j) 
+    if (j!=i) {
       double d;
       d = d2_compute_distance(centroids, i, centroids, j, selected_phase, var_work, p_data->size + i); 
       dist_count +=1;
       p_tr->c[i*num_of_labels + j] = d; 
-      p_tr->c[i + j*num_of_labels] = d;
+      //p_tr->c[i + j*num_of_labels] = d;
 
       if (p_tr->s[i] > d / 2.f) p_tr->s[i] = d / 2.f;
-      if (p_tr->s[j] > d / 2.f) p_tr->s[j] = d / 2.f;
+      //if (p_tr->s[j] > d / 2.f) p_tr->s[j] = d / 2.f;
     }    
     }
 #ifdef __USE_MPI__
@@ -158,7 +168,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
   /* initialization */
   for (i=0; i<size; ++i) 
     if (d2_alg_type == D2_CENTROID_BADMM)
-      { var_work->label_switch[i] = -1; }
+      { var_work->label_switch[i] = -2; }
 
   for (i=0; i<size; ++i) {
   /* step 2 */
@@ -325,7 +335,7 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 
     if (p_data->label[i] == jj) {
       if (d2_alg_type == D2_CENTROID_BADMM) {
-	var_work->label_switch[i] = -1;
+	var_work->label_switch[i] = -2;
       }
     } else {
       if (d2_alg_type == D2_CENTROID_BADMM) {

@@ -4,6 +4,52 @@
 #include "d2_math.h"
 #include <stdio.h>
 #include <time.h>       /* time */
+#include <assert.h>
+
+
+void sp_alloc(int rows, int cols, sparse_matrix *spmat, int nnz) {
+  spmat->m = rows;
+  spmat->n = cols;
+  spmat->nnz = nnz;
+  spmat->p = (int*) malloc((cols+1)*sizeof(int));
+  spmat->i = (int*) malloc(nnz*sizeof(int));
+  spmat->x = (double*) malloc(nnz*sizeof(double));  
+}
+void sparse(double *mat, int rows, int cols, sparse_matrix *spmat, int nnz) { 
+  /* assume variables in mat are positive */
+  int i,j,count;
+  count = 0;
+  for (i=0; i<cols; ++i) {
+    spmat->p[i] = count;
+    for (j=0; j<rows; ++j) 
+      if (mat[i*rows + j] > 1E-9) {
+	spmat->i[count] = j;
+	spmat->x[count] = mat[i*rows + j];
+	count ++;
+	//printf("%d %d %f\n", i, j, mat[i*rows + j]);
+      }
+  }
+  //printf("\n");
+  spmat->p[cols]=count;
+  assert(count <= nnz);
+}
+
+// mat2 (m x k) = spmat.t (m x n) * mat1 (n x k)  
+void multdense(sparse_matrix *spmat, int m, int n, int k, double *mat1, double *mat2) {
+  int i, j, l;
+  for (i=0; i<m*k; ++i) mat2[i] = 0.f;
+  for (i=0; i<m; ++i) {
+    for (j=spmat->p[i]; j<spmat->p[i+1]; ++j) {
+      int ii = spmat->i[j];
+      double xx = spmat->x[j];
+      double *mat1xx = mat1 + ii;
+      double *mat2xx = mat2 + i;
+      for (l=0; l<k; ++l, mat1xx +=n, mat2xx += m) 
+	{ *mat2xx += xx * *mat1xx; }
+    }
+  }
+}
+
 
 double randn () {
   double U1, U2, W, mult;

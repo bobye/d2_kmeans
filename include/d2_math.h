@@ -19,12 +19,9 @@ extern "C" {
   */
   void shuffle(size_t * array, size_t n);
 
-  typedef struct {
-    int m, n, nnz; /* number of rows, number of colums, # of triplet entries */
-    int *p; /* column pointers (size n+1) */
-    int *i; /* row indices */
-    SCALAR *x; /* numerical values */
-  } sparse_matrix; // matrix in compressed-column 
+  void sp_alloc(int rows, int cols, sparse_matrix *spmat, int nnz);
+  void sparse(double *mat, int rows, int cols, sparse_matrix *spmat, int nnz);
+  void multdense(sparse_matrix *spmat, int m, int n, int k, double *mat1, double *mat2); // mat2 (m x k) = spmat (m x n) * mat1 (n x k)
 
 #ifdef __cplusplus
 }

@@ -22,14 +22,20 @@ BADMM_options *p_badmm_options = &badmm_clu_options;
 
 extern double time_budget;
  
-int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwork) {
+#define max(a,b) ((a) > (b)? (a) : (b))
+int d2_allocate_work_sphBregman(sph *ph, size_t nsize, int nlabel, var_sphBregman * var_phwork) {
+  int size = max(nsize, nlabel), i, rows = ph->str, cols = ph->str, nnz=ph->str * 2 - 1;
   assert(ph->str > 0 && ph->col > 0 && size > 0);
   var_phwork->X = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->X);
   var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Z);
   var_phwork->Xc= _D2_MALLOC_SCALAR (ph->col);           assert(var_phwork->Xc);
   var_phwork->Zr= _D2_MALLOC_SCALAR (ph->str * size);    assert(var_phwork->Zr);
   var_phwork->Y = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Y); // initialized
-
+  var_phwork->spmat = (sparse_matrix *) malloc(nlabel * nlabel * sizeof(sparse_matrix));
+  for (i=0; i<nlabel *nlabel; ++i) 
+    if (i/nlabel != i%nlabel ) {
+      sp_alloc(rows, cols, var_phwork->spmat + i, nnz);
+    }
   return 0;
 }
 
@@ -73,6 +79,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   SCALAR *Xc= var_work->l_var_sphBregman[idx_ph].Xc;
   SCALAR *Zr= var_work->l_var_sphBregman[idx_ph].Zr; 
   SCALAR *Zr2 = Zr; char hasZr2 = 0;
+  sparse_matrix *spmat = var_work->l_var_sphBregman[idx_ph].spmat;
 
   /**
    * MPI notes: vector needs synchronized __USE_MPI__ : 
@@ -113,18 +120,35 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
    * whose label are changed  
    */
     for (i=0; i<size; ++i) {
-      if (label_switch[i] >= 0) {
+      if (label_switch[i] == -1) {
 	SCALAR *p_scal = Z + str*p_str_cum[i];
 	SCALAR *data_w_scal  = p_w + p_str_cum[i];
 	SCALAR *c_w_scal = c->p_w + label[i]*str;
-	for (j=0; j<str*p_str[i]; ++j, ++p_scal) 
-	  *p_scal =  data_w_scal[j/str] * c_w_scal[j%str];
+	//SCALAR *y_scal = Y + str*p_str_cum[i];
+	for (j=0; j<str*p_str[i]; ++j) {
+	  p_scal[j] =  data_w_scal[j/str] * c_w_scal[j%str];
+	  //y_scal[j] = 0.f;
+	}
+      } else if (label_switch[i] >= 0) {
+	int new_label = label[i];
+	int old_label = label_switch[i];
+	SCALAR *p_scal1 = Z + str*p_str_cum[i];
+	SCALAR *p_scal2 = X + str*p_str_cum[i];
+	//SCALAR *y_scal = Y + str*p_str_cum[i];
+	//printf("%d => %d\n", old_label, new_label);
+	multdense(&spmat[old_label * num_of_labels + new_label], 
+		  str, str, p_str[i], 
+		  p_scal1, p_scal2);
+	for (j=0; j<str*p_str[i]; ++j) {
+	  p_scal1[j] = p_scal2[j];
+	  //y_scal[j] = 0.f;
+	}
       }
     }
   }
   // allocate buffer of Z
   Z0 = _D2_MALLOC_SCALAR(str*col);
-  for (i=0; i<str*col; ++i) Y[i] = 0; // set Y to zero
+  for (i=0; i<str*col; ++i) Y[i] = 0.f; // set Y to zero
   if (str * num_of_labels * (strxdim * data_ph->vocab_size + 1) > size*str - c->col && data_ph->metric_type == D2_N_GRAM) {
     Zr2 = _D2_MALLOC_SCALAR(str * num_of_labels * (strxdim * data_ph->vocab_size + 1));    
     hasZr2 = 1;
