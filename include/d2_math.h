@@ -19,7 +19,12 @@ extern "C" {
   */
   void shuffle(size_t * array, size_t n);
 
-
+  typedef struct {
+    int m, n, nnz; /* number of rows, number of colums, # of triplet entries */
+    int *p; /* column pointers (size n+1) */
+    int *i; /* row indices */
+    SCALAR *x; /* numerical values */
+  } sparse_matrix; // matrix in compressed-column 
 
 #ifdef __cplusplus
 }
