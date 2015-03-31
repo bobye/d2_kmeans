@@ -195,8 +195,7 @@ extern "C" {
 			     var_mph * var_work, // working data
 			     int idx_ph, // index of phases
 			     sph *c0,
-			     __OUT__ sph *c,
-			     int outer_iter);
+			     __OUT__ sph *c);
 
 
   /**
