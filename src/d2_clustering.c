@@ -453,7 +453,7 @@ int d2_clustering(int num_of_clusters,
 	VPRINTF("\t phase %d: \n", i);            
       
 	if (d2_alg_type == D2_CENTROID_BADMM) 
-	  d2_centroid_sphBregman(p_data, &var_work, i, centroids->ph + i, centroids->ph + i, iter);
+	  d2_centroid_sphBregman(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);
 	if (d2_alg_type == D2_CENTROID_GRADDEC)
 	  d2_centroid_sphGradDecent(p_data, &var_work, i, centroids->ph + i, centroids->ph + i);
 	if (d2_alg_type == D2_CENTROID_ADMM)
