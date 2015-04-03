@@ -1,12 +1,16 @@
-Accelerated and Parallel Clustering of Discrete Distributions
+Accelerated Discrete Distributions Clustering under Wasserstein Distance
 =============
 
-AD2-clustering is a parallel clustering algorithm for **D**iscrete **D**istributions,
+AD2-clustering is an accelerated clustering algorithm for **D**iscrete **D**istributions,
 including normalized histogram and correlated n-gram as special cases,
 under the *exact* [Wasserstein metric](http://en.wikipedia.org/wiki/Wasserstein_metric).
-Please see our paper for technical details. 
+It can scale to large-scale D2 data with parallel computing. Please see our paper for technical details. 
 
 [Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and Jia Li, "Fast Discrete Distribution Clustering under Wasserstein Distance" in submission to NIPS 2015.
+
+This project is the __first__ efficient implementation public available for D2-clustering,
+and it is still in the very early stage of development. Hence please don't expect any
+guanrantee for backward compatibility at this point. 
 
 ## Discrete Distributions
 There are three data types of discrete distribution that have been covered
