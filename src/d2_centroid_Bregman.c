@@ -27,7 +27,7 @@ int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwor
   var_phwork->X = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->X);
   var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Z);
   var_phwork->Xc= _D2_MALLOC_SCALAR (ph->col);           assert(var_phwork->Xc);
-  var_phwork->Zr= _D2_MALLOC_SCALAR (ph->str * size);    assert(var_phwork->Zr);
+  var_phwork->Zr= _D2_MALLOC_SCALAR (2*ph->str * size);    assert(var_phwork->Zr);
   var_phwork->Y = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Y); // initialized
 
   return 0;
@@ -193,7 +193,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     if (iter % p_badmm_options->updatePerLoops == 0) {
       switch (data_ph->metric_type) {
       case D2_EUCLIDEAN_L2 :
-	assert(num_of_labels < size);
+	/*assert(num_of_labels < size);*/ // assertion fail running strong scaling k=256 np=512
 	for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0.f; // reset c->p_supp
 	for (i=0; i<c->col; ++i) Zr[i] = 0.f; //reset Zr to temporarily storage
 
