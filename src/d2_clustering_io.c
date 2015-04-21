@@ -230,6 +230,57 @@ int d2_write_labels(const char* filename, mph *p_data) {
   return 0;
 }
 
+int d2_write_labels_serial(const char* filename, mph *p_data) {
+  FILE *fp = NULL;
+  size_t i, global_size = p_data->global_size;
+  int k;
+
+  assert(filename);
+  
+  if (0 == world_rank) {
+    int *label, *label_o;
+    size_t *indice;
+    char filename_label[255], filename_ind[255];
+    label = _D2_MALLOC_INT(2*global_size); label_o = label + global_size;
+    indice = _D2_MALLOC_SIZE_T(global_size);
+
+    sprintf(filename_label, "%s.label", filename);
+    fp = fopen(filename_label, "r"); assert(fp);
+    for (i=0; i<global_size; ++i) {
+      fscanf(fp, "%d\n", &label[i]);
+    }
+    fclose(fp);
+
+    sprintf(filename_ind, "%s.ind", filename);
+    fp = fopen(filename_ind, "r"); 
+    if (fp) {
+      for (i=0; i<global_size; ++i) {
+	fscanf(fp, "%zd\n", &indice[i]);
+      }
+      fclose(fp);
+    } else {
+      for (i=0; i<global_size; ++i) indice[i] = i;
+    }
+
+    for (i=0; i<global_size; ++i) {
+      label_o[indice[i]] = label[i];
+    }
+
+    sprintf(filename_label, "%s.label_o", filename);
+    fp = fopen(filename_label, "w");
+    for (i=0; i<global_size; ++i) {
+      fprintf(fp, "%d\n", label_o[i]);
+    }
+    _D2_FREE(label); _D2_FREE(indice);
+  }
+
+
+#ifdef __USE_MPI__
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+  return 0;  
+}
+
 /**
    Serial function to split data
  */
