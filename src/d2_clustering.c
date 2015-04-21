@@ -162,7 +162,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
 
   for (i=0; i<size; ++i) {
   /* step 2 */
-  if (p_tr->u[i] > p_tr->s[label[i]]) {
+  if (label[i]<0 || p_tr->u[i] > p_tr->s[label[i]]) {
     int init_label = label[i];
     int jj = init_label>=0? init_label: 0;
     int j;
