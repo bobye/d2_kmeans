@@ -17,6 +17,7 @@
 static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = 2.f, .updatePerLoops = 10};
 static BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .updatePerLoops = 10};
 
+#define ROUNDOFF (1E-9)
 
 BADMM_options *p_badmm_options = &badmm_clu_options;
 
@@ -152,7 +153,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 
     // X = Z.*exp(- (C + Y)/rho)
     for (i=0; i<str*col; ++i) {
-      X[i] = Z[i] * exp (- (C[i] + Y[i])) + 1E-9;
+      X[i] = Z[i] * exp (- (C[i] + Y[i])) + ROUNDOFF;
     }      
     _D2_FUNC(cnorm)(str, col, X, Xc); 
     _D2_FUNC(grms)(str, col, X, p_w);
@@ -162,7 +163,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     // Z = X.*exp(Y/rho)
     for (i=0; i<str*col; ++i) {
       Z0[i] = Z[i];
-      Z[i]  = X[i] * exp(Y[i]) + 1E-9;
+      Z[i]  = X[i] * exp(Y[i]) + ROUNDOFF;
     }
     for (i=0;i<size; ++i) {
       _D2_FUNC(rnorm)(str, p_str[i], Z + str*p_str_cum[i], Zr + str*i); 
