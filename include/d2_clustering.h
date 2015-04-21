@@ -140,7 +140,8 @@ extern "C" {
 		    char use_triangle,
 		    const char* log_file);  
 
-  int d2_assignment(mph *p_data, 
+  int d2_assignment(int k,
+		    mph *p_data, 
 		    mph *centroids, 
 		    int selected_phase,
 		    const char* centroid_filename);
@@ -174,8 +175,8 @@ extern "C" {
     trieq tr; /* data structure for relabeling */
   } var_mph; 
 
-  int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle);
-  int d2_free_work(var_mph *var_work);
+  int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle, int selected_phase);
+  int d2_free_work(var_mph *var_work, int selected_phase);
   
 
   /**
