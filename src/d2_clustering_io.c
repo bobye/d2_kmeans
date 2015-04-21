@@ -210,6 +210,7 @@ int d2_write(const char* filename, mph *p_data) {
   }
 
   if (filename) fclose(fp);
+  VPRINTF("Write centroids to %s\n", filename);
   }
   return 0;
 }
@@ -233,6 +234,8 @@ int d2_write_labels(const char* filename, mph *p_data) {
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
   }
+
+  VPRINTF("Write data partitioned labels to %s\n", filename);
 
   return 0;
 }
@@ -259,23 +262,23 @@ int d2_write_labels_serial(const char* filename, mph *p_data) {
 
     sprintf(filename_ind, "%s.ind", filename);
     fp = fopen(filename_ind, "r"); 
-    if (fp) {
+    if (fp) { // if ind file exists => has data partition 
       for (i=0; i<global_size; ++i) {
 	fscanf(fp, "%zd\n", &indice[i]);
       }
       fclose(fp);
-    } else {
-      for (i=0; i<global_size; ++i) indice[i] = i;
-    }
 
-    for (i=0; i<global_size; ++i) {
-      label_o[indice[i]] = label[i];
-    }
+      for (i=0; i<global_size; ++i) {
+	label_o[indice[i]] = label[i];
+      }
 
-    sprintf(filename_label, "%s.label_o", filename);
-    fp = fopen(filename_label, "w");
-    for (i=0; i<global_size; ++i) {
-      fprintf(fp, "%d\n", label_o[i]);
+      sprintf(filename_label, "%s.label_o", filename);
+      fp = fopen(filename_label, "w");
+      for (i=0; i<global_size; ++i) {
+	fprintf(fp, "%d\n", label_o[i]);
+      }
+      fclose(fp);
+      VPRINTF("Write serial data labels to %s\n", filename_label);
     }
     _D2_FREE(label); _D2_FREE(indice);
   }
