@@ -13,14 +13,19 @@ struct timespec io_time;
 /** Load Data Set: see specification of format at README.md */
 int d2_read(const char* filename, mph *p_data) {
   char filename_main[255];
+  FILE *fp =NULL;
   nclock_start_p(&io_time);
 
   if (nprocs > 1) {
     sprintf(filename_main, "%s.%d", filename, world_rank);
-  } else {
-    sprintf(filename_main, "%s", filename);
+    fp = fopen(filename_main, "r");
   }
-  FILE *fp = fopen(filename_main, "r+");
+
+  if (nprocs == 1 || !fp ) {
+    sprintf(filename_main, "%s", filename);
+    fp = fopen(filename_main, "r");
+  }
+
   assert(fp);
 
   size_t i;
@@ -51,7 +56,7 @@ int d2_read(const char* filename, mph *p_data) {
       FILE *fp_new; // local variable
       int str, c, i;
       sprintf(filename_extra, "%s.hist%d", filename, n);
-      fp_new = fopen(filename_extra, "r+"); assert(fp_new);
+      fp_new = fopen(filename_extra, "r"); assert(fp_new);
       c=fscanf(fp_new, "%d", &str); assert(c>0 && str == p_data->ph[n].str);
       for (i=0; i< str*str; ++i) 
 	fscanf(fp_new, SCALAR_STDIO_TYPE, &(p_data->ph[n].dist_mat[i]));
@@ -63,7 +68,7 @@ int d2_read(const char* filename, mph *p_data) {
       FILE *fp_new; // local variable
       int dim, c, i;
       sprintf(filename_extra, "%s.vocab%d", filename, n);
-      fp_new = fopen(filename_extra, "r+"); assert(fp_new);
+      fp_new = fopen(filename_extra, "r"); assert(fp_new);
       c=fscanf(fp_new, "%d", &dim); assert(c>0 && dim == p_data->ph[n].dim);
       c=fscanf(fp_new, "%d", &p_data->ph[n].vocab_size);
       p_data->ph[n].vocab_vec = _D2_MALLOC_SCALAR(dim * p_data->ph[n].vocab_size);
@@ -240,7 +245,7 @@ int d2_write_labels(const char* filename, mph *p_data) {
   return 0;
 }
 
-int d2_write_labels_serial(const char* filename, mph *p_data) {
+int d2_write_labels_serial(const char* filename_ind, const char* filename, mph *p_data) {
   FILE *fp = NULL;
   size_t i, global_size = p_data->global_size;
 
@@ -249,7 +254,7 @@ int d2_write_labels_serial(const char* filename, mph *p_data) {
   if (0 == world_rank) {
     int *label, *label_o;
     size_t *indice;
-    char filename_label[255], filename_ind[255];
+    char filename_label[255];
     label = _D2_MALLOC_INT(2*global_size); label_o = label + global_size;
     indice = _D2_MALLOC_SIZE_T(global_size);
 
@@ -260,7 +265,6 @@ int d2_write_labels_serial(const char* filename, mph *p_data) {
     }
     fclose(fp);
 
-    sprintf(filename_ind, "%s.ind", filename);
     fp = fopen(filename_ind, "r"); 
     if (fp) { // if ind file exists => has data partition 
       for (i=0; i<global_size; ++i) {
