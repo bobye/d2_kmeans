@@ -143,7 +143,7 @@ int d2_free(mph *p_data) {
  * Allocate memory for working data
  */
 #define max(a,b) ((a) > (b)? (a) : (b))
-int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
+int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle, int selected_phase) {
   int i;
   size_t size = p_data->size;
   int num_of_labels = p_data->num_of_labels;
@@ -155,7 +155,8 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
       var_work->l_var_sphBregman = (var_sphBregman *) malloc(p_data->s_ph * sizeof(var_sphBregman));
       assert(var_work->l_var_sphBregman);
   }
-  for (i=0; i<p_data->s_ph; ++i) {
+  for (i=0; i<p_data->s_ph; ++i) 
+    if (i==selected_phase || selected_phase < 0) {
     int str = p_data->ph[i].str;
     int col = p_data->ph[i].col;
     int max_str = p_data->ph[i].max_str;
@@ -201,11 +202,12 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle) {
 /**
  * Free space for working data
  */
-int d2_free_work(var_mph *var_work) {
+int d2_free_work(var_mph *var_work, int selected_phase) {
   int i;
   trieq *p_tr = &var_work->tr;
 
-  for (i=0; i<var_work->s_ph; ++i) {
+  for (i=0; i<var_work->s_ph; ++i) 
+  if (i== selected_phase || selected_phase < 0) {
     if (var_work->g_var[i].C) _D2_FREE(var_work->g_var[i].C);
     if (var_work->g_var[i].X) _D2_FREE(var_work->g_var[i].X);
     if (var_work->g_var[i].L) _D2_FREE(var_work->g_var[i].L);

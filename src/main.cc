@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
   int size_of_phases = 1;
   long size_of_samples;
   char *ss1_c_str = 0, *ss2_c_str = 0, *ss3_c_str = 0,
-    *filename = 0;
+    *filename = 0, *centroid_filename = 0;
   char use_triangle = true;
   /* default settings */
   int selected_phase = -1; 
@@ -58,15 +58,19 @@ int main(int argc, char *argv[])
     {"non_triangle", 0, 0, 'T'},
     {"prepare_batches", 1, 0, 'P'},
     {"types", 1, 0, 'E'},
+    {"eval", 1, 0, 'e'},
     {NULL, 0, NULL, 0}
   };
 
   /* [BEGIN] Parsing program arguments */
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:TP:E:", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:o:t:c:m:M:TP:E:e:", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
+      break;
+    case 'e': 
+      centroid_filename = optarg;
       break;
     case 'p': 
       size_of_phases = atoi(optarg); assert(size_of_phases > 0);
@@ -173,37 +177,49 @@ int main(int argc, char *argv[])
   /* data structure storing information about centroids of clusters */
   mph c; 
   c.ph = NULL; // make sure c is (re-)initialized 
+  std::string name_hashValue;
 
-  if (world_rank == 0) {
-  if (selected_phase >= 0 && size_of_phases > 1) {
-    cout << "Clustering upon " << selected_phase <<"-th phase" << endl;
-  } else if (selected_phase < 0 && size_of_phases > 1) {
-    cout << "Clustering upon all phases (more than one)" << endl;
-  }
-  }
+  /* if no centroid filename is provided, then clustering data and obtain the centroids */
+  if (centroid_filename == 0) { 
+    if (world_rank == 0) {
+      if (selected_phase >= 0 && size_of_phases > 1) {
+	cout << "Clustering upon " << selected_phase <<"-th phase" << endl;
+      } else if (selected_phase < 0 && size_of_phases > 1) {
+	cout << "Clustering upon all phases (more than one)" << endl;
+      }
+    }
 
 
-  srand (time(NULL));
-  int hashNumber=rand() % 1000000;
+    srand (time(NULL));
+    int hashNumber=rand() % 1000000;
 #ifdef __USE_MPI__
-  MPI_Bcast(&hashNumber, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&hashNumber, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
-  std::string name_hashValue(string(filename) + "_" + std::to_string(hashNumber));
+    name_hashValue = std::string(std::string(filename) + "_" + std::to_string(hashNumber));
 
-  d2_clustering(number_of_clusters, 
-		max_iters, 
-		&data, 
-		&c, 
-		selected_phase,
-		use_triangle,
-		name_hashValue.c_str());
+    d2_clustering(number_of_clusters, 
+		  max_iters, 
+		  &data, 
+		  &c, 
+		  selected_phase,
+		  use_triangle,
+		  name_hashValue.c_str());
   
 
-  if (world_rank == 0) {
-    d2_write((name_hashValue + "_c.d2").c_str(), &c);
+    if (world_rank == 0) {
+      d2_write((name_hashValue + "_c.d2").c_str(), &c);
+    }
+  } else {
+    d2_assignment(number_of_clusters, 
+		  &data, 
+		  &c, 
+		  selected_phase, 
+		  centroid_filename);
+    name_hashValue = std::string(centroid_filename) + "_eval";
   }
 
   d2_write_labels((name_hashValue + ".label").c_str(), &data);
+  d2_write_labels_serial(name_hashValue.c_str(), &data);
 
   d2_free(&data);
   d2_free(&c);

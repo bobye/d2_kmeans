@@ -350,6 +350,34 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
   return count;
 }
 
+
+int d2_init_centroid(mph *p_data, __OUT__ mph *centroids, int selected_phase, int allocate_only) {
+  int i;
+  // MPI note: to be done only on one node
+  // initialize centroids from random
+  VPRINTF("Initializing centroids ... "); VFLUSH();
+  centroids->s_ph = p_data->s_ph;
+  centroids->size = p_data->num_of_labels;
+  centroids->ph = (sph *) malloc(p_data->s_ph * sizeof(sph));
+  for (i=0; i<p_data->s_ph; ++i) 
+    if (selected_phase < 0 || i == selected_phase) {
+      /* allocate mem for centroids */
+      d2_allocate_sph(&centroids->ph[i],  p_data->ph[i].dim, p_data->ph[i].str, p_data->num_of_labels, 0., p_data->ph[i].metric_type % D2_WORD_EMBED); // yet a trick here
+      /* initialize centroids from random samples */
+      if (!allocate_only) {
+	d2_centroid_rands(p_data, i, &centroids->ph[i]);
+	broadcast_centroids(centroids, i);
+      }
+    } else {
+      centroids->ph[i].dim = p_data->ph[i].dim;
+      centroids->ph[i].col = 0;
+      centroids->ph[i].metric_type = p_data->ph[i].metric_type % D2_WORD_EMBED;
+    }
+  // d2_write(NULL, centroids);     getchar();
+  VPRINTF("[done]\n");
+  return 0;
+}
+
 /**
  * The main algorithm for d2 clustering 
  */
@@ -380,38 +408,16 @@ int d2_clustering(int num_of_clusters,
   p_data->num_of_labels = num_of_clusters;
 
   if (!centroids->ph) {
-  // MPI note: to be done only on one node
-  // initialize centroids from random
-  VPRINTF("Initializing centroids ... "); VFLUSH();
-  centroids->s_ph = s_ph;
-  centroids->size = num_of_clusters;
-  centroids->ph = (sph *) malloc(s_ph * sizeof(sph));
-  for (i=0; i<s_ph; ++i) 
-    if (selected_phase < 0 || i == selected_phase) {
-      /* allocate mem for centroids */
-      d2_allocate_sph(&centroids->ph[i],  p_data->ph[i].dim, p_data->ph[i].str, p_data->num_of_labels, 0., p_data->ph[i].metric_type % D2_WORD_EMBED); // yet a trick here
-      /* initialize centroids from random samples */
-      d2_centroid_rands(p_data, i, &centroids->ph[i]);
-      broadcast_centroids(centroids, i);
-    } else {
-      centroids->ph[i].col = 0;
-    }
-  // d2_write(NULL, centroids);     getchar();
-  VPRINTF("[done]\n");
+    d2_init_centroid(p_data, centroids, selected_phase, false);
   }
-
   assert(centroids->s_ph == s_ph && centroids->size == num_of_clusters);
 
   // allocate initialize auxiliary variables
-  d2_allocate_work(p_data, &var_work, use_triangle);
-
+  d2_allocate_work(p_data, &var_work, use_triangle, selected_phase);
 
 
   // start centroid-based clustering here
-  if (selected_phase < 0) 
-    d2_solver_setup((size + num_of_clusters)*s_ph);  
-  else 
-    d2_solver_setup(size + num_of_clusters);
+  d2_solver_setup();
 
   MPI_Pcontrol(1);
   nclock_start_p(&n_time);
@@ -470,7 +476,7 @@ int d2_clustering(int num_of_clusters,
   if (use_triangle)  label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
   d2_solver_release();
 
-  d2_free_work(&var_work);
+  d2_free_work(&var_work, selected_phase);
   if (use_triangle) d2_free(&the_centroids_copy);
 
 
@@ -486,6 +492,24 @@ int d2_clustering(int num_of_clusters,
 }
 
 
+int d2_assignment(int num_of_clusters,
+		  mph *p_data, 
+		  mph *centroids, 
+		  int selected_phase,
+		  const char* centroid_filename) {
+
+  var_mph var_work = {.tr = {NULL, NULL, NULL, NULL, NULL}};
+  p_data->num_of_labels = num_of_clusters;
+  d2_init_centroid(p_data, centroids, selected_phase, true);
+  d2_read(centroid_filename, centroids);  
+  d2_allocate_work(p_data, &var_work, false, selected_phase);
+  d2_solver_setup();
+  nclock_start_p(&n_time);
+  d2_labeling(p_data, centroids, &var_work, selected_phase);
+  d2_solver_release();
+  d2_free_work(&var_work, selected_phase);
+  return 0;
+}
 
 
 
