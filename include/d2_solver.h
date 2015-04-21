@@ -8,7 +8,7 @@ extern "C" {
 #include "common.h"
 #include "blas_like.h"
 
-  void d2_solver_setup(size_t num);
+  void d2_solver_setup();
   void d2_solver_release();
   void d2_solver_debug();
   /*
