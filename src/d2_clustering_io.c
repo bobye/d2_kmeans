@@ -25,7 +25,7 @@ int d2_read(const char* filename, mph *p_data) {
 
   size_t i;
   int n;
-  int **p_str, **p_supp_sym, str;
+  int **p_str, **p_supp_sym;
   double **p_supp, **p_w;
   int s_ph = p_data->s_ph;
   size_t size = p_data->size;
@@ -78,7 +78,7 @@ int d2_read(const char* filename, mph *p_data) {
     for (n=0; n<s_ph; ++n) {      
       double *p_supp_sph, *p_w_sph, w_sum;
       int *p_supp_sym_sph;
-      int dim, strxdim, c, j;
+      int dim, str, strxdim, c, j;
       // read dimension and stride    
       c=fscanf(fp, "%d", &dim); 
       if (c!=1) {
@@ -87,12 +87,14 @@ int d2_read(const char* filename, mph *p_data) {
 	size = i; break;
       }
       assert(dim == p_data->ph[n].dim);    
-      fscanf(fp, "%d", p_str[n]); 
-      str = *(p_str[n]); assert(str > 0);
+      fscanf(fp, "%d", &str); assert(str >= 0);
+      if (str == 0) continue;
+      *p_str[n] = str; 
+
       if (str >p_data->ph[n].max_str) p_data->ph[n].max_str = str;
 
       // check if needed to reallocate
-      if (p_data->ph[n].col + str >= p_data->ph[n].max_col) {
+      if (p_data->ph[n].col + str > p_data->ph[n].max_col) {
 	printf("rank %d warning: preallocated memory for phase %d is insufficient! Reallocated.\n", world_rank, n);
 	if (p_data->ph[n].metric_type == D2_EUCLIDEAN_L2) {
 	  p_data->ph[n].p_supp = (double *) realloc(p_data->ph[n].p_supp, 2 * dim * p_data->ph[n].max_col * sizeof(double));
@@ -148,7 +150,8 @@ int d2_read(const char* filename, mph *p_data) {
     }
   }
 
-  for (n=0; n<s_ph; ++n) {
+  for (n=0; n<s_ph; ++n) 
+  if (p_data->ph[n].col > 0) {
     size_t * p_str_cum = p_data->ph[n].p_str_cum;
     int * p_str = p_data->ph[n].p_str;
     p_str_cum[0] = 0;
@@ -199,6 +202,10 @@ int d2_write(const char* filename, mph *p_data) {
 	  for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
 	  fprintf(fp, "\n"); 
 	}
+      } else {
+	fprintf(fp, "%d\n", p_data->ph[j].dim);
+	fprintf(fp, "0\n");
+	fprintf(fp, "\n");
       }
   }
 
@@ -233,7 +240,6 @@ int d2_write_labels(const char* filename, mph *p_data) {
 int d2_write_labels_serial(const char* filename, mph *p_data) {
   FILE *fp = NULL;
   size_t i, global_size = p_data->global_size;
-  int k;
 
   assert(filename);
   
