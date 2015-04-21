@@ -219,7 +219,8 @@ int main(int argc, char *argv[])
   }
 
   d2_write_labels((name_hashValue + ".label").c_str(), &data);
-  d2_write_labels_serial(name_hashValue.c_str(), &data);
+  d2_write_labels_serial((std::string(filename) + ".ind").c_str(), 
+			 name_hashValue.c_str(), &data);
 
   d2_free(&data);
   d2_free(&c);
