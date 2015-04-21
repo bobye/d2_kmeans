@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 		  &c, 
 		  selected_phase, 
 		  centroid_filename);
-    name_hashValue = std::string(centroid_filename) + "_eval";
+    name_hashValue = std::string(filename) + "_eval";
   }
 
   d2_write_labels((name_hashValue + ".label").c_str(), &data);
