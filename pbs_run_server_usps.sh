@@ -1,8 +1,8 @@
 #!/bin/sh
 
-#PBS -l nodes=2:ppn=8
+#PBS -l nodes=1:ppn=8
 #PBS -l walltime=96:00:00
-#PBS -l pmem=16gb
+#PBS -l pmem=8gb
 
 cd $PBS_O_WORKDIR
 module load openmpi/gnu
