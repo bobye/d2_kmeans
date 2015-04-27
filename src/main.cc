@@ -210,12 +210,15 @@ int main(int argc, char *argv[])
       d2_write((name_hashValue + "_c.d2").c_str(), &c);
     }
   } else {
+    std::string cf=std::string(centroid_filename);
     d2_assignment(number_of_clusters, 
 		  &data, 
 		  &c, 
 		  selected_phase, 
 		  centroid_filename);
-    name_hashValue = std::string(filename) + "_eval";
+    cf=cf.substr(0, cf.rfind("_c"));
+    cf=cf.substr(cf.rfind("_"));
+    name_hashValue = std::string(filename) + cf;
   }
 
   d2_write_labels((name_hashValue + ".label").c_str(), &data);
