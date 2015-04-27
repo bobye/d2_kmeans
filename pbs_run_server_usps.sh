@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #PBS -l nodes=1:ppn=8
 #PBS -l walltime=96:00:00
@@ -16,8 +16,8 @@ for k in 120 240 360; do
 ratio=${ratios[$i]}
 # extract data
 cd data/usps
-bunzip2 usps_blankout"$ratio"_train.d2s.bz2
-bunzip2 usps_blankout"$ratio"_test.d2s.bz2
+bunzip2 -k usps_blankout"$ratio"_train.d2s.bz2
+bunzip2 -k usps_blankout"$ratio"_test.d2s.bz2
 ln -s usps.d2s.vocab0 usps_blankout"$ratio"_train.d2s.vocab0
 ln -s usps.d2s.vocab0 usps_blankout"$ratio"_test.d2s.vocab0
 
