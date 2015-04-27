@@ -185,7 +185,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
       _D2_CBLAS_FUNC(axpy)(str, 1, Zr + str*i, 1, c->p_w +label[i]*str, 1);
 #ifdef __USE_MPI__
     /* ALLREDUCE by SUM operator: vec(c->p_w, c->col) */
-    MPI_Allreduce(MPI_IN_PLACE, c->p_w, c->col, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, c->p_w, c->col, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
 #endif
     _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, Xc);
     
@@ -212,9 +212,9 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	}
 #ifdef __USE_MPI__
 	/* ALLREDUCE by SUM operator: vec(c->p_supp, c->col*dim) */
-	MPI_Allreduce(MPI_IN_PLACE, c->p_supp, c->col * dim, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, c->p_supp, c->col * dim, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
 	/* ALLREDUCE by SUM operator: vec(Zr, c->col) */
-	MPI_Allreduce(MPI_IN_PLACE, Zr, c->col, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, Zr, c->col, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
 #endif
 	for (i=0; i<num_of_labels; ++i) {
 	  _D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, Zr + i*str);
@@ -247,9 +247,9 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	}
 #ifdef __USE_MPI__
 	/* ALLREDUCE by SUM operator: vec(c->p_supp, c->col*dim) */
-	MPI_Allreduce(MPI_IN_PLACE, c->p_supp, c->col * dim, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, c->p_supp, c->col * dim, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
 	/* ALLREDUCE by SUM operator: vec(Zr, c->col) */
-	MPI_Allreduce(MPI_IN_PLACE, Zr, c->col, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, Zr, c->col, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
 #endif
 	for (i=0; i<num_of_labels; ++i) {
 	  _D2_FUNC(irms)(dim, str, c->p_supp + i*strxdim, Zr + i*str);
@@ -279,7 +279,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	}
 #ifdef __USE_MPI__
 	/* ALLREDUCE by SUM operator: vec(Zr2, num_of_labels*str*dim*data_ph->vocab_size) */
-	MPI_Allreduce(MPI_IN_PLACE, Zr2, c->col * dim * data_ph->vocab_size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, Zr2, c->col * dim * data_ph->vocab_size, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
 #endif
 	for (i=0; i<num_of_labels; ++i) {
 	  minimize_symbolic(dim, str, c->p_supp_sym + i*strxdim, Zr2 + i*strxdim*data_ph->vocab_size, data_ph->vocab_size, data_ph->dist_mat, Zr2 + num_of_labels*strxdim*data_ph->vocab_size);
@@ -304,9 +304,9 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
       dualres = _D2_CBLAS_FUNC(asum)(str*col,Z0, 1);
 #ifdef __USE_MPI__
       /* ALLREDUCE by SUM operator: obj, primres, dualres */
-      MPI_Allreduce(MPI_IN_PLACE, &obj,     1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-      MPI_Allreduce(MPI_IN_PLACE, &primres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-      MPI_Allreduce(MPI_IN_PLACE, &dualres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &obj,     1, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &primres, 1, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, &dualres, 1, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
 #endif
       obj     *= rho / p_data->global_size;
       primres /= p_data->global_size;

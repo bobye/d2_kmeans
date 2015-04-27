@@ -22,7 +22,7 @@ inline void accumulate_symbolic(int d, int m, int n, const int *supp /* d x n*/,
       }
 }
 
-inline void minimize_symbolic(int d, int m, int *supp, const double *z, const int vocab_size, const double *dist_mat, double *z_buffer) {
+inline void minimize_symbolic(int d, int m, int *supp, const SCALAR *z, const int vocab_size, const SCALAR *dist_mat, SCALAR *z_buffer) {
   int i,j, min_idx;
   double min ;
   _D2_CBLAS_FUNC(gemm)(CblasColMajor, CblasNoTrans, CblasNoTrans, 
@@ -49,19 +49,19 @@ inline void broadcast_centroids(mph *centroids, int i) {
     MPI_Allreduce(MPI_IN_PLACE, 
 		  centroids->ph[i].p_supp, 
 		  centroids->ph[i].col * centroids->ph[i].dim, 
-		  MPI_DOUBLE, // must set SCALAR to double
+		  MPI_SCALAR, 
 		  MPI_SUM, MPI_COMM_WORLD);
     MPI_Allreduce(MPI_IN_PLACE, 
 		  centroids->ph[i].p_w, 
 		  centroids->ph[i].col, 
-		  MPI_DOUBLE,
+		  MPI_SCALAR,
 		  MPI_SUM, MPI_COMM_WORLD);
     break;
   case D2_HISTOGRAM:
     MPI_Allreduce(MPI_IN_PLACE,
 		  centroids->ph[i].p_w, 
 		  centroids->ph[i].col, 
-		  MPI_DOUBLE,
+		  MPI_SCALAR,
 		  MPI_SUM, MPI_COMM_WORLD);
     break;
   case D2_N_GRAM:
@@ -73,7 +73,7 @@ inline void broadcast_centroids(mph *centroids, int i) {
     MPI_Allreduce(MPI_IN_PLACE,
 		  centroids->ph[i].p_w, 
 		  centroids->ph[i].col, 
-		  MPI_DOUBLE,
+		  MPI_SCALAR,
 		  MPI_SUM, MPI_COMM_WORLD);
     break;
   }

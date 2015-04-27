@@ -27,6 +27,7 @@ C_SOURCE_FILES=\
 	src/d2_clustering_io.c\
 	src/d2_clustering_util.c\
 	src/d2_math.c\
+	src/blas_like32.c\
 	src/blas_like64.c\
 	src/d2_centroid_util.c\
 	src/d2_centroid_rand.c\

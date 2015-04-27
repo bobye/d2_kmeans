@@ -2,13 +2,13 @@
 
 #define __USE_C99_MATH
 #include <stdbool.h>
+#include "common.h"
 #include "blas_like.h"
 #include "blas_util.h"
 #include <stdio.h>
 #include <assert.h>
 
-#define SCALAR double
-
+#ifdef _D2_DOUBLE
 void _dgzero(size_t n, double *a) {
   size_t i;
   for (i=0; i<n; ++i) assert(a[i] > 1E-10);
@@ -243,4 +243,4 @@ void _dexp(size_t n, double *a) {
   for (i=0; i<n; ++i, ++a) *a = exp(*a);
 }
 
-
+#endif

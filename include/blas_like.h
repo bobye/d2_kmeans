@@ -45,6 +45,45 @@ extern "C" {
   void _dpdist2_sym(int d, size_t n, size_t m, double *A, int *B, double *C, const double *vocab);
   void _dpdist_symbolic(int d, size_t n, size_t m, int * A, int * B, double *C, 
 			const int vocab_size, const double* dist_mat);
+
+
+  // assertation
+  void _sgzero(size_t n, float *a); //assert (a>0)
+
+  // element-wise op
+  void _sadd(size_t, float *a, float b); // a(:) += b;
+  void _svmul(size_t n, float *a, float *b, float *c);// c = a .* b
+  void _sexp(size_t n, float *a);//inplace a -> exp(a);
+
+  // column-wise op
+  void _sgcmv(size_t m, size_t n, float *a, float *b); // a(:,*) = a(:,*) .+ b
+  void _sgcms(size_t m, size_t n, float *a, float *b); // a = diag(b) * a
+  void _sicms(size_t m, size_t n, float *a, float *b); // a = diag(1./b) * a
+  void _scsum(size_t m, size_t n, float *a, float *b); // b(*) = sum(a(:,*))
+  void _scsum2(size_t m, size_t n, float *a, float *b); // b(*) += sum(a(:,*))
+  void _scnorm(size_t m, size_t n, float *a, float *sa); // replace a(:,*) -> a(:,*) / sum(a(:,*))
+  void _sccenter(size_t m, size_t n, float *a, float *sa); // replace a(:,*) -> a(:,*) - mean(a(:,*))
+  // row-wise op
+  void _sgrmv(size_t m, size_t n, float *a, float *b); // a(*,:) = a(*,:) .+ b
+  void _sgrms(size_t m, size_t n, float *a, float *b); // a = a * diag(b) 
+  void _sirms(size_t m, size_t n, float *a, float *b); // a = a * diag(1./b) 
+  void _srsum(size_t m, size_t n, float *a, float *b); // b(*) = sum(a(*,:))
+  void _srsum2(size_t m, size_t n, float *a, float *b); // b(*) += sum(a(*,:))
+  void _srnorm(size_t m, size_t n, float *a, float *sa); // inplace a(*,:) = a(*,:) / sum(a(*,:))
+  void _srcenter(size_t m, size_t n, float *a, float *sa); // replace a(*,:) -> a(*,:) - mean(a(*,:))
+
+
+  /* compute squared Euclidean distance matrix
+   * A: d x n 
+   * B: d x m
+   * C: n x m 
+   * d: dimension of data entry
+   * n, m: number of data entry
+   */
+  void _spdist2(int d, size_t n, size_t m, float * A, float * B, float *C);
+  void _spdist2_sym(int d, size_t n, size_t m, float *A, int *B, float *C, const float *vocab);
+  void _spdist_symbolic(int d, size_t n, size_t m, int * A, int * B, float *C, 
+			const int vocab_size, const float* dist_mat);
   
 
 #ifdef __cplusplus
