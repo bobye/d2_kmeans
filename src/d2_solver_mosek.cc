@@ -165,9 +165,11 @@ double d2_match_by_distmat(int n, int m, SCALAR *C, SCALAR *wX, SCALAR *wY,
 	    MSK_getprimalobj(*p_task, MSK_SOL_BAS, &fval);
             if ( x )
             {
+#ifdef _D2_DOUBLE
               MSK_getxx(*p_task,
                         MSK_SOL_BAS,    /* Request the basic solution. */
                         x);        
+#endif
               //printf("Optimal primal solution\n");
               //for(j=0; j<numvar; ++j) printf("x[%d]: %e\n",j,xx[j]);
 
@@ -176,9 +178,11 @@ double d2_match_by_distmat(int n, int m, SCALAR *C, SCALAR *wX, SCALAR *wY,
 
 	    if (lambda) 
 	    {
+#ifdef _D2_DOUBLE
 	      MSK_gety (*p_task,
                         MSK_SOL_BAS,    /* Request the dual solution: be careful about exact +- of variables */
                         lambda);
+#endif
 	    }	    
             else 
               r = MSK_RES_ERR_SPACE;
@@ -414,9 +418,11 @@ double d2_qpsimple(int n, int count, SCALAR *c, /** OUT **/ SCALAR *w) {
 	  case MSK_SOL_STA_NEAR_OPTIMAL:
 	    MSK_getprimalobj(task, MSK_SOL_ITR, &fval);
 	    if ( w ) {
+#ifdef _D2_DOUBLE
 	      MSK_getxx(task,
 			MSK_SOL_ITR,
 			w);
+#endif
 	    }
 	    break;
           case MSK_SOL_STA_DUAL_INFEAS_CER:
