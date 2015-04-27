@@ -12,7 +12,7 @@
 /**
  * inline functions
  */
-inline void accumulate_symbolic(int d, int m, int n, const int *supp /* d x n*/, const double *xx /* m x n*/, double *z /* vocab_size x d x m  */, int vocab_size) {
+inline void accumulate_symbolic(int d, int m, int n, const int *supp /* d x n*/, const SCALAR *xx /* m x n*/, SCALAR *z /* vocab_size x d x m  */, int vocab_size) {
   int i,j,k; double val;
   for (i=0; i<n; ++i)
     for (j=0; j<m; ++j) 
