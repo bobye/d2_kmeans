@@ -33,12 +33,12 @@ test_batch=`./d2 -i $test_files -n 3000 -d 2 -s $s --types 7 --prepare_batches $
 
 # run with different cluster numbers, use nohup to forward stdout
 # results will save to different files with multiple runs
-nohup mpirun -n $num_of_nodes ./d2 -i $train_files -n $train_batch -d 2 -s $s --types 7 --clusters $k > nohup.$k.out 
+nohup mpirun -n $num_of_nodes ./d2 -i $train_files -n $train_batch -d 2 -s $s --types 7 --clusters $k > nohup.$k.$ratio.out 
 
-centroids_file=`grep "Write centroids to" nohup.$k.out | head -1 | awk '{ print $NF }'`
+centroids_file=`grep "Write centroids to" nohup.$k.$ratio.out | head -1 | awk '{ print $NF }'`
 	
 # assign samples from test set to clusters
-nohup mpirun -n $num_of_nodes ./d2 -i $test_files -n $test_batch -d 2 -s $s --types 7 --clusters $k --eval $centroids_file >> nohup.$k.out
+nohup mpirun -n $num_of_nodes ./d2 -i $test_files -n $test_batch -d 2 -s $s --types 7 --clusters $k --eval $centroids_file >> nohup.$k.$ratio.out
 
 # save nohup.*.out for convergence analysis
 
