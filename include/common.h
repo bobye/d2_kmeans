@@ -22,6 +22,13 @@ extern "C" {
 #define SCALAR_STDIO_TYPE ("%f ")
 #endif
 
+#ifdef _D2_DOUBLE
+#define MPI_SCALAR MPI_DOUBLE
+#elif defined _D2_SINGLE
+#define MPI_SCALAR MPI_FLOAT
+#endif
+
+
   extern int world_rank; // rank of processor
   extern int nprocs; // number of processors
 

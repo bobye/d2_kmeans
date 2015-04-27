@@ -31,14 +31,14 @@ int d2_read(const char* filename, mph *p_data) {
   size_t i;
   int n;
   int **p_str, **p_supp_sym;
-  double **p_supp, **p_w;
+  SCALAR **p_supp, **p_w;
   int s_ph = p_data->s_ph;
   size_t size = p_data->size;
 
   p_str  = (int **) malloc(s_ph * sizeof(int *));
   p_supp_sym=(int**) malloc(s_ph * sizeof(int *));
-  p_supp = (double **) malloc(s_ph * sizeof(double *));
-  p_w    = (double **) malloc(s_ph * sizeof(double *));
+  p_supp = (SCALAR **) malloc(s_ph * sizeof(SCALAR *));
+  p_w    = (SCALAR **) malloc(s_ph * sizeof(SCALAR *));
   
   for (n=0; n<s_ph; ++n) {
     p_str[n]  = p_data->ph[n].p_str;
@@ -81,7 +81,7 @@ int d2_read(const char* filename, mph *p_data) {
   // Read main data file
   for (i=0; i<size; ++i) {
     for (n=0; n<s_ph; ++n) {      
-      double *p_supp_sph, *p_w_sph, w_sum;
+      SCALAR *p_supp_sph, *p_w_sph, w_sum;
       int *p_supp_sym_sph;
       int dim, str, strxdim, c, j;
       // read dimension and stride    
@@ -102,13 +102,13 @@ int d2_read(const char* filename, mph *p_data) {
       if (p_data->ph[n].col + str > p_data->ph[n].max_col) {
 	printf("rank %d warning: preallocated memory for phase %d is insufficient! Reallocated.\n", world_rank, n);
 	if (p_data->ph[n].metric_type == D2_EUCLIDEAN_L2) {
-	  p_data->ph[n].p_supp = (double *) realloc(p_data->ph[n].p_supp, 2 * dim * p_data->ph[n].max_col * sizeof(double));
-	  p_data->ph[n].p_w = (double *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(double));
+	  p_data->ph[n].p_supp = (SCALAR *) realloc(p_data->ph[n].p_supp, 2 * dim * p_data->ph[n].max_col * sizeof(SCALAR));
+	  p_data->ph[n].p_w = (SCALAR *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(SCALAR));
 	  assert(p_data->ph[n].p_supp != NULL && p_data->ph[n].p_w != NULL);
 	  p_supp[n] = p_data->ph[n].p_supp + p_data->ph[n].col * dim;
 	  p_w[n]    = p_data->ph[n].p_w + p_data->ph[n].col;
 	} else if (p_data->ph[n].metric_type == D2_HISTOGRAM) {
-	  p_data->ph[n].p_w = (double *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(double));
+	  p_data->ph[n].p_w = (SCALAR *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(SCALAR));
 	  assert(p_data->ph[n].p_w != NULL);
 	  p_w[n]    = p_data->ph[n].p_w + p_data->ph[n].col;
 	} else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {

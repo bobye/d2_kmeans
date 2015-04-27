@@ -151,8 +151,8 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
     }    
     }
 #ifdef __USE_MPI__
-    MPI_Allreduce(MPI_IN_PLACE, p_tr->c, num_of_labels*num_of_labels, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, p_tr->s, num_of_labels, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, p_tr->c, num_of_labels*num_of_labels, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, p_tr->s, num_of_labels, MPI_SCALAR, MPI_MIN, MPI_COMM_WORLD);
 #endif
 
   /* initialization */
@@ -339,7 +339,7 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 #ifdef __USE_MPI__
   assert(sizeof(size_t)  == sizeof(unsigned long long));
   MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
-  MPI_Allreduce(MPI_IN_PLACE, &cost,  1, MPI_DOUBLE,   MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &cost,  1, MPI_SCALAR,   MPI_SUM, MPI_COMM_WORLD);
 #endif
 
   VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/p_data->global_size, nclock_end_p(&n_time));
