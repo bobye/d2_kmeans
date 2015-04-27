@@ -28,7 +28,7 @@ int d2_allocate_work_sphBregman(sph *ph, size_t size, var_sphBregman * var_phwor
   var_phwork->X = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->X);
   var_phwork->Z = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Z);
   var_phwork->Xc= _D2_MALLOC_SCALAR (ph->col);           assert(var_phwork->Xc);
-  var_phwork->Zr= _D2_MALLOC_SCALAR (2*ph->str * size);    assert(var_phwork->Zr);
+  var_phwork->Zr= _D2_MALLOC_SCALAR (ph->str * size);    assert(var_phwork->Zr);
   var_phwork->Y = _D2_MALLOC_SCALAR (ph->str * ph->col); assert(var_phwork->Y); // initialized
 
   return 0;
