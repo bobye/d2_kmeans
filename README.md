@@ -39,6 +39,10 @@ Build dependencies:
  - MPI
  - CBLAS
  - [Mosek](https://mosek.com) 7.0+: free individual academic license available.
+
+
+Create `make.inc` file to specify the dependencies, see `make.inc.Linux` for an example.
+Then compile the whole project via 
  
 ```
  $ make MPI=0 # build sequential version, or
@@ -49,6 +53,15 @@ Run unit tests (it takes several minutes):
 ```
  $ make test 
 ```
+
+By default, 64bit floating numbers are used. Optionally, you can switch to use 32bit to save
+memory and get some marginal speedups by changing the line in `include/common.h`
+```c
+#define _D2_DOUBLE // to _D2_SINGLE
+```
+
+## Usage
+IO specifications
 
 ## Guides and Tutorials
  - [data format supported](data)
