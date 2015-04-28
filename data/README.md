@@ -42,7 +42,7 @@ be found at directory protein_seq/ .
    their symbolic ids (starting from one, zero id saved for empty document).
 
    ```emacs-lisp
-   ;; file ext: .d2s.vocab
+   ;; file ext: .d2s.vocab0
    m n
    <n x m matrix> ;; n is the size of vocabulary, m is the dimension of embeddings
    ;; file ext: .d2s
