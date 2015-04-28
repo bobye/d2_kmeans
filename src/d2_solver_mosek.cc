@@ -61,7 +61,7 @@ double d2_match_by_distmat(int n, int m, SCALAR *C, SCALAR *wX, SCALAR *wY,
 			   __OUT__ SCALAR *x, __OUT__ SCALAR *lambda, size_t index) {
   
   const MSKint32t numvar = n * m,
-                  numcon = n + m;
+                  numcon = n + m - 1;
   MSKtask_t    *p_task;
   MSKrescodee r = MSK_RES_OK;
   MSKint32t    i,j;
@@ -102,9 +102,10 @@ double d2_match_by_distmat(int n, int m, SCALAR *C, SCALAR *wX, SCALAR *wY,
 			0.0,      /* Numerical value of lower bound.*/
                         +MSK_INFINITY);     /* Numerical value of upper bound.*/
 
+    i = (j >= (m-1)*n) ? 1 : 2;
     r = MSK_putacol(*p_task, 
 		    j,           /* Index of variable.*/
-		    2,           /* Number of non-zeros in column j.*/
+		    i,           /* Number of non-zeros in column j.*/
 		    asub+j*2,
 		    ones);
   }
@@ -119,7 +120,6 @@ double d2_match_by_distmat(int n, int m, SCALAR *C, SCALAR *wX, SCALAR *wY,
   r = MSK_putintparam(*p_task, MSK_IPAR_OPTIMIZER,  MSK_OPTIMIZER_NETWORK_PRIMAL_SIMPLEX);
   /* disable multi-threads */
   r = MSK_putintparam(*p_task, MSK_IPAR_NUM_THREADS, 1);
-
   } else {
   }
 
@@ -134,7 +134,7 @@ double d2_match_by_distmat(int n, int m, SCALAR *C, SCALAR *wX, SCALAR *wY,
 			MSK_BK_FX,
 			wX[i],
 			wX[i]);
-  for (i=0; i<m && r==MSK_RES_OK; ++i)
+  for (i=0; i<m-1 && r==MSK_RES_OK; ++i)
     r = MSK_putconbound(*p_task,
 			i+n,
 			MSK_BK_FX,
@@ -145,6 +145,7 @@ double d2_match_by_distmat(int n, int m, SCALAR *C, SCALAR *wX, SCALAR *wY,
   if ( r==MSK_RES_OK )
     {
       MSKrescodee trmcode;
+
       /* Run optimizer */
       r = MSK_optimizetrm(*p_task,&trmcode);      
 
