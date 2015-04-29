@@ -65,7 +65,7 @@ memory and get some marginal speedups by changing the line in `include/common.h`
 ### Arguments
 Input options
  - `--ifile <input_filename>, -i <input_filename>` : the main name of input file (required).
- - `-n <integer>` : number of instances read in per processors (required)
+ - `-n <integer>` : number of instances read in per processor (required)
  - `--phase <integer>, -p <integer>` : the number of phases per instance in `<input_filename>` (default: 1).
  - `--phase_only <integer>, -t <integer>` : the phase to cluster upon (default: use all phases)
  - `--strides <integer array>, -s <integer array>` : the numbers of support points of computed centroids in each phase (required), integer array with comma delimiter and no spaces. 
