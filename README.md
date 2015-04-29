@@ -42,7 +42,7 @@ Build dependencies:
 
 
 Create `make.inc` file to resolve the dependencies, see `make.inc.Linux` for an example.
-One can choose the build the program under Linux or Mac. 
+One can choose to build the program under Linux or Mac. 
 
 Compile
 ```
