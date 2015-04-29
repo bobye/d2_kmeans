@@ -19,6 +19,7 @@ typedef struct {
 #define D2_CENTROID_GRADDEC  (2)
 
 
+/* types of D2 data */
 #define D2_EUCLIDEAN_L2      (0)
 #define D2_CITYBLOCK_L1      (1)
 #define D2_HISTOGRAM         (5)
