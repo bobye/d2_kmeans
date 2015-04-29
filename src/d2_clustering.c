@@ -419,7 +419,9 @@ int d2_clustering(int num_of_clusters,
   // start centroid-based clustering here
   d2_solver_setup();
 
+#ifdef __USE_MPI__
   MPI_Pcontrol(1);
+#endif
   nclock_start_p(&n_time);
   for (iter=0; iter<max_iter; ++iter) {
     VPRINTF("Round %d ... \n", iter);
@@ -470,7 +472,9 @@ int d2_clustering(int num_of_clusters,
     if (use_triangle) 
       d2_labeling_post(p_data, &the_centroids_copy, centroids, &var_work, selected_phase);
   }
+#ifdef __USE_MPI__
   MPI_Pcontrol(0);
+#endif
   VPRINTF("Iteration time: %lf\n", nclock_end_p(&n_time));
 
   if (use_triangle)  label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
