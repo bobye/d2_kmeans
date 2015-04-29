@@ -1,8 +1,7 @@
 Accelerated Discrete Distributions Clustering under Wasserstein Distance
 =============
 
-AD2-clustering is an accelerated clustering algorithm for **D**iscrete **D**istributions,
-including normalized histogram and correlated n-gram as special cases,
+AD2-clustering is an accelerated clustering algorithm for **D**iscrete **D**istributions
 under the *exact* [Wasserstein metric](http://en.wikipedia.org/wiki/Wasserstein_metric).
 It can scale to large-scale D2 data with parallel computing. Please see our paper for technical details. 
 
@@ -71,7 +70,7 @@ Input options
  - `--phase_only <integer>, -t <integer>` : the phase to cluster upon (default: use all phases)
  - `--strides <integer array>, -s <integer array>` : the numbers of support points of computed centroids in each phase (required), integer array with comma delimiter and no spaces. 
  - `-d <integer array>` : the dimensions in each phase (required), integer array with comma delimiter and no spaces.
- - `--types <integer>, -E <type>` : the type of D2 data (default: 0, see `include/d2_param.h` for details).
+ - `--types <integer>, -E <integer>` : the type of D2 data (default: 0, see `include/d2_param.h` for details).
  
 Algorithm options
  - `--clusters <integer>, -c <integer>` : number of clusters intended (default: 3, mostly required).
