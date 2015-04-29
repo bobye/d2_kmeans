@@ -41,9 +41,10 @@ Build dependencies:
  - [Mosek](https://mosek.com) 7.0+: free individual academic license available.
 
 
-Create `make.inc` file to specify the dependencies, see `make.inc.Linux` for an example.
-Then compile the whole project via 
- 
+Create `make.inc` file to resolve the dependencies, see `make.inc.Linux` for an example.
+One can choose the build the program under Linux or Mac. 
+
+Compile
 ```
  $ make MPI=0 # build sequential version, or
  $ make MPI=1 # build MPI version (default)
