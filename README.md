@@ -90,9 +90,9 @@ Parallel computing options
 See [data](data) for options to prepare D2 data. 
 
 ## Examples
- - [preprocessed "20newsgroups" as bags of word-vectors](pbs_run_server_20news.sh) (related [codes](https://github.com/bobye/20newsgroups) on preparing the data).
+ - [preprocessed "20newsgroups" as bags of word-vectors](experiment/pbs_run_server_20news.sh) (related [codes](https://github.com/bobye/20newsgroups) on preparing the data).
  - [preprocessed n-gram of protein sequences](data/protein_seq): experimental
- - [USPS handwritten digit dataset](pbs_run_server_usps.sh)
+ - [USPS handwritten digit dataset](experiment/pbs_run_server_usps.sh)
 
 See [test](test) for more examples.
 
