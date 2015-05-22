@@ -83,15 +83,18 @@ Parallel computing options
  
 ### Modes
 1. The default mode is the clustering algorithm, which outputs results in two main files. For example, taking in `data.d2`, program outputs the centroids computed (`data.d2_123456_c.d2` which is again in D2 format) and the memberships of each instances (`data.d2_123456.label` in sequential run or `data.d2_123456.label_o` in parallel run). 
-2. To preprocess a data file into multiple batches and feed into a parallel environment, one has to call `--prepare_batches`.
-3. Given computed centroids from training set, one can assign cluster memberships to another testing set using `--eval`. 
+2. To preprocess a data file into multiple batches and later feed them into a parallel computing environment, one has to call `--prepare_batches`.
+3. Given pre-computed centroids from a training set, one can assign cluster memberships to another testing set using `--eval`. 
+
+Remark that example [bash script](pbs_run_server_usps.sh) for USPS datasets is provided, illustrating the combined usage of different modes.
 
 
 ### Data formats
 See [data](data) for options to prepare D2 data. 
 
-## Examples
- - [clustering "20newsgroups" as bags of word-vectors](https://github.com/bobye/20newsgroups/wiki)
+## More Examples
+ - ["20newsgroups" as bags of word-vectors](https://github.com/bobye/20newsgroups/wiki)
+ - [preprocessed n-gram of protein sequences](data/protein_seq)
 
 
 
