@@ -44,11 +44,11 @@ echo "[$num_of_nodes processes] Clustering proteins: n=10742 1-gram with 2 clust
 time mpirun -n $num_of_nodes ./protein protein 0 2 0
 
 
-num_of_nodes=4
-echo "[$num_of_nodes processes] Clustering images: n=10000 and k=3 with both phases"
-batch_size=`./d2 -i data/20news-bydate/20newsgroups_clean/20newsgroups.d2s -n 1000 -d 300 -s 128 --type 7 --prepare_batches $num_of_nodes | grep batch_size | sed 's/^.*batch_size://g'`
+#num_of_nodes=4
+#echo "[$num_of_nodes processes] Clustering documents: n=1000 and k=3 with both phases"
+#batch_size=`./d2 -i data/20news-bydate/20newsgroups_clean/20newsgroups.d2s -n 1000 -d 300 -s 128 --type 7 --prepare_batches $num_of_nodes | grep batch_size | sed 's/^.*batch_size://g'`
 
-time mpirun -n $num_of_nodes ./d2 -i data/20news-bydate/20newsgroups_clean/20newsgroups.d2s -n $batch_size -d 300 -s 128 --clusters 3  --type 7
+#time mpirun -n $num_of_nodes ./d2 -i data/20news-bydate/20newsgroups_clean/20newsgroups.d2s -n $batch_size -d 300 -s 128 --clusters 3  --type 7
 
-echo 'End the test of parallel version [Success]'
+#echo 'End the test of parallel version [Success]'
 
