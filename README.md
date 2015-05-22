@@ -5,7 +5,7 @@ AD2-clustering is an accelerated clustering algorithm for **D**iscrete **D**istr
 under the *exact* [Wasserstein metric](http://en.wikipedia.org/wiki/Wasserstein_metric).
 It can scale to large-scale D2 data with parallel computing. Please see our paper for technical details: 
 
-[Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and [Jia Li](http://sites.stat.psu.edu/~jiali/), "Fast Discrete Distribution Clustering under Wasserstein Distance" in submission to NIPS 2015.
+[Jianbo Ye](http://www.personal.psu.edu/jxy198), Panruo Wu, James Z. Wang and [Jia Li](http://sites.stat.psu.edu/~jiali/), "Fast Discrete Distribution Clustering under Wasserstein Distance" in submission to NIPS 2015.
 
 This project is the __first__ efficient implementation public available for D2-clustering,
 and it is still in the very early stage of development.
