@@ -1,15 +1,14 @@
 Accelerated Discrete Distributions Clustering under Wasserstein Distance
 =============
 
-AD2-clustering is an accelerated clustering algorithm for **D**iscrete **D**istributions
+AD2-clustering is an accelerated clustering algorithm for **D**iscrete **D**istributions (D2)
 under the *exact* [Wasserstein metric](http://en.wikipedia.org/wiki/Wasserstein_metric).
-It can scale to large-scale D2 data with parallel computing. Please see our paper for technical details. 
+It can scale to large-scale D2 data with parallel computing. Please see our paper for technical details: 
 
-[Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and Jia Li, "Fast Discrete Distribution Clustering under Wasserstein Distance" in submission to NIPS 2015.
+[Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and [Jia Li](http://sites.stat.psu.edu/~jiali/), "Fast Discrete Distribution Clustering under Wasserstein Distance" in submission to NIPS 2015.
 
 This project is the __first__ efficient implementation public available for D2-clustering,
-and it is still in the very early stage of development. Hence please don't expect any
-guanrantee for backward compatibility at this point. 
+and it is still in the very early stage of development.
 
 ## Discrete Distributions
 There are three data types of discrete distribution that have been covered
@@ -62,15 +61,15 @@ memory and get some marginal speedups by changing the line in `include/common.h`
 
 ## Usage
 
-See [data](data) for options to prepare D2 data and 
-see [src](src) for detailed instructions on possible arguments and modes of program.
+See [here](data) for options to prepare D2 data and 
+see [here](src) for detailed instructions on possible arguments and modes of program.
 
 ## Examples
  - [preprocessed "20newsgroups" as bags of word-vectors](experiment/pbs_run_server_20news.sh) (related [codes](https://github.com/bobye/20newsgroups) on preparing the data).
  - [preprocessed n-gram of protein sequences](data/protein_seq): experimental
  - [USPS handwritten digit dataset](experiment/pbs_run_server_usps.sh)
 
-See [test](test) for more examples.
+See [here](test) for more examples.
 
 
 
