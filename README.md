@@ -86,16 +86,15 @@ Parallel computing options
 2. To preprocess a data file into multiple batches and later feed them into a parallel computing environment, one has to call `--prepare_batches`.
 3. Given pre-computed centroids from a training set, one can assign cluster memberships to another testing set using `--eval`. 
 
-Remark that example [bash script](pbs_run_server_usps.sh) for USPS datasets is provided, illustrating the combined usage of different modes.
-
-
 ### Data formats
 See [data](data) for options to prepare D2 data. 
 
-## More Examples
- - ["20newsgroups" as bags of word-vectors](https://github.com/bobye/20newsgroups/wiki)
- - [preprocessed n-gram of protein sequences](data/protein_seq)
+## Examples
+ - [preprocessed "20newsgroups" as bags of word-vectors](pbs_run_server.sh) (related [codes](https://github.com/bobye/20newsgroups) on preparing the data).
+ - [preprocessed n-gram of protein sequences](data/protein_seq): experimental
+ - [USPS handwritten digit dataset](pbs_run_server_usps.sh)
 
+See [test](test) for more examples.
 
 
 
