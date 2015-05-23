@@ -142,7 +142,9 @@ int d2_free(mph *p_data) {
 /**
  * Allocate memory for working data
  */
+#if !defined(max)
 #define max(a,b) ((a) > (b)? (a) : (b))
+#endif
 int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle, int selected_phase) {
   int i;
   size_t size = p_data->size;

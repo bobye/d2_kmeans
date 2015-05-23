@@ -16,7 +16,7 @@ extern int d2_alg_type;
 
 const double time_budget_ratio = 2000.0;
 double time_budget;
-struct timespec n_time;
+double global_startTime;
 /**
  * Compute the distance between i-th d2 in a and j-th d2 in b 
  * Return square root of the undergoing cost as distance
@@ -127,9 +127,10 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
   const size_t size = p_data->size;
   const size_t num_of_labels = centroids->size;
   int *label = p_data->label;
+  double startTime;
   trieq *p_tr = &var_work->tr;
 
-  nclock_start();
+  startTime = getRealTime();
   /* step 1 */
   for (i=0; i<num_of_labels; ++i) p_tr->s[i] = DBL_MAX;
   for (i=0; i<num_of_labels * num_of_labels; ++i) p_tr->c[i] = 0;
@@ -214,10 +215,10 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
   MPI_Allreduce(MPI_IN_PLACE, &dist_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 #endif
 
-  VPRINTF("\n\t\t\t\t %ld objects change their labels\n\t\t\t\t %ld distance pairs computed\n\t\t\t\t seconds: %f\n", count, dist_count, nclock_end_p(&n_time));
+  VPRINTF("\n\t\t\t\t %ld objects change their labels\n\t\t\t\t %ld distance pairs computed\n\t\t\t\t seconds: %f\n", count, dist_count, getRealTime() - global_startTime);
 
   // set time budget for update step
-  time_budget = time_budget_ratio * nclock_end();
+  time_budget = time_budget_ratio * (getRealTime() - startTime);
   return count;
 }
 
@@ -266,7 +267,9 @@ int d2_copy(mph* a, mph *b) {
   return 0;
 }
 
+#if !defined(max)
 #define max(X,Y) (((X) > (Y)) ? (X) : (Y))
+#endif
 size_t d2_labeling_post(mph *p_data,
 		      mph *c_old,
 		      mph *c_new,
@@ -306,8 +309,9 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
   int *label = p_data->label;
   size_t size = p_data->size;
   double cost = 0.f;
+  double startTime;
 
-  nclock_start();
+  startTime = getRealTime();
 
   for (i=0; i<size; ++i) {
     double min_distance = -1;	
@@ -342,10 +346,11 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
   MPI_Allreduce(MPI_IN_PLACE, &cost,  1, MPI_SCALAR,   MPI_SUM, MPI_COMM_WORLD);
 #endif
 
-  VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", count, cost/p_data->global_size, nclock_end_p(&n_time));
+  VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", 
+           count, cost/p_data->global_size, getRealTime() - startTime);
 
   // set time budget for update step
-  time_budget = time_budget_ratio * nclock_end() / p_data->num_of_labels;
+  time_budget = time_budget_ratio * (getRealTime() - startTime) / p_data->num_of_labels;
   
   return count;
 }
@@ -422,7 +427,7 @@ int d2_clustering(int num_of_clusters,
 #ifdef __USE_MPI__
   MPI_Pcontrol(1);
 #endif
-  nclock_start_p(&n_time);
+  global_startTime = getRealTime();
   for (iter=0; iter<max_iter; ++iter) {
     VPRINTF("Round %d ... \n", iter);
     VPRINTF("\tRe-labeling all instances ... "); VFLUSH();
@@ -475,7 +480,7 @@ int d2_clustering(int num_of_clusters,
 #ifdef __USE_MPI__
   MPI_Pcontrol(0);
 #endif
-  VPRINTF("Iteration time: %lf\n", nclock_end_p(&n_time));
+  VPRINTF("Iteration time: %lf\n", getRealTime() - global_startTime);
 
   if (use_triangle)  label_change_count = d2_labeling(p_data, centroids, &var_work, selected_phase);
   d2_solver_release();
@@ -508,7 +513,7 @@ int d2_assignment(int num_of_clusters,
   d2_read(centroid_filename, centroids);  
   d2_allocate_work(p_data, &var_work, false, selected_phase);
   d2_solver_setup();
-  nclock_start_p(&n_time);
+  global_startTime = getRealTime();
   d2_labeling(p_data, centroids, &var_work, selected_phase);
   d2_solver_release();
   d2_free_work(&var_work, selected_phase);

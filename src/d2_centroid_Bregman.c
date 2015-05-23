@@ -74,6 +74,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   SCALAR *Xc= var_work->l_var_sphBregman[idx_ph].Xc;
   SCALAR *Zr= var_work->l_var_sphBregman[idx_ph].Zr; 
   SCALAR *Zr2 = Zr; char hasZr2 = 0;
+  double startTime;
 
   /**
    * MPI notes: vector needs synchronized __USE_MPI__ : 
@@ -146,7 +147,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   // main loop
   VPRINTF("\titer\tobj\t\tprimres\t\tdualres\t\tseconds\n");
   VPRINTF("\t----------------------------------------------------------------\n");
-  nclock_start();
+  startTime = getRealTime();
   for (iter=0; iter <= max_niter; ++iter) {
     /*************************************************************************/
     // step 1: update X
@@ -311,10 +312,10 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
       obj     *= rho / p_data->global_size;
       primres /= p_data->global_size;
       dualres /= p_data->global_size;
-      VPRINTF("\t%d\t%f\t%f\t%f\t%f\n", iter+1, obj, primres, dualres, nclock_end());
+      VPRINTF("\t%d\t%f\t%f\t%f\t%f\n", iter+1, obj, primres, dualres, getRealTime() - startTime);
     }
 
-    if (nclock_end() > time_budget) {break;}
+    if (getRealTime() - startTime > time_budget) {break;}
   }
 
   _D2_FREE(Z0);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <iostream>
 #include <assert.h>
@@ -195,7 +196,8 @@ int main(int argc, char *argv[])
 #ifdef __USE_MPI__
     MPI_Bcast(&hashNumber, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
-    name_hashValue = std::string(std::string(filename) + "_" + std::to_string(hashNumber));
+    std::stringstream ss; ss << hashNumber;
+    name_hashValue = std::string(std::string(filename) + "_" + ss.str());
 
     d2_clustering(number_of_clusters, 
 		  max_iters, 
