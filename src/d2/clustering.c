@@ -4,11 +4,11 @@
 #include <stdbool.h>
 #include <float.h>
 #include <string.h>
-#include "d2_clustering.h"
-#include "d2_math.h"
-#include "d2_solver.h"
-#include "d2_param.h"
-#include "d2_centroid_util.h"
+#include "d2/clustering.h"
+#include "d2/math.h"
+#include "d2/solver.h"
+#include "d2/param.h"
+#include "d2/centroid_util.h"
 #ifdef __USE_MPI__
 #include <mpi.h>
 #endif

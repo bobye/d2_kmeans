@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-#include "common.h"
-#include "blas_like.h"
+#include "utils/common.h"
+#include "utils/blas_like.h"
 
   void d2_solver_setup();
   void d2_solver_release();

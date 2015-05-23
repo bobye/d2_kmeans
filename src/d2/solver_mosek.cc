@@ -1,7 +1,7 @@
-#include "d2_solver.h"
+#include "d2/solver.h"
 #include "mosek.h"
 #include <stdio.h>
-#include "blas_util.h"
+#include "utils/blas_util.h"
 
 static MSKenv_t   env = NULL;
 //static MSKtask_t *task_seq = NULL;

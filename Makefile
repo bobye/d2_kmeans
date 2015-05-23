@@ -23,24 +23,24 @@ LIBRARIES=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread $(BLAS_LIB)
 
 
 C_SOURCE_FILES=\
-	src/d2_clustering.c\
-	src/d2_clustering_io.c\
-	src/d2_clustering_util.c\
-	src/d2_math.c\
-	src/blas_like32.c\
-	src/blas_like64.c\
-	src/d2_centroid_util.c\
-	src/d2_centroid_rand.c\
-	src/d2_centroid_Bregman.c\
-	src/d2_centroid_GradDecent.c\
-	src/d2_centroid_ADMM.c\
+	src/d2/clustering.c\
+	src/d2/clustering_io.c\
+	src/d2/clustering_util.c\
+	src/d2/math.c\
+	src/utils/blas_like32.c\
+	src/utils/blas_like64.c\
+	src/d2/centroid_util.c\
+	src/d2/centroid_rand.c\
+	src/d2/centroid_Bregman.c\
+	src/d2/centroid_GradDecent.c\
+	src/d2/centroid_ADMM.c\
 
 CPP_SOURCE_FILES=\
-	src/d2_solver_mosek.cc\
-	src/util.cc
+	src/d2/solver_mosek.cc\
+	src/app/util.cc
 
 SOURCE_FILES_WITH_MAIN=\
-	src/main.cc
+	src/app/main.cc
 
 C_SOURCE_OBJECTS=\
 	$(patsubst %.c, %.o, $(C_SOURCE_FILES))\
@@ -50,7 +50,7 @@ CPP_SOURCE_OBJECTS=\
 
 LIB_SOURCE_OBJECTS=\
 	$(C_SOURCE_OBJECTS)\
-	src/d2_solver_mosek.o # use mosek solver as the driver
+	src/d2/solver_mosek.o # use mosek solver as the driver
 
 ALL_OBJECTS=\
 	$(C_SOURCE_OBJECTS)\

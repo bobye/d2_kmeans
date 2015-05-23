@@ -5,10 +5,11 @@
 extern "C" {
 #endif
 
-#include "common.h"
-#include "d2_param.h"
+#include "utils/common.h"
+#include "d2/param.h"
+
   /**
-   * data structure to store d2 of one phase
+   * data structure to store d2 dataset of one phase
    */
   typedef struct {
     /**
