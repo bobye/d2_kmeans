@@ -54,7 +54,7 @@ Run unit tests (it takes several minutes):
 ```
 
 By default, 64bit floating numbers are used. Optionally, you can switch to use 32bit to save
-memory and get some marginal speedups by changing the line in `include/common.h`
+memory and get some marginal speedups by changing the line in `include/utils/common.h`
 ```c
 #define _D2_DOUBLE // to _D2_SINGLE
 ```
@@ -62,7 +62,7 @@ memory and get some marginal speedups by changing the line in `include/common.h`
 ## Usage
 
 See [here](data) for options to prepare D2 data and 
-see [here](src) for detailed instructions on possible arguments and modes of program.
+see [here](src/app) for detailed instructions on possible arguments and modes of program.
 
 ## Examples
  - [preprocessed "20newsgroups" as bags of word-vectors](experiment/pbs_run_server_20news.sh) (related [codes](https://github.com/bobye/20newsgroups) on preparing the data).
