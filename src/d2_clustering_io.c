@@ -8,13 +8,12 @@
 #include <mpi.h>
 #endif
 
-struct timespec io_time;
-
 /** Load Data Set: see specification of format at README.md */
 int d2_read(const char* filename, mph *p_data) {
   char filename_main[255];
   FILE *fp =NULL;
-  nclock_start_p(&io_time);
+  double io_startTime;
+  io_startTime = getRealTime();
 
   if (nprocs > 1) {
     sprintf(filename_main, "%s.%d", filename, world_rank);
@@ -176,7 +175,7 @@ int d2_read(const char* filename, mph *p_data) {
   p_data->global_size = p_data->size;
 #endif
 
-  VPRINTF("IO time: %lf\n", nclock_end_p(&io_time));
+  VPRINTF("IO time: %lf\n", getRealTime() - io_startTime);
 
   return 0;
 }

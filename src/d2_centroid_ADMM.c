@@ -29,7 +29,7 @@ int d2_centroid_sphADMM(mph *p_data,
   SCALAR *X = var_work->g_var[idx_ph].X;
   SCALAR *L = var_work->g_var[idx_ph].L;
   size_t *label_count;
-  double rho;
+  double rho, startTime;
   SCALAR *q;
 
   assert(dim > 0); // current only support the D2 format
@@ -55,7 +55,7 @@ int d2_centroid_sphADMM(mph *p_data,
   q = _D2_MALLOC_SCALAR(num_of_labels * str);
 
   /* start iterations */
-  nclock_start();
+  startTime=getRealTime();
   for (iter = 0; iter <= nIter; ++iter) {
     fval0 = fval;
     fval = 0;
@@ -80,7 +80,7 @@ int d2_centroid_sphADMM(mph *p_data,
     fval /= size;
     
 
-    printf("\t%d\t%f\t%f\n", iter, fval, nclock_end());        
+    printf("\t%d\t%f\t%f\n", iter, fval, getRealTime() - startTime);        
     if (fval - fval0 > 1E-3*fval0 || iter == nIter) break;
 
     /* update c->p_supp */

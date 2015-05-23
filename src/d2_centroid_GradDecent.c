@@ -41,6 +41,7 @@ int d2_centroid_sphGradDecent(mph *p_data,
   size_t *label_count;
   SCALAR *p_grad, *Zr=NULL, tmp;
   double step_size = p_graddec_options->stepSize;
+  double startTime;
 
   assert(dim > 0); // current only support the D2 format
 
@@ -71,7 +72,7 @@ int d2_centroid_sphGradDecent(mph *p_data,
 
   /* compute exact distances */
   calculate_distmat(data_ph, label, size, c, C);
-  nclock_start();  
+  startTime = getRealTime();  
   for (iter = 0; iter <= nIter; ++iter) {
 
     fval0 = fval;
@@ -87,8 +88,8 @@ int d2_centroid_sphGradDecent(mph *p_data,
     }
     fval /= size;
   
-    printf("\t%d\t%f\t%f\n", iter, fval, nclock_end());    
-    if (fabs(fval - fval0) < 1E-4 * fval || nclock_end() > time_budget) break;
+    printf("\t%d\t%f\t%f\n", iter, fval, getRealTime() - startTime);    
+    if (fabs(fval - fval0) < 1E-4 * fval || getRealTime() - startTime > time_budget) break;
 
     /* compute p_grad */
     _D2_FUNC(ccenter)(str, size, L, NULL);

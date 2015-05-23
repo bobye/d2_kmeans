@@ -67,8 +67,28 @@ extern "C" {
   //#define _D2_LAPACKE_FUNC(x) s ## x
 #endif
 
+#define BILLION  1000000000L
 
 // Timing, count in nano seconds.
+#if defined (_WIN32)
+#include <Windows.h>
+
+inline double getRealTime() {
+  FILETIME tm;
+  ULONGLONG t;
+#if defined(NTDDI_WIN8) && NTDDI_VERSION >= NTDDI_WIN8
+	/* Windows 8, Windows Server 2012 and later. ---------------- */
+	GetSystemTimePreciseAsFileTime( &tm );
+#else
+	/* Windows 2000 and later. ---------------------------------- */
+	GetSystemTimeAsFileTime( &tm );
+#endif  
+  t = ((ULONGLONG)tm.dwHighDateTime << 32) | (ULONGLONG)tm.dwLowDateTime;
+  return (double) t / (double) BILLION;
+}
+
+
+#else
 #include <time.h>
 
 #ifdef __MACH__
@@ -91,21 +111,14 @@ inline int clock_gettime(int clk_id, struct timespec* ts) {
 }
 #endif
 
-#define BILLION  1000000000L
-static struct timespec nstart, nend;
-static inline void nclock_start() {clock_gettime(CLOCK_MONOTONIC, &nstart);}
-static inline double nclock_end() {clock_gettime(CLOCK_MONOTONIC, &nend);     
-  return (double) ( nend.tv_sec - nstart.tv_sec ) + (double) ( nend.tv_nsec - nstart.tv_nsec ) / (double) BILLION ;
+
+inline double getRealTime() {
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);     
+  return (double) ( ts.tv_sec ) + (double) ( ts.tv_nsec ) / (double) BILLION ;
 }
 
-static inline void nclock_start_p(struct timespec * p_time) {
-  clock_gettime(CLOCK_MONOTONIC, p_time);
-}
-static inline double nclock_end_p(struct timespec * p_time) {
-  struct timespec nend;
-  clock_gettime(CLOCK_MONOTONIC, &nend);     
-  return (double) ( nend.tv_sec - p_time->tv_sec ) + (double) ( nend.tv_nsec - p_time->tv_nsec ) / (double) BILLION ;
-}
+#endif
 
 #ifdef __cplusplus
 }
