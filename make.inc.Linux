@@ -4,7 +4,7 @@ TCXX=g++ -std=c++11
 MPICC=mpicc -D __USE_MPI__ -std=gnu99
 MPICXX=mpicxx -D __USE_MPI__ -std=c++11
 
-MOSEK=$(HOME)/mosek/7/tools/platform/osx64x86
+MOSEK=$(HOME)/mosek/7/tools/platform/linux64x86
 MOSEK_VERSION=7.0
 OTHER_LIB=-lrt # clock_gettime()
 BLAS_LIB=-lblas
