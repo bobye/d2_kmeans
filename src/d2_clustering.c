@@ -347,7 +347,7 @@ size_t d2_labeling(__IN_OUT__ mph *p_data,
 #endif
 
   VPRINTF("\t %ld labels change.\tmean cost %lf\ttime %f s [done]\n", 
-           count, cost/p_data->global_size, getRealTime() - startTime);
+           count, cost/p_data->global_size, getRealTime() - global_startTime);
 
   // set time budget for update step
   time_budget = time_budget_ratio * (getRealTime() - startTime) / p_data->num_of_labels;
