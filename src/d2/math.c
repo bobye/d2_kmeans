@@ -1,7 +1,7 @@
 //#define _VERBOSE_OUTPUT
 
 #include <math.h>
-#include "d2_math.h"
+#include "d2/math.h"
 #include <stdio.h>
 #include <time.h>       /* time */
 

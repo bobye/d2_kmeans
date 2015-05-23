@@ -10,10 +10,10 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <float.h>
-#include "d2_clustering.h"
-#include "d2_centroid_util.h"
-#include "blas_util.h"
-#include "d2_math.h"
+#include "d2/clustering.h"
+#include "d2/centroid_util.h"
+#include "utils/blas_util.h"
+#include "d2/math.h"
 #ifdef __USE_MPI__
 #include <mpi.h>
 #endif
@@ -23,7 +23,7 @@
  * 1: ADMM
  * 2: Gradient Decent
  */
-#include "d2_param.h"
+#include "d2/param.h"
 int d2_alg_type; //  = D2_CENTROID_BADMM;
 int world_rank = 0;
 int nprocs = 1;

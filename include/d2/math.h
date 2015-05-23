@@ -6,11 +6,11 @@
 extern "C" {
 #endif
 
-#include "d2_clustering.h"
+#include "d2/clustering.h"
 
 
-#include "blas_like.h"
-#include "blas_util.h"
+#include "utils/blas_like.h"
+#include "utils/blas_util.h"
 
   /*
   void d2_mean(sph * data, int * label, long num_of_entries, int num_of_labels, 

@@ -1,8 +1,8 @@
-#include "d2_clustering.h"
-#include "d2_math.h"
-#include "stdio.h"
-#include "d2_param.h"
-#include "d2_centroid_util.h"
+#include "d2/clustering.h"
+#include "d2/math.h"
+#include "d2/param.h"
+#include "d2/centroid_util.h"
+#include <stdio.h>
 #include <float.h>
 #include <assert.h>
 

@@ -5,8 +5,8 @@
 #include <mpi.h>
 #endif
 
-#include "d2_param.h"
-#include "blas_util.h"
+#include "d2/param.h"
+#include "utils/blas_util.h"
 #include <float.h>
 
 /**

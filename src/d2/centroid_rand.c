@@ -1,6 +1,6 @@
-#include "d2_clustering.h"
-#include "d2_math.h"
-#include "d2_param.h"
+#include "d2/clustering.h"
+#include "d2/math.h"
+#include "d2/param.h"
 #include <stdbool.h>
 #include <float.h>
 #include <assert.h>

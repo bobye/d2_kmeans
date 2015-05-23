@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <time.h>       /* time_t, struct tm, time, localtime */
 
-#include "d2_clustering.h"
+#include "d2/clustering.h"
 #include "util.hh"
 #include <cstdlib>
 #include <getopt.h> /* for getopt_long; GNU extension */
@@ -20,7 +20,7 @@
  * 1: ADMM
  * 2: Gradient Decent
  */
-#include "d2_param.h"
+#include "d2/param.h"
 int d2_alg_type = D2_CENTROID_BADMM;
 int world_rank = 0; 
 int nprocs = 1;
