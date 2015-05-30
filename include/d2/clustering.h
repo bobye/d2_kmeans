@@ -132,6 +132,11 @@ extern "C" {
   int d2_write_split(const char* filename, mph *p_data, int splits);
   int d2_free(mph *p_data);
 
+  int d2_init_centroid(mph *p_data, 
+		       __OUT__ mph *centroids, 
+		       int selected_phase, 
+		       int allocate_only);
+
   /* main algorithm */
   int d2_clustering(int k, 
 		    int max_iter, 

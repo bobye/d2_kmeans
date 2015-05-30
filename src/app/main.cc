@@ -38,7 +38,8 @@ int main(int argc, char *argv[])
   int size_of_phases = 1;
   long size_of_samples;
   char *ss1_c_str = 0, *ss2_c_str = 0, *ss3_c_str = 0,
-    *filename = 0, *centroid_filename = 0;
+    *filename = 0, *centroid_filename = 0, 
+    is_eval=0, is_load=0;
   char use_triangle = true;
   /* default settings */
   int selected_phase = -1; 
@@ -60,18 +61,24 @@ int main(int argc, char *argv[])
     {"prepare_batches", 1, 0, 'P'},
     {"types", 1, 0, 'E'},
     {"eval", 1, 0, 'e'},
+    {"load", 1, 0, 'L'},
     {NULL, 0, NULL, 0}
   };
 
   /* [BEGIN] Parsing program arguments */
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:t:c:m:M:TP:E:e:", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:t:c:m:M:TP:E:e:L:", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
       break;
     case 'e': 
       centroid_filename = optarg;
+      is_eval = 1; assert(!is_load);      
+      break;
+    case 'L':
+      centroid_filename = optarg;
+      is_load = 1; assert(!is_eval);
       break;
     case 'p': 
       size_of_phases = atoi(optarg); assert(size_of_phases > 0);
@@ -180,8 +187,8 @@ int main(int argc, char *argv[])
   c.ph = NULL; // make sure c is (re-)initialized 
   std::string name_hashValue;
 
-  /* if no centroid filename is provided, then clustering data and obtain the centroids */
-  if (centroid_filename == 0) { 
+  /* clustering data and obtain the centroids */
+  if (!is_eval) { 
     if (world_rank == 0) {
       if (selected_phase >= 0 && size_of_phases > 1) {
 	cout << "Clustering upon " << selected_phase <<"-th phase" << endl;
@@ -199,6 +206,14 @@ int main(int argc, char *argv[])
     std::stringstream ss; ss << hashNumber;
     name_hashValue = std::string(std::string(filename) + "_" + ss.str());
 
+
+    if (is_load) {
+      assert(centroid_filename);
+      data.num_of_labels = number_of_clusters;
+      d2_init_centroid(&data, &c, selected_phase, true);
+      d2_read(centroid_filename, &c);        
+    }
+
     d2_clustering(number_of_clusters, 
 		  max_iters, 
 		  &data, 
@@ -206,12 +221,14 @@ int main(int argc, char *argv[])
 		  selected_phase,
 		  use_triangle,
 		  name_hashValue.c_str());
-  
 
     if (world_rank == 0) {
       d2_write((name_hashValue + "_c.d2").c_str(), &c);
     }
-  } else {
+  } 
+  
+  if (is_eval) {
+    assert(centroid_filename);
     std::string cf=std::string(centroid_filename);
     d2_assignment(number_of_clusters, 
 		  &data, 
