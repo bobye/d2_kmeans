@@ -360,7 +360,7 @@ int d2_init_centroid(mph *p_data, __OUT__ mph *centroids, int selected_phase, in
   int i;
   // MPI note: to be done only on one node
   // initialize centroids from random
-  VPRINTF("Initializing centroids ... "); VFLUSH();
+  if (!allocate_only) VPRINTF("Initializing centroids ... "); VFLUSH();
   centroids->s_ph = p_data->s_ph;
   centroids->size = p_data->num_of_labels;
   centroids->ph = (sph *) malloc(p_data->s_ph * sizeof(sph));
@@ -379,7 +379,7 @@ int d2_init_centroid(mph *p_data, __OUT__ mph *centroids, int selected_phase, in
       centroids->ph[i].metric_type = p_data->ph[i].metric_type % D2_WORD_EMBED;
     }
   // d2_write(NULL, centroids);     getchar();
-  VPRINTF("[done]\n");
+  if (!allocate_only) VPRINTF("[done]\n");
   return 0;
 }
 
@@ -414,6 +414,8 @@ int d2_clustering(int num_of_clusters,
 
   if (!centroids->ph) {
     d2_init_centroid(p_data, centroids, selected_phase, false);
+  } else {
+    VPRINTF("Centroid initialization provided\n");
   }
   assert(centroids->s_ph == s_ph && centroids->size == num_of_clusters);
 
