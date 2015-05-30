@@ -109,21 +109,20 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
   rho = p_badmm_options->rhoCoeff * _D2_CBLAS_FUNC(asum)(str*col, C, 1) / (str*col);
   for (i=0; i<str*col; ++i) C[i] /= rho; // normalize C and Y
 
-  if (dim > 0) { // for histogram, no re-init needed
   /* 
    * Indeed, we may only need to reinitialize for entries 
    * whose label are changed  
    */
-    for (i=0; i<size; ++i) {
-      if (label_switch[i] == 1) {
-	SCALAR *p_scal = Z + str*p_str_cum[i];
-	SCALAR *data_w_scal  = p_w + p_str_cum[i];
-	SCALAR *c_w_scal = c->p_w + label[i]*str;
-	for (j=0; j<str*p_str[i]; ++j, ++p_scal) 
-	  *p_scal =  data_w_scal[j/str] * c_w_scal[j%str];
-      }
+  for (i=0; i<size; ++i) {
+    if (label_switch[i] == 1) {
+      SCALAR *p_scal = Z + str*p_str_cum[i];
+      SCALAR *data_w_scal  = p_w + p_str_cum[i];
+      SCALAR *c_w_scal = c->p_w + label[i]*str;
+      for (j=0; j<str*p_str[i]; ++j, ++p_scal) 
+	*p_scal =  data_w_scal[j/str] * c_w_scal[j%str];
     }
   }
+
   // allocate buffer of Z
   Z0 = _D2_MALLOC_SCALAR(str*col);
   for (i=0; i<str*col; ++i) Y[i] = 0; // set Y to zero
