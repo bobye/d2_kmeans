@@ -16,10 +16,13 @@ bunzip2 20newsgroups.d2s.vocab0.bz2
 
 
 # run d2 clustering of documents
-# make sure you change the line in d2_clusetering_io.c from 
+# make sure you change the line in src/d2/clusetering_io.c from 
 #>   if (1) { // non pre-processed
 # to 
 #>   if (0) { // non pre-processed
+# this will pre-process each BoW into a representation which has less than s supports.
+# Of course, one can opt for pre-processing them on their own, but our implementation
+# provides such function. 
 
 cd $main_dir
 num_of_nodes=16
