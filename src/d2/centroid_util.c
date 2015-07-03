@@ -6,7 +6,7 @@
 #include <assert.h>
 
 void calculate_distmat(sph *data_ph, int* label, size_t size, sph *c, SCALAR* C) {
-  int dim = c->dim, str = c->str, strxdim = c->dim*c->str;
+  size_t dim = c->dim, str = c->str, col = c->col, strxdim = c->dim*c->str;
   size_t i;
   int *p_str = data_ph->p_str;
   SCALAR *p_supp = data_ph->p_supp;
@@ -17,11 +17,35 @@ void calculate_distmat(sph *data_ph, int* label, size_t size, sph *c, SCALAR* C)
   case D2_EUCLIDEAN_L2 :
     for (i=0;i < size;  ++i) 
       _D2_FUNC(pdist2)(dim, str, p_str[i], c->p_supp + label[i]*strxdim, p_supp + dim*p_str_cum[i], C + str*p_str_cum[i]);
-    break;
+    break;    
+
+  case D2_SEMI_EUCLIDEAN :
+    for (i=0;i < size;  ++i) 
+      _D2_FUNC(pdist2)(dim, str, p_str[i], c->p_supp + label[i]*strxdim, p_supp + dim*p_str_cum[i], C + str*p_str_cum[i]);
+    {
+    SCALAR sigma = data_ph->metric_param / 2.;
+    SCALAR sigma2 = data_ph->metric_param * data_ph->metric_param;
+    SCALAR sigma2half = sigma2 / 2.;
+    for (i=0; i<str * col; ++i)
+      if (C[i] > sigma2) C[i] = sigma * sqrt(C[i]) + sigma2half;
+    }
+    break;    
 
   case D2_WORD_EMBED : 
     for (i=0; i< size; ++i)
       _D2_FUNC(pdist2_sym)(dim, str, p_str[i], c->p_supp + label[i]*strxdim, p_supp_sym + p_str_cum[i], C + str*p_str_cum[i], data_ph->vocab_vec);
+    break;
+
+  case D2_SEMI_WORD_EMBED : 
+    for (i=0; i< size; ++i)
+      _D2_FUNC(pdist2_sym)(dim, str, p_str[i], c->p_supp + label[i]*strxdim, p_supp_sym + p_str_cum[i], C + str*p_str_cum[i], data_ph->vocab_vec);
+    {
+    SCALAR sigma = data_ph->metric_param / 2.;
+    SCALAR sigma2 = data_ph->metric_param * data_ph->metric_param;
+    SCALAR sigma2half = sigma2 / 2.;
+    for (i=0; i<str * col; ++i)
+      if (C[i] > sigma2) C[i] = sigma * sqrt(C[i]) + sigma2half;
+    }
     break;
 
   case D2_HISTOGRAM : 
