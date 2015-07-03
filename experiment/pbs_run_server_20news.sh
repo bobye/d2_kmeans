@@ -9,8 +9,8 @@ module load openmpi/gnu
 main_dir=${PWD}
 
 # download data
-cd data && git clone -o 20news_bydate https://github.com/bobye/20newsgroups.git 
-cd 20news_bydate/20newsgroups_clean
+cd data && git clone -o 20news-bydate https://github.com/bobye/20newsgroups.git 
+cd 20news-bydate/20newsgroups_clean
 bunzip2 20newsgroups.d2s.bz2
 bunzip2 20newsgroups.d2s.vocab0.bz2
 
