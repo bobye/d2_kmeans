@@ -3,12 +3,14 @@ Accelerated Discrete Distributions Clustering under Wasserstein Distance
 
 AD2-clustering is an accelerated clustering algorithm for **D**iscrete **D**istributions (D2)
 under the *exact* [Wasserstein metric](http://en.wikipedia.org/wiki/Wasserstein_metric).
-It can scale to large-scale D2 data with parallel computing. Please see our paper for technical details: 
+It can scale to large-scale D2 data with parallel computing. 
+This project is the __first__ efficient implementation publicly available for D2-clustering,
+and it is still in the very early stage of development. Contributions are welcomed. 
 
-[Jianbo Ye](http://www.personal.psu.edu/jxy198), Panruo Wu, James Z. Wang and [Jia Li](http://sites.stat.psu.edu/~jiali/), "Fast Discrete Distribution Clustering under Wasserstein Distance" in submission to NIPS 2015.
+Please see our paper for technical details: 
 
-This project is the __first__ efficient implementation public available for D2-clustering,
-and it is still in the very early stage of development.
+[Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and Jia Li, "Fast Discrete Distribution Clustering under Wasserstein Distance" in submission to NIPS 2015.
+
 
 ## Discrete Distributions
 There are three data types of discrete distribution that have been covered
@@ -71,5 +73,8 @@ see [here](src/app) for detailed instructions on possible arguments and modes of
 
 See [here](test) for more examples.
 
+
+## Misc
+ - Other related projects: [d2lib](https://github.com/colourbrain/d2lib)
 
 
