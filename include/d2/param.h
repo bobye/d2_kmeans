@@ -21,9 +21,11 @@ typedef struct {
 
 /* types of D2 data */
 #define D2_EUCLIDEAN_L2      (0)
-#define D2_CITYBLOCK_L1      (1)
+#define D2_SEMI_EUCLIDEAN    (1)
+#define D2_CITYBLOCK_L1      (2)
 #define D2_HISTOGRAM         (5)
 #define D2_N_GRAM            (6)
 #define D2_WORD_EMBED        (7)
+#define D2_SEMI_WORD_EMBED   (8) // 9%7=2
 
 #endif /* _D2_PARAM_H_ */

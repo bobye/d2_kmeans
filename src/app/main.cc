@@ -141,11 +141,15 @@ int main(int argc, char *argv[])
     type_of_phases[i] = atoi(ss3[i].c_str());
     if (world_rank == 0) {
       if (type_of_phases[i] == D2_HISTOGRAM) {
-	cout << "\t" << i << "-th phase is of histogram format" << endl;
+	cout << "\t" << i << "-th phase is of D2_HISTORAM" << endl;
       } else if (type_of_phases[i] == D2_EUCLIDEAN_L2) {
-	cout << "\t" << i << "-th phase is of discrete distribution format" << endl;
+	cout << "\t" << i << "-th phase is of D2_Euclidean_L2 " << endl;
+      } else if (type_of_phases[i] == D2_SEMI_EUCLIDEAN) {
+	cout << "\t" << i << "-th phase is of D2_SEMI_EUCLIDEAN" << endl;
       } else if (type_of_phases[i] == D2_WORD_EMBED) {
-	cout << "\t" << i << "-th phase is of word embedding format" << endl;
+	cout << "\t" << i << "-th phase is of D2_WORD_EMBED" << endl;
+      } else if (type_of_phases[i] == D2_SEMI_WORD_EMBED) {
+	cout << "\t" << i << "-th phase is of D2_SEMI_WORD_EMBED" << endl;
       }
     }
     assert(dimension_of_phases[i] >= 0 && avg_strides[i] > 0);

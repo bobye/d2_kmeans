@@ -62,7 +62,8 @@ int d2_read(const char* filename, mph *p_data) {
       p_data->ph[n].vocab_size = str;
       fclose(fp_new);
     }
-    else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {
+    else if (p_data->ph[n].metric_type == D2_WORD_EMBED ||
+	     p_data->ph[n].metric_type == D2_SEMI_WORD_EMBED) {
       char filename_extra[255];
       FILE *fp_new; // local variable
       int dim, c, i;
@@ -100,7 +101,8 @@ int d2_read(const char* filename, mph *p_data) {
       // check if needed to reallocate
       if (p_data->ph[n].col + str > p_data->ph[n].max_col) {
 	printf("rank %d warning: preallocated memory for phase %d is insufficient! Reallocated.\n", world_rank, n);
-	if (p_data->ph[n].metric_type == D2_EUCLIDEAN_L2) {
+	if (p_data->ph[n].metric_type == D2_EUCLIDEAN_L2 ||
+	    p_data->ph[n].metric_type == D2_SEMI_EUCLIDEAN ) {
 	  p_data->ph[n].p_supp = (SCALAR *) realloc(p_data->ph[n].p_supp, 2 * dim * p_data->ph[n].max_col * sizeof(SCALAR));
 	  p_data->ph[n].p_w = (SCALAR *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(SCALAR));
 	  assert(p_data->ph[n].p_supp != NULL && p_data->ph[n].p_w != NULL);
@@ -110,7 +112,8 @@ int d2_read(const char* filename, mph *p_data) {
 	  p_data->ph[n].p_w = (SCALAR *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(SCALAR));
 	  assert(p_data->ph[n].p_w != NULL);
 	  p_w[n]    = p_data->ph[n].p_w + p_data->ph[n].col;
-	} else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {
+	} else if (p_data->ph[n].metric_type == D2_WORD_EMBED ||
+		   p_data->ph[n].metric_type == D2_SEMI_WORD_EMBED) {
 	  p_data->ph[n].p_supp_sym = (int *) realloc(p_data->ph[n].p_supp_sym, 2* p_data->ph[n].max_col * sizeof(int));
 	  p_data->ph[n].p_w = (SCALAR *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(SCALAR));
 	  assert(p_data->ph[n].p_supp_sym != NULL && p_data->ph[n].p_w != NULL);
@@ -137,12 +140,14 @@ int d2_read(const char* filename, mph *p_data) {
       p_w[n] = p_w[n] + str;
 
       // read support vec
-      if (p_data->ph[n].metric_type == D2_EUCLIDEAN_L2) {
+      if (p_data->ph[n].metric_type == D2_EUCLIDEAN_L2 ||
+	  p_data->ph[n].metric_type == D2_SEMI_EUCLIDEAN ) {
 	p_supp_sph = p_supp[n];strxdim = str*dim;
 	for (j=0; j<strxdim; ++j)
 	  fscanf(fp, SCALAR_STDIO_TYPE, &p_supp_sph[j]); 
 	p_supp[n] = p_supp[n] + strxdim;
-      } else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {	
+      } else if (p_data->ph[n].metric_type == D2_WORD_EMBED ||
+		 p_data->ph[n].metric_type == D2_SEMI_WORD_EMBED) {	
 	p_supp_sym_sph = p_supp_sym[n]; 
 	for (j=0; j<str; ++j) {
 	  fscanf(fp, "%d", &p_supp_sym_sph[j]); p_supp_sym_sph[j] --; // index started at one
@@ -347,13 +352,15 @@ int d2_write_split(const char* filename, mph *p_data, int splits) {
 	    }
 	  for (k=0; k<str; ++k) fprintf(fp, "%lf ", p_data->ph[j].p_w[pos + k]);
 	  fprintf(fp, "\n");
-	  if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2) {
+	  if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2 ||
+	      p_data->ph[j].metric_type == D2_SEMI_EUCLIDEAN ) {
 	    for (k=0; k<str; ++k) {
 	      for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
 	      fprintf(fp, "\n"); 
 	    }
 	  }
-	  else if (p_data->ph[j].metric_type == D2_WORD_EMBED) {
+	  else if (p_data->ph[j].metric_type == D2_WORD_EMBED ||
+		   p_data->ph[j].metric_type == D2_SEMI_WORD_EMBED) {
 	    for (k=0; k<str; ++k) {
 	      fprintf(fp, "%d ", p_data->ph[j].p_supp_sym[pos + k]);
 	    }
@@ -365,11 +372,13 @@ int d2_write_split(const char* filename, mph *p_data, int splits) {
 	    SCALAR *supp=NULL, *c_supp=NULL;
 	    SCALAR *w=NULL, *c_w = NULL;
 	    char renew=0;
-	    if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2) {
+	    if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2||
+		p_data->ph[j].metric_type == D2_SEMI_EUCLIDEAN ) {
 	      supp=p_data->ph[j].p_supp + pos*dim;
 	      w=p_data->ph[j].p_w + pos;
 	    }
-	    else if (p_data->ph[j].metric_type == D2_WORD_EMBED) {
+	    else if (p_data->ph[j].metric_type == D2_WORD_EMBED ||
+		     p_data->ph[j].metric_type == D2_SEMI_WORD_EMBED) {
 	      renew = 1;
 	      supp = (SCALAR*) _D2_MALLOC_SCALAR(str*dim);	 
 	      w = (SCALAR*) _D2_MALLOC_SCALAR(str);

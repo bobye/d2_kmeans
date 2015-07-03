@@ -19,7 +19,9 @@ extern "C" {
      *
      * @param(metric_type)
      * D2_EUCLIDEAN_L2 : @param(dim) is the dimension of vector space
+     * D2_SEMI_EUCLIDEAN : @param(dim) is the dimension of vector space
      * D2_WORD_EMBED   : @param(dim) is the dimension of embedding space
+     * D2_SEMI_WORD_EMBED : @param(dim) is the dimension of embedding space
      * D2_CITYBLOCK_L1 : same above
      * D2_HISTOGRAM    : @param(dim=0)
      * D2_N_GRAM       : @param(dim) is the size of grams.

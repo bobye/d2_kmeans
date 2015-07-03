@@ -39,7 +39,8 @@ int d2_allocate_sph(sph *p_data_sph,
   p_data_sph->p_w    = _D2_MALLOC_SCALAR(m);
 
   // consider different data format
-  if (type == D2_EUCLIDEAN_L2) {
+  if (type == D2_EUCLIDEAN_L2 ||
+      type == D2_SEMI_EUCLIDEAN) {
     p_data_sph->p_supp = _D2_MALLOC_SCALAR(n);
     p_data_sph->metric_type = D2_EUCLIDEAN_L2;
     p_data_sph->p_supp_sym = NULL;
@@ -49,7 +50,8 @@ int d2_allocate_sph(sph *p_data_sph,
     p_data_sph->metric_type = D2_HISTOGRAM;
     p_data_sph->p_supp_sym = NULL;
   }
-  else if (type == D2_WORD_EMBED) {
+  else if (type == D2_WORD_EMBED ||
+	   type == D2_SEMI_WORD_EMBED) {
     p_data_sph->p_supp_sym = _D2_MALLOC_INT(m);
     p_data_sph->metric_type = D2_WORD_EMBED;
     p_data_sph->p_supp = NULL;
@@ -69,15 +71,25 @@ int d2_free_sph(sph *p_data_sph) {
   _D2_FREE(p_data_sph->p_str_cum);
 
   if (p_data_sph->metric_type == D2_EUCLIDEAN_L2 ||
-      p_data_sph->metric_type == D2_CITYBLOCK_L1) {
+      p_data_sph->metric_type == D2_SEMI_EUCLIDEAN || 
+      p_data_sph->metric_type == D2_CITYBLOCK_L1 ) {
     _D2_FREE(p_data_sph->p_supp);
   }
-  else if (p_data_sph->metric_type == D2_HISTOGRAM) {
+  
+  if (p_data_sph->metric_type == D2_HISTOGRAM ||
+      p_data_sph->metric_type == D2_N_GRAM) {
     _D2_FREE(p_data_sph->dist_mat);
   }
-  else if (p_data_sph->metric_type == D2_N_GRAM) {
+  
+  if (p_data_sph->metric_type == D2_N_GRAM || 
+      p_data_sph->metric_type == D2_WORD_EMBED || 
+      p_data_sph->metric_type == D2_SEMI_WORD_EMBED) {
     _D2_FREE(p_data_sph->p_supp_sym);
-    _D2_FREE(p_data_sph->dist_mat);
+  }
+
+  if (p_data_sph->metric_type == D2_WORD_EMBED ||
+      p_data_sph->metric_type == D2_SEMI_WORD_EMBED) {
+    _D2_FREE(p_data_sph->vocab_vec);
   }
   return 0;
 }
