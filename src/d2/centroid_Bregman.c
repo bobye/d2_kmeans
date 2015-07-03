@@ -194,9 +194,17 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     if (iter % p_badmm_options->updatePerLoops == 0) {
       switch (data_ph->metric_type) {
       case D2_EUCLIDEAN_L2 :
+      case D2_SEMI_EUCLIDEAN :	
 	//	assert(num_of_labels < size);
 	for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0.f; // reset c->p_supp
-	for (i=0; i<c->col; ++i) Zr[i] = 0.f; //reset Zr to temporarily storage
+	for (i=0; i<c->col; ++i) Zr[i] = 0.f; //reset Zr to temporarily storage	
+
+	if (data_ph->metric_type == D2_SEMI_EUCLIDEAN) {
+	  SCALAR sigma = data_ph->metric_param;
+	  SCALAR sigma2rel = sigma * sigma / rho;
+	  for (i=0; i<str*col; ++i)
+	    if (C[i] > sigma2rel) X[i] = X[i] * sigma2rel / C[i];	  
+	}
 
 	for (i=0;i < size;  ++i) {
 	  /* ADD mat(&p_supp[p_str_cum[i]*dim], dim, p_str[i]) * 
@@ -227,9 +235,18 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	for (i=0; i<str*col; ++i) C[i] /= rho; // normalize C and Y
 	break;
       case D2_WORD_EMBED :
+      case D2_SEMI_WORD_EMBED :
 	assert(num_of_labels < size);
 	for (i=0; i<strxdim*num_of_labels; ++i) c->p_supp[i] = 0.f;
 	for (i=0; i<c->col; ++i) Zr[i] = 0.f; //reset Zr to temporarily storage
+
+	if (data_ph->metric_type == D2_SEMI_WORD_EMBED) {
+	  SCALAR sigma = data_ph->metric_param;
+	  SCALAR sigma2rel = sigma * sigma / rho;
+	  for (i=0; i<str*col; ++i)
+	    if (C[i] > sigma2rel) X[i] = X[i] * sigma2rel / C[i];	  
+	}
+
 	for (i=0; i<size; ++i) {
 	  int *m_supp_sym = p_supp_sym + p_str_cum[i];
 	  SCALAR *Xm = X + str*p_str_cum[i];
@@ -297,6 +314,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     /*************************************************************************/
     // step 6: check residuals
     if ((iter%100==99 ) || (iter < 100 && iter%20 == 19))  {
+      // make sure X is not modified 
       obj = _D2_CBLAS_FUNC(dot)(str*col, C, 1, X, 1);
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, X, 1);
       _D2_CBLAS_FUNC(axpy)(str*col, -1, Z, 1, Z0,1);
