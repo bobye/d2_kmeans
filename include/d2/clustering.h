@@ -49,7 +49,12 @@ extern "C" {
      *                   and dist_mat is the pairwise distance matrix of vocab
      */
     int metric_type;     
-    
+
+    /**
+     * Extra parameter if metric_type is a semi-metric
+     * In general, it should read from command line
+     */
+    SCALAR metric_param; 
 
     /**
      * For data of D2 with Euclidean supports */

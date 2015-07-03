@@ -1,4 +1,4 @@
-#include <stdio.h>
+ #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -34,6 +34,7 @@ double d2_compute_distance(mph *a, size_t i,
       int dim = a->ph[n].dim; assert(dim == b_sph->dim);      
       size_t index = (selected_phase < 0 ? (index_task * a->s_ph + n) : index_task);
       size_t idx = b_sph->p_str[j] * a_sph->p_str_cum[i];
+      SCALAR metric_param = a->ph[n].metric_param;
       switch (a_sph->metric_type) {
       case D2_EUCLIDEAN_L2 :
 	_D2_FUNC(pdist2)(dim, 
@@ -52,6 +53,32 @@ double d2_compute_distance(mph *a, size_t i,
 				  index);
 	d += val;
 	break;
+      case D2_SEMI_EUCLIDEAN : {
+	SCALAR *thisC = var_work->g_var[n].C + idx;
+	int k, k_max=b_sph->p_str[j]*a_sph->p_str[i];
+	SCALAR sigma = metric_param;
+	SCALAR square_sigma  = metric_param * metric_param;
+	_D2_FUNC(pdist2)(dim, 
+			 b_sph->p_str[j], 
+			 a_sph->p_str[i], 
+			 b_sph->p_supp + b_sph->p_str_cum[j]*dim, 
+			 a_sph->p_supp + a_sph->p_str_cum[i]*dim, 
+			 thisC);
+	for (k=0; k < k_max; ++k) 
+	  if (thisC[k] > square_sigma) {
+	    thisC[k] = sigma * sqrt(thisC[k]) / 2. + square_sigma / 2.;
+	  }
+	val = d2_match_by_distmat(b_sph->p_str[j], 
+				  a_sph->p_str[i], 				  
+				  thisC,
+				  b_sph->p_w + b_sph->p_str_cum[j], 
+				  a_sph->p_w + a_sph->p_str_cum[i], 
+				  NULL, // x and lambda are implemented later
+				  NULL,
+				  index);
+	d += val;
+      }
+	break;
       case D2_WORD_EMBED :
 	_D2_FUNC(pdist2_sym)(dim,
 			     b_sph->p_str[j],
@@ -69,6 +96,33 @@ double d2_compute_distance(mph *a, size_t i,
 				  NULL,
 				  index);
 	d += val;
+	break;
+      case D2_SEMI_WORD_EMBED : {
+	SCALAR *thisC = var_work->g_var[n].C + idx;
+	int k, k_max=b_sph->p_str[j]*a_sph->p_str[i];
+	SCALAR sigma = metric_param;
+	SCALAR square_sigma  = metric_param * metric_param;
+	_D2_FUNC(pdist2_sym)(dim,
+			     b_sph->p_str[j],
+			     a_sph->p_str[i],
+			     b_sph->p_supp + b_sph->p_str_cum[j]*dim,
+			     a_sph->p_supp_sym + a_sph->p_str_cum[i],
+			     thisC,
+			     a_sph->vocab_vec);
+	for (k=0; k < k_max; ++k) 
+	  if (thisC[k] > square_sigma) {
+	    thisC[k] = sigma * sqrt(thisC[k]) / 2. + square_sigma / 2.;
+	  }
+	val = d2_match_by_distmat(b_sph->p_str[j], 
+				  a_sph->p_str[i], 				  
+				  thisC,
+				  b_sph->p_w + b_sph->p_str_cum[j], 
+				  a_sph->p_w + a_sph->p_str_cum[i], 
+				  NULL, // x and lambda are implemented later
+				  NULL,
+				  index);
+	d += val;
+      }
 	break;
       case D2_HISTOGRAM :
 	val = d2_match_by_distmat(b_sph->p_str[j],
