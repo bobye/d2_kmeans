@@ -23,11 +23,10 @@ void calculate_distmat(sph *data_ph, int* label, size_t size, sph *c, SCALAR* C)
     for (i=0;i < size;  ++i) 
       _D2_FUNC(pdist2)(dim, str, p_str[i], c->p_supp + label[i]*strxdim, p_supp + dim*p_str_cum[i], C + str*p_str_cum[i]);
     {
-    SCALAR sigma = data_ph->metric_param / 2.;
+    SCALAR sigma = data_ph->metric_param * 2.;
     SCALAR sigma2 = data_ph->metric_param * data_ph->metric_param;
-    SCALAR sigma2half = sigma2 / 2.;
     for (i=0; i<str * col; ++i)
-      if (C[i] > sigma2) C[i] = sigma * sqrt(C[i]) + sigma2half;
+      if (C[i] > sigma2) C[i] = sigma * sqrt(C[i]) - sigma2;
     }
     break;    
 
@@ -40,11 +39,10 @@ void calculate_distmat(sph *data_ph, int* label, size_t size, sph *c, SCALAR* C)
     for (i=0; i< size; ++i)
       _D2_FUNC(pdist2_sym)(dim, str, p_str[i], c->p_supp + label[i]*strxdim, p_supp_sym + p_str_cum[i], C + str*p_str_cum[i], data_ph->vocab_vec);
     {
-    SCALAR sigma = data_ph->metric_param / 2.;
+    SCALAR sigma = data_ph->metric_param * 2.;
     SCALAR sigma2 = data_ph->metric_param * data_ph->metric_param;
-    SCALAR sigma2half = sigma2 / 2.;
     for (i=0; i<str * col; ++i)
-      if (C[i] > sigma2) C[i] = sigma * sqrt(C[i]) + sigma2half;
+      if (C[i] > sigma2) C[i] = sigma * sqrt(C[i]) - sigma2;
     }
     break;
 

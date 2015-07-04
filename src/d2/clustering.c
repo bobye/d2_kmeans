@@ -56,7 +56,7 @@ double d2_compute_distance(mph *a, size_t i,
       case D2_SEMI_EUCLIDEAN : {
 	SCALAR *thisC = var_work->g_var[n].C + idx;
 	int k, k_max=b_sph->p_str[j]*a_sph->p_str[i];
-	SCALAR sigma = metric_param;
+	SCALAR sigma = 2. * metric_param;
 	SCALAR square_sigma  = metric_param * metric_param;
 	_D2_FUNC(pdist2)(dim, 
 			 b_sph->p_str[j], 
@@ -66,7 +66,7 @@ double d2_compute_distance(mph *a, size_t i,
 			 thisC);
 	for (k=0; k < k_max; ++k) 
 	  if (thisC[k] > square_sigma) {
-	    thisC[k] = sigma * sqrt(thisC[k]) / 2. + square_sigma / 2.;
+	    thisC[k] = sigma * sqrt(thisC[k]) - square_sigma;
 	  }
 	val = d2_match_by_distmat(b_sph->p_str[j], 
 				  a_sph->p_str[i], 				  
@@ -100,7 +100,7 @@ double d2_compute_distance(mph *a, size_t i,
       case D2_SEMI_WORD_EMBED : {
 	SCALAR *thisC = var_work->g_var[n].C + idx;
 	int k, k_max=b_sph->p_str[j]*a_sph->p_str[i];
-	SCALAR sigma = metric_param;
+	SCALAR sigma = 2. * metric_param;
 	SCALAR square_sigma  = metric_param * metric_param;
 	_D2_FUNC(pdist2_sym)(dim,
 			     b_sph->p_str[j],
@@ -111,7 +111,7 @@ double d2_compute_distance(mph *a, size_t i,
 			     a_sph->vocab_vec);
 	for (k=0; k < k_max; ++k) 
 	  if (thisC[k] > square_sigma) {
-	    thisC[k] = sigma * sqrt(thisC[k]) / 2. + square_sigma / 2.;
+	    thisC[k] = sigma * sqrt(thisC[k]) - square_sigma;
 	  }
 	val = d2_match_by_distmat(b_sph->p_str[j], 
 				  a_sph->p_str[i], 				  
