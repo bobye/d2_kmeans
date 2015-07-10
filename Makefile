@@ -91,17 +91,17 @@ data/protein_seq/protein: data/protein_seq/d2_protein_ngram.cc $(LIB)
 ifeq ($(OS), Darwin)
 
 libmosek64_wrapper.dylib: src/d2/solver_mosek.o
-	$(CXX) -dynamiclib $(DEFINES) $(INCLUDES) -Wl,-install_name,$@ -o libmosek64_wrapper.$(MOSEK_VERSION).dylib $< $(MOSEKLIB) $(LIBRARIES) 
+	$(TCXX) -dynamiclib $(DEFINES) $(INCLUDES) -Wl,-install_name,$@ -compatibility_version 7.0 -current_version $(MOSEK_VERSION) -o libmosek64_wrapper.$(MOSEK_VERSION).dylib $< $(MOSEKLIB) $(LIBRARIES) 
 	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib libmosek64_wrapper.$(MOSEK_VERSION).dylib
 	ln -sf libmosek64_wrapper.$(MOSEK_VERSION).dylib $@ 
 
 libad2c.dylib: $(C_SOURCE_OBJECTS) libmosek64_wrapper.dylib
-	$(CC) -dynamiclib $(DEFINES) $(INCLUDES) -Wl,-install_name,$@ -o libad2c.$(VERSION).dylib $^ $(LIBRARIES)
+	$(CC) -dynamiclib $(DEFINES) $(INCLUDES) -Wl,-install_name,$@ -current_version $(VERSION) -o libad2c.$(VERSION).dylib $^ $(LIBRARIES)
 	ln -sf libad2c.$(VERSION).dylib $@
 
 else
 libmosek64_wrapper.so: src/d2/solver_mosek.o
-	$(CXX) -shared $(DEFINES) $(INCLUDES) -Wl,-soname,$@ -o libmosek64_wrapper.$(MOSEK_VERSION).so $< $(MOSEKLIB) $(LIBRARIES) 
+	$(TCXX) -shared $(DEFINES) $(INCLUDES) -Wl,-soname,$@ -o libmosek64_wrapper.$(MOSEK_VERSION).so $< $(MOSEKLIB) $(LIBRARIES) 
 	ln -sf libmosek64_wrapper.$(MOSEK_VERSION).so $@ 
 
 libad2c.so: $(C_SOURCE_OBJECTS) libmosek64_wrapper.so
