@@ -44,14 +44,10 @@ Build dependencies:
 Create `make.inc` file to resolve the dependencies, see `make.inc.Linux` for an example.
 One can choose to build the program under Linux or Mac. 
 
-Compile
-```
- $ make MPI=0 # build sequential version, or
- $ make MPI=1 # build MPI version (default)
-```
+Compile, and run unit tests (it takes several minutes):
 
-Run unit tests (it takes several minutes):
 ```
+ $ make -j4 && make install 
  $ make test 
 ```
 

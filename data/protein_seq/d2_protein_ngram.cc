@@ -24,9 +24,7 @@
  * 2: Gradient Decent
  */
 #include "d2/param.h"
-int d2_alg_type; //  = D2_CENTROID_BADMM;
-int world_rank = 0;
-int nprocs = 1;
+extern int d2_alg_type;
 extern BADMM_options *p_badmm_options;
 extern GRADDEC_options *p_graddec_options;
 

@@ -12,11 +12,15 @@
 #ifdef __USE_MPI__
 #include <mpi.h>
 #endif
-extern int d2_alg_type;
 
 const double time_budget_ratio = 2000.0;
 double time_budget;
 double global_startTime;
+
+int d2_alg_type = D2_CENTROID_BADMM;
+int world_rank = 0; 
+int nprocs = 1;
+
 /**
  * Compute the distance between i-th d2 in a and j-th d2 in b 
  * Return square root of the undergoing cost as distance

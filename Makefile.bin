@@ -1,0 +1,81 @@
+include make.inc
+
+ifndef MPI
+MPI=1
+endif
+
+ifeq ($(MPI),1)
+CC=$(MPICC)
+CXX=$(MPICXX)
+else
+CC=$(TCC)
+CXX=$(TCXX)
+endif
+
+OS=$(shell uname)
+VERSION=0.1
+
+ARCH_FLAGS=-m64
+CFLAGS=-Wextra -Wall -pedantic-errors -O3 -fPIC -fno-common $(ARCH_FLAGS)
+LDFLAGS=$(ARCH_FLAGS) 
+DEFINES=-D __BLAS_LEGACY__
+INCLUDES=-Iinclude/ -I$(MOSEK)/h $(CBLAS_INC)
+MOSEKLIB=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread
+LIBRARIES=$(BLAS_LIB) $(OTHER_LIB)
+
+SOURCE_FILES_WITH_MAIN=\
+	src/app/util.cc\
+	src/app/main.cc
+
+ALL_OBJECTS=\
+	$(patsubst %.cc, %.o, $(SOURCE_FILES_WITH_MAIN))
+
+LIB=\
+	libad2c.dylib\
+	libmosek64_wrapper.dylib
+
+all: install d2 protein
+
+lib: $(LIB) #prebuild libraries
+
+d2: src/app/util.cc src/app/main.cc $(LIB)
+	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+
+data/protein_seq/protein: data/protein_seq/d2_protein_ngram.cc $(LIB)
+	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+
+
+ifeq ($(OS), Darwin)
+loaddylib=\
+	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $(1)
+
+install: libmosek64_wrapper.$(MOSEK_VERSION).dylib 
+	$(call loaddylib,$<)
+
+else
+install:
+	echo "Do Nothing."
+endif
+
+
+-include $(DEPENDENCY_FILES)
+
+
+protein: data/protein_seq/protein
+
+.PHONY: clean test
+clean:
+	@rm -f *_test d2 data/protein_seq/protein
+	@for pattern in '*.o' '*.d'; do \
+		find . -name "$$pattern" | xargs rm; \
+	done
+
+ifeq ($(MPI),1)
+test:
+	cd test && ./test_mpi.sh
+else
+test:
+	cd test && ./test_single.sh
+endif
+
+

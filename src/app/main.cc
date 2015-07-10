@@ -21,9 +21,7 @@
  * 2: Gradient Decent
  */
 #include "d2/param.h"
-int d2_alg_type = D2_CENTROID_BADMM;
-int world_rank = 0; 
-int nprocs = 1;
+extern int d2_alg_type;
 
 int main(int argc, char *argv[])
 { 
