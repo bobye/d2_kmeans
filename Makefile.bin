@@ -23,38 +23,57 @@ INCLUDES=-Iinclude/ -I$(MOSEK)/h $(CBLAS_INC)
 MOSEKLIB=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread
 LIBRARIES=$(BLAS_LIB) $(OTHER_LIB)
 
+CPP_SOURCE_FILES=\
+	src/d2/solver_mosek.cc\
+
 SOURCE_FILES_WITH_MAIN=\
 	src/app/util.cc\
 	src/app/main.cc
 
 ALL_OBJECTS=\
+	$(CPP_SOURCE_OBJECTS)\
 	$(patsubst %.cc, %.o, $(SOURCE_FILES_WITH_MAIN))
 
+DEPENDENCY_FILES=\
+	$(patsubst %.o, %.d, $(ALL_OBJECTS))
+
+ifeq ($(OS), Darwin)
 LIB=\
 	libad2c.dylib\
 	libmosek64_wrapper.dylib
+else
+LIB=\
+	libad2c.so\
+	libmosek64_wrapper.so
+endif
 
-all: install d2 protein
 
-lib: $(LIB) #prebuild libraries
+all: d2 protein
+
+lib: $(LIB) 
+
+%.o: %.cc Makefile
+	@# Make dependecy file
+	$(CXX) -MM -MT $@ -MF $(patsubst %.cc,%.d,$<) $(CFLAGS) $(DEFINES) $(INCLUDES) $<
+	@# Compile
+	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDES) -c -o $@ $<
 
 d2: src/app/util.cc src/app/main.cc $(LIB)
-	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES) $(MOSEKLIB)
 
 data/protein_seq/protein: data/protein_seq/d2_protein_ngram.cc $(LIB)
-	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES) $(MOSEKLIB)
 
 
 ifeq ($(OS), Darwin)
-loaddylib=\
-	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib $(1)
-
-install: libmosek64_wrapper.$(MOSEK_VERSION).dylib 
-	$(call loaddylib,$<)
-
+libmosek64_wrapper.dylib: src/d2/solver_mosek.o
+	$(TCXX) -dynamiclib $(DEFINES) $(INCLUDES) -Wl,-install_name,$@ -compatibility_version 7.0 -current_version $(MOSEK_VERSION) -o libmosek64_wrapper.$(MOSEK_VERSION).dylib $< $(MOSEKLIB) $(LIBRARIES) 
+	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib libmosek64_wrapper.$(MOSEK_VERSION).dylib
+	ln -sf libmosek64_wrapper.$(MOSEK_VERSION).dylib $@ 
 else
-install:
-	echo "Do Nothing."
+libmosek64_wrapper.so: src/d2/solver_mosek.o
+	$(TCXX) -shared $(DEFINES) $(INCLUDES) -Wl,-soname,$@ -o libmosek64_wrapper.$(MOSEK_VERSION).so $< $(MOSEKLIB) $(LIBRARIES) 
+	ln -sf libmosek64_wrapper.$(MOSEK_VERSION).so $@ 
 endif
 
 
@@ -65,7 +84,8 @@ protein: data/protein_seq/protein
 
 .PHONY: clean test
 clean:
-	@rm -f *_test d2 data/protein_seq/protein
+	@rm -f libmosek64_wrapper*.so
+	@rm -f d2 data/protein_seq/protein
 	@for pattern in '*.o' '*.d'; do \
 		find . -name "$$pattern" | xargs rm; \
 	done

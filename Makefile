@@ -58,12 +58,19 @@ ALL_OBJECTS=\
 	$(CPP_SOURCE_OBJECTS)\
 	$(patsubst %.cc, %.o, $(SOURCE_FILES_WITH_MAIN))
 
+DEPENDENCY_FILES=\
+	$(patsubst %.o, %.d, $(ALL_OBJECTS))
+
+ifeq ($(OS), Darwin)
 LIB=\
 	libad2c.dylib\
 	libmosek64_wrapper.dylib
+else
+LIB=\
+	libad2c.so\
+	libmosek64_wrapper.so
+endif
 
-DEPENDENCY_FILES=\
-	$(patsubst %.o, %.d, $(ALL_OBJECTS))
 
 all: d2 protein
 
@@ -82,10 +89,10 @@ lib: $(LIB)
 	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDES) -c -o $@ $<
 
 d2: src/app/util.cc src/app/main.cc $(LIB)
-	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES) $(MOSEKLIB)
 
 data/protein_seq/protein: data/protein_seq/d2_protein_ngram.cc $(LIB)
-	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
+	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES) $(MOSEKLIB)
 
 
 ifeq ($(OS), Darwin)
@@ -105,11 +112,8 @@ libmosek64_wrapper.so: src/d2/solver_mosek.o
 	ln -sf libmosek64_wrapper.$(MOSEK_VERSION).so $@ 
 
 libad2c.so: $(C_SOURCE_OBJECTS) libmosek64_wrapper.so
-	$(CC) -shared $(DEFINES) $(INCLUDES) -Wl,-install_name,$@ -o libad2c.$(VERSION).so $^ $(LIBRARIES)
+	$(CC) -shared $(DEFINES) $(INCLUDES) -Wl,-soname,$@ -o libad2c.$(VERSION).so $^ -Wl,-rpath,. $(LIBRARIES)
 	ln -sf libad2c.$(VERSION).so $@ 
-
-install:
-	echo "Do Nothing."
 endif
 
 
@@ -120,7 +124,8 @@ protein: data/protein_seq/protein
 
 .PHONY: clean test
 clean:
-	@rm -f *_test d2 data/protein_seq/protein
+	@rm -f *.so
+	@rm -f d2 data/protein_seq/protein
 	@for pattern in '*.o' '*.d'; do \
 		find . -name "$$pattern" | xargs rm; \
 	done
