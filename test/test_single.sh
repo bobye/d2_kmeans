@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 
 echo 'Starting the test of serial version'
