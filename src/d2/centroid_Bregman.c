@@ -159,7 +159,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     _D2_FUNC(grms)(str, col, X, p_w);
 
     /*************************************************************************/
-    // step 2: update Z
+    // step 2a: update Z
     // Z = X.*exp(Y/rho)
     for (i=0; i<str*col; ++i) {
       Z0[i] = Z[i];
@@ -167,14 +167,8 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     }
     for (i=0;i<size; ++i) {
       _D2_FUNC(rnorm)(str, p_str[i], Z + str*p_str_cum[i], Zr + str*i); 
-      _D2_FUNC(gcms)(str, p_str[i], Z + str*p_str_cum[i], c->p_w + str*label[i]);
     }
-   
-    /*************************************************************************/
-    // step 3: update Y
-    for (i=0; i<str*col; ++i) Y[i] += X[i] - Z[i];
 
-    /*************************************************************************/
     // step 4: update c->p_w
     for (i=0; i<str*num_of_labels; ++i) c->p_w[i] = 0; //reset c->p_w locally
     _D2_FUNC(cnorm)(str, size, Zr, Xc);
@@ -188,6 +182,17 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
     MPI_Allreduce(MPI_IN_PLACE, c->p_w, c->col, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
 #endif
     _D2_FUNC(cnorm)(str, num_of_labels, c->p_w, Xc);
+    
+    // step 2b: update Z
+    for (i=0;i<size; ++i) {
+      _D2_FUNC(gcms)(str, p_str[i], Z + str*p_str_cum[i], c->p_w + str*label[i]);
+    }
+   
+    /*************************************************************************/
+    // step 3: update Y
+    for (i=0; i<str*col; ++i) Y[i] += X[i] - Z[i];
+
+    /*************************************************************************/
     
 
     // step 5: update c->p_supp (optional)
