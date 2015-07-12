@@ -1,12 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
 echo 'Starting the test of parallel version'
 
 alias mpirun="mpirun -mca btl ^openib" # suppress openib
 
-cd .. && make clean && make MPI=1 &> /dev/null
-
-echo 'Build done'
+cd ..
+#cd .. && make clean && make MPI=1 &> /dev/null
 
 num_of_nodes=8
 batch_size=`./d2 -i data/icip14_data/total.d2 -p 2 -n 5000 -d 3,3 -s 6,8 --prepare_batches $num_of_nodes | grep batch_size | sed 's/^.*batch_size://g'`

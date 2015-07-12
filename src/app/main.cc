@@ -21,9 +21,7 @@
  * 2: Gradient Decent
  */
 #include "d2/param.h"
-int d2_alg_type = D2_CENTROID_BADMM;
-int world_rank = 0; 
-int nprocs = 1;
+extern int d2_alg_type;
 
 int main(int argc, char *argv[])
 { 
@@ -141,11 +139,11 @@ int main(int argc, char *argv[])
     type_of_phases[i] = atoi(ss3[i].c_str());
     if (world_rank == 0) {
       if (type_of_phases[i] == D2_HISTOGRAM) {
-	cout << "\t" << i << "-th phase is of histogram format" << endl;
+	cout << "\t" << i << "-th phase is of D2_HISTORAM" << endl;
       } else if (type_of_phases[i] == D2_EUCLIDEAN_L2) {
-	cout << "\t" << i << "-th phase is of discrete distribution format" << endl;
+	cout << "\t" << i << "-th phase is of D2_Euclidean_L2 " << endl;
       } else if (type_of_phases[i] == D2_WORD_EMBED) {
-	cout << "\t" << i << "-th phase is of word embedding format" << endl;
+	cout << "\t" << i << "-th phase is of D2_WORD_EMBED" << endl;
       }
     }
     assert(dimension_of_phases[i] >= 0 && avg_strides[i] > 0);

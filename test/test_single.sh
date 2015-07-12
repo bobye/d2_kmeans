@@ -1,11 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
 
 echo 'Starting the test of serial version'
 
-cd .. && make clean && make MPI=0 &> /dev/null
-
-echo 'Build done'
+cd ..
+#cd .. && make clean && make MPI=0 &> /dev/null
 
 echo 'Profiling image centroids: test single phase #0 with one cluster'
 time ./d2 -i data/mountaindat.d2 -p 2 -n 1000 -d 3,3 -s 6,8 --phase_only 0 --clusters 1  > /dev/null
