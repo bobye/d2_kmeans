@@ -1,16 +1,7 @@
 include make.inc
 
-ifndef MPI
-MPI=1
-endif
-
-ifeq ($(MPI),1)
 CC=$(MPICC)
 CXX=$(MPICXX)
-else
-CC=$(TCC)
-CXX=$(TCXX)
-endif
 
 OS=$(shell uname)
 VERSION=0.1
@@ -48,7 +39,7 @@ LIB=\
 endif
 
 
-all: d2 protein
+all: d2
 
 lib: $(LIB) 
 
@@ -60,11 +51,6 @@ lib: $(LIB)
 
 d2: src/app/util.cc src/app/main.cc $(LIB)
 	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
-
-data/protein_seq/protein: data/protein_seq/d2_protein_ngram.cc $(LIB)
-	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
-
-
 
 ifeq ($(OS), Darwin)
 libmosek64_wrapper.dylib: src/d2/solver_mosek.o
@@ -81,22 +67,15 @@ endif
 -include $(DEPENDENCY_FILES)
 
 
-protein: data/protein_seq/protein
-
 .PHONY: clean test
 clean:
-	@rm -f libmosek64_wrapper*.so
-	@rm -f d2 data/protein_seq/protein
+	@rm -f libmosek64_wrapper*
+	@rm -f d2
 	@for pattern in '*.o' '*.d'; do \
 		find . -name "$$pattern" | xargs rm; \
 	done
 
-ifeq ($(MPI),1)
 test:
 	cd test && ./test_mpi.sh
-else
-test:
-	cd test && ./test_single.sh
-endif
 
 

@@ -4,7 +4,6 @@
 
 #ifdef __BLAS_LEGACY__
 #include <math.h>
-#include "utils/cblas.h"
 //#include <lapacke.h> //! hasn't used
 #define _D2_MALLOC_SCALAR(x)       (SCALAR *) malloc( (x) *sizeof(SCALAR)) 
 #define _D2_MALLOC_INT(x)       (int *) malloc( (x) *sizeof(int))
