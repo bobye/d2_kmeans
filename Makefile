@@ -20,8 +20,8 @@ CFLAGS=-Wextra -Wall -pedantic-errors -O3 -fPIC -fno-common $(ARCH_FLAGS)
 LDFLAGS=$(ARCH_FLAGS) 
 DEFINES=-D __BLAS_LEGACY__
 INCLUDES=-Iinclude/ -I$(MOSEK)/h $(CBLAS_INC)
-MOSEKLIB=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -liomp5 -lpthread
-LIBRARIES=-Wl,-rpath,. $(BLAS_LIB) $(OTHER_LIB)
+MOSEKLIB=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread
+LIBRARIES=-Wl,-rpath,. -Wl,-rpath,$(MOSEK)/bin $(BLAS_LIB) $(OTHER_LIB)
 
 C_SOURCE_FILES=\
 	src/d2/clustering.c\
