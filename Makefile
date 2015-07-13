@@ -97,7 +97,7 @@ data/protein_seq/protein: data/protein_seq/d2_protein_ngram.cc $(LIB)
 ifeq ($(OS), Darwin)
 
 libmosek64_wrapper.dylib: src/d2/solver_mosek.o
-	$(TCXX) -dynamiclib $(DEFINES) $(INCLUDES) -Wl,-install_name,$@ -compatibility_version 7.0 -current_version $(MOSEK_VERSION) -o libmosek64_wrapper.$(MOSEK_VERSION).dylib $< $(MOSEKLIB) $(LIBRARIES) 
+	$(TCXX) -dynamiclib $(DEFINES) $(INCLUDES) -Wl,-install_name,$@ -compatibility_version 7.0 -current_version $(MOSEK_VERSION) -o libmosek64_wrapper.$(MOSEK_VERSION).dylib $< $(MOSEKLIB)
 	install_name_tool -change  @loader_path/libmosek64.$(MOSEK_VERSION).dylib  $(MOSEK)/bin/libmosek64.$(MOSEK_VERSION).dylib libmosek64_wrapper.$(MOSEK_VERSION).dylib
 	ln -sf libmosek64_wrapper.$(MOSEK_VERSION).dylib $@ 
 

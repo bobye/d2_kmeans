@@ -6,6 +6,7 @@ MPICXX=mpicxx -D __USE_MPI__ -std=c++0x
 
 MOSEK=/Users/jxy198/mosek/7/tools/platform/osx64x86
 MOSEK_VERSION=7.1
+MOSEK_BIN=-lmosek64 -pthread
 OTHER_LIB=
 BLAS_LIB=-lblas
 
