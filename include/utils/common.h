@@ -11,7 +11,10 @@ extern "C" {
 
 #include <stdint.h> // for -std=gnu99
 
+#if !(defined(_D2_DOUBLE) || defined(_D2_SINGLE))
 #define _D2_DOUBLE
+#endif 
+
 #define _VERBOSE_OUTPUT
 
 #ifdef _D2_DOUBLE

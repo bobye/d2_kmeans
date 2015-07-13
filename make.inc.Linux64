@@ -1,0 +1,13 @@
+TCC=gcc -std=gnu99
+TCXX=g++ -std=c++0x
+
+MPICC=mpicc -D __USE_MPI__ -std=gnu99
+MPICXX=mpicxx -D __USE_MPI__ -std=c++0x
+
+MOSEK=$(HOME)/mosek/7/tools/platform/linux64x86
+MOSEK_VERSION=7.1
+OTHER_LIB=-lrt -Wl,-unresolved-symbols=ignore-in-shared-libs # clock_gettime() 
+BLAS_LIB=-lblas
+
+ARCH_FLAGS=-m64
+D2_DEFINES=-D _D2_DOUBLE
