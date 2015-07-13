@@ -30,7 +30,7 @@ s=16 # 2 4 8 16 32 64
 data_files=data/20news-bydate/20newsgroups_clean/20newsgroups.d2s
 
 # make sure split data only once
-batch_size=`./d2 -i $data_files -n 20000 -d 300 -s $s --types 7 --prepare_batches $num_of_nodes | grep batch_size | sed 's/^.*batch_size://g'`
+batch_size=`./d2 -i $data_files -n 20000 -d 300 -s $s --types 7 --prepare_batches $num_of_nodes --pre_process | grep batch_size | sed 's/^.*batch_size://g'`
 
 
 # run with different cluster numbers, use nohup to forward stdout

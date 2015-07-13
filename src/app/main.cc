@@ -37,7 +37,8 @@ int main(int argc, char *argv[])
   long size_of_samples;
   char *ss1_c_str = 0, *ss2_c_str = 0, *ss3_c_str = 0,
     *filename = 0, *centroid_filename = 0, 
-    is_eval=0, is_load=0;
+    is_eval=0, is_load=0,
+    is_pre_processed=0;
   char use_triangle = true;
   /* default settings */
   int selected_phase = -1; 
@@ -57,6 +58,7 @@ int main(int argc, char *argv[])
     {"centroid_method", 1, 0, 'M'},
     {"non_triangle", 0, 0, 'T'},
     {"prepare_batches", 1, 0, 'P'},
+    {"pre_process", 1, 0, 'Q'},
     {"types", 1, 0, 'E'},
     {"eval", 1, 0, 'e'},
     {"load", 1, 0, 'L'},
@@ -65,7 +67,7 @@ int main(int argc, char *argv[])
 
   /* [BEGIN] Parsing program arguments */
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:t:c:m:M:TP:E:e:L:", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:t:c:m:M:TQP:E:e:L:", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
@@ -108,6 +110,9 @@ int main(int argc, char *argv[])
       break;
     case 'T':
       use_triangle = false;
+      break;
+    case 'Q':
+      is_pre_processed = true;
       break;
     case 'P':
       num_of_batches = atoi(optarg); assert(num_of_batches > 0);
@@ -164,12 +169,13 @@ int main(int argc, char *argv[])
 			&dimension_of_phases[0],
 			&type_of_phases[0]);
 
+  if (num_of_batches == 0 && is_pre_processed) num_of_batches = 1;
 
   if (err == 0 && num_of_batches == 0) {  
     d2_read(filename, &data);  
   } else if (num_of_batches > 0 && world_rank == 0) {
     d2_read(filename, &data);      
-    d2_write_split(filename, &data, num_of_batches);    
+    d2_write_split(filename, &data, num_of_batches, is_pre_processed);    
     d2_free(&data);
     if (world_rank == 0) {  cout << "[Finish!]" <<endl; }
 #ifdef __USE_MPI__

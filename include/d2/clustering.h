@@ -129,7 +129,7 @@ extern "C" {
   int d2_write_labels(const char* filename, mph *p_data);
   int d2_write_labels_serial(const char* filename_ind, const char* filename, mph *p_data);
 
-  int d2_write_split(const char* filename, mph *p_data, int splits);
+  int d2_write_split(const char* filename, mph *p_data, int splits, char is_pre_processed);
   int d2_free(mph *p_data);
 
   int d2_init_centroid(mph *p_data, 

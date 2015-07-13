@@ -296,7 +296,7 @@ int d2_write_labels_serial(const char* filename_ind, const char* filename, mph *
 /**
    Serial function to split data
  */
-int d2_write_split(const char* filename, mph *p_data, int splits) {
+int d2_write_split(const char* filename, mph *p_data, int splits, char is_pre_processed) {
   const int s_ph = p_data->s_ph;
   const size_t size = p_data->size; 
   size_t *indices, batch_size, n;
@@ -339,7 +339,7 @@ int d2_write_split(const char* filename, mph *p_data, int splits) {
 	  int dim = p_data->ph[j].dim;
 	  int str = p_data->ph[j].p_str[i];
 	  size_t pos = p_data->ph[j].p_str_cum[i];
-	  if (1) { // non pre-processed
+	  if (!is_pre_processed) { // non pre-processed
 	    if (p_data->ph[j].metric_type == D2_HISTOGRAM) {
 	      fprintf(fp, "%d %d ", dim, str);
 	    } else {
