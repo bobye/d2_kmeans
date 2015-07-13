@@ -19,7 +19,7 @@ CFLAGS=-Wextra -Wall -pedantic-errors -O3 -fPIC -fno-common $(ARCH_FLAGS)
 LDFLAGS=$(ARCH_FLAGS) 
 DEFINES=-D __BLAS_LEGACY__ $(D2_DEFINES)
 INCLUDES=-Iinclude/ -I$(MOSEK)/h $(CBLAS_INC)
-MOSEKLIB=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin -lmosek64 -lpthread
+MOSEKLIB=-L$(MOSEK)/bin -Wl,-rpath,$(MOSEK)/bin $(MOSEK_BIN)
 LIBRARIES=-Wl,-rpath,. -Wl,-rpath,$(MOSEK)/bin $(BLAS_LIB) $(OTHER_LIB)
 
 C_SOURCE_FILES=\
@@ -83,9 +83,9 @@ lib: $(LIB)
 
 %.o: %.cc Makefile
 	@# Make dependecy file
-	$(CXX) -MM -MT $@ -MF $(patsubst %.cc,%.d,$<) $(CFLAGS) $(DEFINES) $(INCLUDES) $<
+	$(TCXX) -MM -MT $@ -MF $(patsubst %.cc,%.d,$<) $(CFLAGS) $(DEFINES) $(INCLUDES) $<
 	@# Compile
-	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDES) -c -o $@ $<
+	$(TCXX) $(CFLAGS) $(DEFINES) $(INCLUDES) -c -o $@ $<
 
 d2: src/app/util.cc src/app/main.cc $(LIB)
 	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
@@ -107,11 +107,11 @@ libad2c.dylib: $(C_SOURCE_OBJECTS) libmosek64_wrapper.dylib
 
 else
 libmosek64_wrapper.so: src/d2/solver_mosek.o
-	$(TCXX) -shared $(DEFINES) $(INCLUDES) -Wl,-soname,$@ -o libmosek64_wrapper.$(MOSEK_VERSION).so $< $(MOSEKLIB) $(LIBRARIES) 
+	$(TCXX) -shared $(LDFLAGS) $(DEFINES) $(INCLUDES) -Wl,-soname,$@ -o libmosek64_wrapper.$(MOSEK_VERSION).so $< $(MOSEKLIB)
 	ln -sf libmosek64_wrapper.$(MOSEK_VERSION).so $@ 
 
 libad2c.so: $(C_SOURCE_OBJECTS) libmosek64_wrapper.so
-	$(CC) -shared $(DEFINES) $(INCLUDES) -Wl,-soname,$@ -o libad2c.$(VERSION).so $^ -Wl,-rpath,. $(LIBRARIES)
+	$(CC) -shared $(LDFLAGS) $(DEFINES) $(INCLUDES) -Wl,-soname,$@ -o libad2c.$(VERSION).so $^ -Wl,-rpath,. $(LIBRARIES)
 	ln -sf libad2c.$(VERSION).so $@ 
 endif
 
