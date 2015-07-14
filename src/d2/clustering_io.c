@@ -398,7 +398,7 @@ int d2_write_split(const char* filename, mph *p_data, int splits, char is_pre_pr
 	      for (k=0; k<str; ++k) {
 		for (d=0; d<dim; ++d) 
 		  p_supp[k*dim + d] = p_data->ph[j].vocab_vec[supp_sym[k]*dim + d];
-		p_w[k] = w[pos + k];
+		p_w[k] = w[k];
 	      }
 
 	    }
