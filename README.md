@@ -78,6 +78,6 @@ See [here](test) for more examples.
 
 
 ## Misc
- - Other related projects: [d2lib](https://github.com/colourbrain/d2lib)
+ - Related projects: [d2suite](https://github.com/colourbrain/d2suite)
 
 
