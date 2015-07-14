@@ -166,13 +166,35 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle, int sele
     int str = p_data->ph[i].str;
     int col = p_data->ph[i].col;
     int max_str = p_data->ph[i].max_str;
+    int *p_str = p_data->ph[i].p_str;
+    SCALAR *p_supp = p_data->ph[i].p_supp;
+    int *p_supp_sym = p_data->ph[i].p_supp_sym;
+    size_t *p_str_cum = p_data->ph[i].p_str_cum;
 
     var_work->g_var[i].C = NULL;
     var_work->g_var[i].X = NULL;
     var_work->g_var[i].L = NULL;
 
-    var_work->g_var[i].C = _D2_MALLOC_SCALAR(str * (col + num_of_labels*str)); // space for transportation cost
+    // space for transportation cost
+    var_work->g_var[i].C = _D2_MALLOC_SCALAR(str * (col + num_of_labels*str)); 
     assert(var_work->g_var[i].C);
+
+    // precompute C if the metric type is D2_HISTOGRAM or D2_SPARSE_HISTOGRAM
+    if (p_data->ph[i].metric_type == D2_HISTOGRAM) {
+      SCALAR *C = var_work->g_var[i].C;
+      for (i=0; i< size; ++i) { 
+	_D2_CBLAS_FUNC(copy)(str*p_str[i], p_data->ph[i].dist_mat, 1, C + str*p_str_cum[i], 1);
+      }
+    } else if (p_data->ph[i].metric_type == D2_SPARSE_HISTOGRAM) {
+      SCALAR *C = var_work->g_var[i].C;
+      for (i=0; i< size; ++i) {
+	_D2_FUNC(pdist2_submat)(p_str[i],
+				p_supp_sym + p_str_cum[i],
+				C + str*p_str_cum[i],
+				p_data->ph[i].vocab_size,
+				p_data->ph[i].dist_mat);	
+      }	
+    }
 
     if (d2_alg_type == D2_CENTROID_BADMM) {
       d2_allocate_work_sphBregman(p_data->ph +i, max(p_data->size, p_data->num_of_labels), 

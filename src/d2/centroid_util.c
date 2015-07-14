@@ -24,9 +24,8 @@ void calculate_distmat(sph *data_ph, int* label, size_t size, sph *c, SCALAR* C)
       _D2_FUNC(pdist2_sym)(dim, str, p_str[i], c->p_supp + label[i]*strxdim, p_supp_sym + p_str_cum[i], C + str*p_str_cum[i], data_ph->vocab_vec);
     break;
 
-  case D2_HISTOGRAM : 
-    for (i=0; i< size; ++i) 
-      _D2_CBLAS_FUNC(copy)(str*p_str[i], data_ph->dist_mat, 1, C + str*p_str_cum[i], 1);
+  case D2_HISTOGRAM :
+  case D2_SPARSE_HISTOGRAM :
     break;
 
   case D2_N_GRAM :
