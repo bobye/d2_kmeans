@@ -11,4 +11,4 @@ OTHER_LIB=
 BLAS_LIB=-lblas
 
 ARCH_FLAGS=-m64
-D2_DEFINES=-D _D2_DOUBLE
+D2_DEFINES=-D _D2_DOUBLE # change to _D2_SINGLE if the size of RAM is limited
