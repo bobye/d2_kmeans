@@ -381,8 +381,14 @@ int main(int argc, char *argv[]) {
   
   VPRINTF("Centroid initialization done; start clustering ... \n");
 
-  BADMM_options ad_hoc_op_badmm = {.maxIters = 60, .rhoCoeff = 1.f, .updatePerLoops = 60};
-  GRADDEC_options ad_hoc_op_graddec = {.maxIters = 5, .stepSize = 0.5};
+  BADMM_options ad_hoc_op_badmm; 
+  ad_hoc_op_badmm.maxIters = 60; 
+  ad_hoc_op_badmm.rhoCoeff = 1.f; 
+  ad_hoc_op_badmm.updatePerLoops = 60;
+  GRADDEC_options ad_hoc_op_graddec;
+  ad_hoc_op_graddec.maxIters = 5;
+  ad_hoc_op_graddec.stepSize = 0.5;
+
   p_badmm_options = &ad_hoc_op_badmm;
   p_graddec_options = &ad_hoc_op_graddec;
 
