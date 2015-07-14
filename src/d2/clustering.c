@@ -269,11 +269,14 @@ int d2_copy(mph* a, mph *b) {
 	memcpy(b->ph[n].p_supp, a->ph[n].p_supp, a->ph[n].col * a->ph[n].dim * sizeof(SCALAR));
 	break;
       case D2_HISTOGRAM:
-	if (new_init_tag) memcpy(b->ph[n].dist_mat, a->ph[n].dist_mat, a->ph[n].vocab_size*a->ph[n].vocab_size);
+      case D2_SPARSE_HISTOGRAM:
+	b->ph[n].dist_mat = a->ph[n].dist_mat;
+	//	if (new_init_tag) memcpy(b->ph[n].dist_mat, a->ph[n].dist_mat, a->ph[n].vocab_size*a->ph[n].vocab_size);
 	break;
       case D2_N_GRAM:
 	memcpy(b->ph[n].p_supp_sym, a->ph[n].p_supp_sym, a->ph[n].col * a->ph[n].dim * sizeof(int));
-	if (new_init_tag) memcpy(b->ph[n].dist_mat, a->ph[n].dist_mat, a->ph[n].vocab_size*a->ph[n].vocab_size);
+	b->ph[n].dist_mat = a->ph[n].dist_mat;
+	//if (new_init_tag) memcpy(b->ph[n].dist_mat, a->ph[n].dist_mat, a->ph[n].vocab_size*a->ph[n].vocab_size);
 	break;
       }
     } else {

@@ -62,6 +62,7 @@ int d2_allocate_sph(sph *p_data_sph,
  * Free the space of a single phase
  */
 int d2_free_sph(sph *p_data_sph) {
+  //bug exists
   _D2_FREE(p_data_sph->p_w);
   _D2_FREE(p_data_sph->p_str);
   _D2_FREE(p_data_sph->p_str_cum);
@@ -71,12 +72,12 @@ int d2_free_sph(sph *p_data_sph) {
     _D2_FREE(p_data_sph->p_supp);
   }
   else if (p_data_sph->metric_type == D2_HISTOGRAM) {
-    _D2_FREE(p_data_sph->dist_mat);
+    //_D2_FREE(p_data_sph->dist_mat);
   }
   else if (p_data_sph->metric_type == D2_SPARSE_HISTOGRAM ||
 	   p_data_sph->metric_type == D2_N_GRAM) {
     _D2_FREE(p_data_sph->p_supp_sym);
-    _D2_FREE(p_data_sph->dist_mat);
+    //_D2_FREE(p_data_sph->dist_mat);
   }
   else if (p_data_sph->metric_type == D2_WORD_EMBED) {
     _D2_FREE(p_data_sph->p_supp_sym);
