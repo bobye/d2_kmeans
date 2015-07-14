@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     {"centroid_method", 1, 0, 'M'},
     {"non_triangle", 0, 0, 'T'},
     {"prepare_batches", 1, 0, 'P'},
-    {"pre_process", 1, 0, 'Q'},
+    {"pre_process", 0, 0, 'Q'},
     {"types", 1, 0, 'E'},
     {"eval", 1, 0, 'e'},
     {"load", 1, 0, 'L'},
