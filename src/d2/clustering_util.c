@@ -45,7 +45,6 @@ int d2_allocate_sph(sph *p_data_sph,
     p_data_sph->p_supp_sym = NULL;
   }
   else if (type == D2_HISTOGRAM) { 
-    p_data_sph->dist_mat = _D2_MALLOC_SCALAR( stride * stride );
     p_data_sph->metric_type = D2_HISTOGRAM;
     p_data_sph->p_supp_sym = NULL;
   }
@@ -182,15 +181,17 @@ int d2_allocate_work(mph *p_data, var_mph *var_work, char use_triangle, int sele
     // precompute C if the metric type is D2_HISTOGRAM or D2_SPARSE_HISTOGRAM
     if (p_data->ph[i].metric_type == D2_HISTOGRAM) {
       SCALAR *C = var_work->g_var[i].C;
-      for (i=0; i< size; ++i) { 
-	_D2_CBLAS_FUNC(copy)(str*p_str[i], p_data->ph[i].dist_mat, 1, C + str*p_str_cum[i], 1);
+      size_t k;
+      for (k=0; k< size; ++k) { 
+	_D2_CBLAS_FUNC(copy)(str*p_str[k], p_data->ph[k].dist_mat, 1, C + str*p_str_cum[k], 1);
       }
     } else if (p_data->ph[i].metric_type == D2_SPARSE_HISTOGRAM) {
       SCALAR *C = var_work->g_var[i].C;
-      for (i=0; i< size; ++i) {
-	_D2_FUNC(pdist2_submat)(p_str[i],
-				p_supp_sym + p_str_cum[i],
-				C + str*p_str_cum[i],
+      size_t k;
+      for (k=0; k< size; ++k) {
+	_D2_FUNC(pdist2_submat)(p_str[k],
+				p_supp_sym + p_str_cum[k],
+				C + str*p_str_cum[k],
 				p_data->ph[i].vocab_size,
 				p_data->ph[i].dist_mat);	
       }	

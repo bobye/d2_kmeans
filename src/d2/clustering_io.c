@@ -57,7 +57,8 @@ int d2_read(const char* filename, mph *p_data) {
       int str, c, i;
       sprintf(filename_extra, "%s.hist%d", filename, n);
       fp_new = fopen(filename_extra, "r"); assert(fp_new);
-      c=fscanf(fp_new, "%d", &str); assert(c>0 && str == p_data->ph[n].str);
+      c=fscanf(fp_new, "%d", &str); //assert(c>0 && str == p_data->ph[n].str);
+      p_data->ph[n].dist_mat = _D2_MALLOC_SCALAR(str * str);
       for (i=0; i< str*str; ++i) 
 	fscanf(fp_new, SCALAR_STDIO_TYPE, &(p_data->ph[n].dist_mat[i]));
       p_data->ph[n].vocab_size = str;
@@ -122,7 +123,7 @@ int d2_read(const char* filename, mph *p_data) {
 
 	p_data->ph[n].max_col *= 2;		// resize
       }
-
+      
       p_data->ph[n].col += str; //incr
 
       // read weights      

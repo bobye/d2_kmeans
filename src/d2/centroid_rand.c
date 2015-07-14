@@ -186,7 +186,7 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   if (data_ph->metric_type == D2_HISTOGRAM ||
       data_ph->metric_type == D2_SPARSE_HISTOGRAM || 
       data_ph->metric_type == D2_N_GRAM) {
-    for (i=0; i<vocab_size * vocab_size; ++i) c->dist_mat[i] = data_ph->dist_mat[i];
+    c->dist_mat = data_ph->dist_mat;
     c->vocab_size = data_ph->vocab_size;
   }
   
