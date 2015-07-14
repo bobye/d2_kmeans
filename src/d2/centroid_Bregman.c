@@ -263,6 +263,7 @@ int d2_centroid_sphBregman(mph *p_data, /* local data */
 	break;
 
       case D2_HISTOGRAM :
+      case D2_SPARSE_HISTOGRAM :
 	break;
 
       case D2_N_GRAM :
