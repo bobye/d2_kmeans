@@ -50,6 +50,7 @@ be found at directory protein_seq/ .
    n
    w{1} w{2} ... w{n}
    id{1} id{2} ... id{n}
+   ...
    ```
    The last row of vocabulary embedding matrix is zero, serving as default
    embedding (in case where id{}<1). Starting from root directory, you may
@@ -70,19 +71,12 @@ be found at directory protein_seq/ .
    ...
    d{1,n1} d{2,n1} ... d{n1,n1} ;; End of transportation cost
 
-   ;; file ext: .d2.hist1
-   n2 ;; number of bins for the second phase
-   d{1,1} d{2,1} ... d{n2,1} ;; transportation cost between different bins
-   d{1,2} d{2,2} ... d{n2,2} ;; d has to be symmetric, and d{i,i} = 0
-   ...
-   d{1,n2} d{2,n2} ... d{n2,n2} ;; End of transportation cost
    
    ;; file ext: .d2
    0 n1 w{1,1} w{2,1} ... w{n1,1} ;; first phase histogram of first object
-   0 n2 w{1,2} w{2,2} ... w{n2,2} ;; second phase histogram of first object
 
    0 n1 w{1,1} w{2,1} ... w{n1,1} ;; first phase histogram of the second object
-   0 n2 w{1,2} w{2,2} ... w{n2,2} ;; second phase histogram of the second object
+
    ...
    
    ```
@@ -90,3 +84,49 @@ be found at directory protein_seq/ .
    But for using triangle inequality to accelerate the undergoing computation,
    you can enforce to modify the distance such that they are qualified under
    a true metric. 
+
+4. [Sparse Histograms].
+   To save computation cost, it is possible to handle histogram data with sparse
+   non-zero bins. In those cases, one has to provide a sparse data format to
+   enable this feature. The histogram representation is like discrete distribution
+   over vocabulary space (aka, 2nd case), with the difference that a distince matrix
+   is specified instead of the embedding space. Therefore, an example of sparse
+   histogram format is as follows:
+   ```emacs-lisp
+   ;; file ext: .d2.hist0
+   n1 ;; number of bins for this phase
+   d{1,1} d{2,1} ... d{n1,1} ;; transportation cost between different bins
+   d{1,2} d{2,2} ... d{n1,2} ;; d has to be symmetric, and d{i,i} = 0
+   ...
+   d{1,n1} d{2,n1} ... d{n1,n1} ;; End of transportation cost
+   
+   ;; file ext: d2
+   0
+   n
+   w{1} w{2} ... w{n}
+   id{1} id{2} ... id{n}
+   ...
+   
+   ```
+   Remark it is required that n>0. 
+
+
+## Data format with hybrid phases
+
+It is possible to read objects with hybrid phases. In such cases, each header file
+(ending with `.d2.histN` or `.d2.vocabN`) is associated
+with its respective phase. Here `N` denotes the index of phase
+(starting from zero). In the main file (ending with `.d2`), objects
+are written in the phase-major order. 
+
+
+
+
+
+
+
+
+
+
+
+
