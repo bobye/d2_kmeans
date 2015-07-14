@@ -16,6 +16,7 @@ Algorithm options
  - `--non_triangle, -T` : disable the triangle inequality based acceleration (default: enabled).
  - `--eval <centroids_filename>, -e <centroids_filename>` : no clustering, but assigning instances to the pre-computed centroids (default: disabled).
  - `--load <centroids_filename>, -L <centroids_filename>` : load pre-computed centroids as initial start of D2 clustering. (optional, excluding the `--eval` option)
+ - `--pre_process, -Q` : preprocess the input format data (more explanations TBA) (default: disabled).
  
 Parallel computing options
  - `--prepare_batches <integer>, -P <integer>` : the number of batches that is equal to the number of processors in data pre-processing stage. It reads in `<input_filename> = data.d2` and generates files in say `data.d2.0, data.d2.1, data.d2.2, data.d2.3` containing randomly splitted parts of `data.d2`.

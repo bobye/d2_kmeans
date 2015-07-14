@@ -168,6 +168,10 @@ int d2_read(const char* filename, mph *p_data) {
     for (i=1; i<size; ++i) {
       p_str_cum[i] = p_str_cum[i-1] + p_str[i-1];
     }
+    if (p_data->ph[n].metric_type == D2_SPARSE_HISTOGRAM) {
+      // change str to vocab_size, which is for initializing centroids.
+      p_data->ph[n].str = p_data->ph[n].vocab_size; 
+    }
   }
 
   // free the pointer space

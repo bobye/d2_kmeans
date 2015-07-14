@@ -49,11 +49,10 @@ int d2_allocate_sph(sph *p_data_sph,
     p_data_sph->metric_type = D2_HISTOGRAM;
     p_data_sph->p_supp_sym = NULL;
   }
-  else if (type == D2_WORD_EMBED) {
+  else if (type == D2_WORD_EMBED || type == D2_SPARSE_HISTOGRAM ) {
     p_data_sph->p_supp_sym = _D2_MALLOC_INT(m);
-    p_data_sph->metric_type = D2_WORD_EMBED;
+    p_data_sph->metric_type = type;
     p_data_sph->p_supp = NULL;
-    // vocab_size and vocab_vec not specified
   }
 
 
@@ -75,9 +74,14 @@ int d2_free_sph(sph *p_data_sph) {
   else if (p_data_sph->metric_type == D2_HISTOGRAM) {
     _D2_FREE(p_data_sph->dist_mat);
   }
-  else if (p_data_sph->metric_type == D2_N_GRAM) {
+  else if (p_data_sph->metric_type == D2_SPARSE_HISTOGRAM ||
+	   p_data_sph->metric_type == D2_N_GRAM) {
     _D2_FREE(p_data_sph->p_supp_sym);
     _D2_FREE(p_data_sph->dist_mat);
+  }
+  else if (p_data_sph->metric_type == D2_WORD_EMBED) {
+    _D2_FREE(p_data_sph->p_supp_sym);
+    _D2_FREE(p_data_sph->vocab_vec);
   }
   return 0;
 }

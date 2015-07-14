@@ -27,4 +27,7 @@ typedef struct {
 #define D2_WORD_EMBED        (7)
 #define D2_SPARSE_HISTOGRAM  (12)
 
+
+/* data format @(i) can be pre-processed into @(i%D2_GROUP_SIZE) */
+#define D2_GROUP_SIZE (7)
 #endif /* _D2_PARAM_H_ */

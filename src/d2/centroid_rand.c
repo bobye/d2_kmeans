@@ -183,7 +183,9 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
   c->col = str * num_of_labels;
 
   // set vocab_size and dist_mat
-  if (data_ph->metric_type == D2_HISTOGRAM || data_ph->metric_type == D2_N_GRAM) {
+  if (data_ph->metric_type == D2_HISTOGRAM ||
+      data_ph->metric_type == D2_SPARSE_HISTOGRAM || 
+      data_ph->metric_type == D2_N_GRAM) {
     for (i=0; i<vocab_size * vocab_size; ++i) c->dist_mat[i] = data_ph->dist_mat[i];
     c->vocab_size = data_ph->vocab_size;
   }
@@ -210,14 +212,20 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
     int the_str;
     size_t the_str_cum;
 
-    while (i<size && data_ph->p_str[array[i]] < str)  { ++i; }
+    while (i<size &&
+	   data_ph->p_str[array[i]] < str &&
+	   data_ph->metric_type != D2_SPARSE_HISTOGRAM ) { ++i; }
+    
     if (i == size) break;
     the_str = data_ph->p_str[array[i]];
     the_str_cum = data_ph->p_str_cum[array[i]];
 
     switch (data_ph->metric_type) {
-    case D2_EUCLIDEAN_L2:
     case D2_HISTOGRAM:
+      m_w = data_ph->p_w + the_str_cum;
+      _D2_CBLAS_FUNC(copy)(str, m_w, 1, c->p_w + j*str, 1);
+      break;
+    case D2_EUCLIDEAN_L2:
       m_supp = data_ph->p_supp + the_str_cum*dim; 
       m_w = data_ph->p_w + the_str_cum;
 
@@ -249,6 +257,13 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
 	      c->p_supp + j*strxdim, c->p_w + j*str, str);
 	_D2_FREE(supp);
       }
+      break;
+    case D2_SPARSE_HISTOGRAM:
+      // very simple way to initialize
+      m_supp_sym = data_ph->p_supp_sym + the_str_cum;
+      m_w = data_ph->p_w + the_str_cum;
+      for (k=0; k<str; ++k) c->p_w[k] = 0.f;
+      for (k=0; k<the_str; ++k) c->p_w[m_supp_sym[k]] = m_w[k];
       break;
     case D2_N_GRAM: 
       m_supp_sym = data_ph->p_supp_sym + the_str_cum*dim;
