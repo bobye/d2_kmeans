@@ -13,18 +13,20 @@ Please see our paper for technical details:
 
 
 ## Discrete Distributions
-There are three data types of discrete distribution that have been covered
-in this project:
+There are four data types of discrete distribution that have been covered
+in this project (See [data format](data) for their specifications):
  - [default] discrete distribution over vector space endowed with Euclidean distance
  - Same type as the default one, but over embeddings space with a finite vocabulary size
    (e.g. document represented by tf-idf over word vectors, sparsified histograms)
- - normalized (dense) histograms with bin-to-bin distance
+ - normalized dense histograms with bin-to-bin distance
+ - normalized sparse histograms with bin-to-bin distance
  - [**experimental] d2 over [n-gram](http://en.wikipedia.org/wiki/N-gram) provided
    with item-to-item similarity/distance (sparse histograms are represented as 1-gram)
 
 An object/instance can be represented as the joint of multiple discrete
-distributions (of any aforementioned type), called phases. For example, an image can be
-represented in two phases: color distribution and texture distribution; a protein
+distributions (in combinations of any aforementioned types), called phases. 
+For example, an image can be represented in two phases: 
+color distribution and texture distribution; a protein
 sequence can be represented as distributions in three phases, aka,
 1-gram, 2-gram, 3-gram of amino acid. A document can be represented by 
 a bag of weighted word vectors.
