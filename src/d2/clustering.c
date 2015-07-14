@@ -86,7 +86,7 @@ double d2_compute_distance(mph *a, size_t i,
 	d += val;
 	break;
       case D2_SPARSE_HISTOGRAM :
-	val = d2_match_by_distmat(b_sph->p_str[i],
+	val = d2_match_by_distmat(b_sph->p_str[j],
 				  a_sph->p_str[i],
 				  var_work->g_var[n].C + idx,
 				  b_sph->p_w + b_sph->p_str_cum[j],

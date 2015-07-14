@@ -105,7 +105,7 @@ int d2_allocate(mph *p_data,
 					*/
 		const int *dimension_of_phases,
 		const int *type_of_phases) {
-  size_t i;
+  size_t i; int n;
   int success = 0;
 
   p_data->s_ph = size_of_phases;
@@ -117,13 +117,13 @@ int d2_allocate(mph *p_data,
   p_data->label = _D2_MALLOC_INT(size_of_samples); 
   for (i=0; i<p_data->size; ++i)  p_data->label[i] = -1;
 
-  for (i=0; i<p_data->s_ph; ++i) {
-    success = d2_allocate_sph(p_data->ph + i, 
-			      dimension_of_phases[i], 
-			      avg_strides[i], 
+  for (n=0; n<p_data->s_ph; ++n) {
+    success = d2_allocate_sph(p_data->ph + n, 
+			      dimension_of_phases[n], 
+			      avg_strides[n], 
 			      size_of_samples, 
 			      0.6,
-			      type_of_phases[i]);
+			      type_of_phases[n]);
     if (success != 0) break;
   }
 
