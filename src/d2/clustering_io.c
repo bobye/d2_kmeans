@@ -50,7 +50,8 @@ int d2_read(const char* filename, mph *p_data) {
 
   // Load header information if available
   for (n=0; n<s_ph; ++n) {
-    if (p_data->ph[n].metric_type == D2_HISTOGRAM) {
+    if (p_data->ph[n].metric_type == D2_HISTOGRAM ||
+	p_data->ph[n].metric_type == D2_SPARSE_HISTOGRAM) {
       char filename_extra[255];
       FILE *fp_new; // local variable
       int str, c, i;
@@ -110,7 +111,8 @@ int d2_read(const char* filename, mph *p_data) {
 	  p_data->ph[n].p_w = (SCALAR *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(SCALAR));
 	  assert(p_data->ph[n].p_w != NULL);
 	  p_w[n]    = p_data->ph[n].p_w + p_data->ph[n].col;
-	} else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {
+	} else if (p_data->ph[n].metric_type == D2_WORD_EMBED ||
+		   p_data->ph[n].metric_type == D2_SPARSE_HISTOGRAM ) {
 	  p_data->ph[n].p_supp_sym = (int *) realloc(p_data->ph[n].p_supp_sym, 2* p_data->ph[n].max_col * sizeof(int));
 	  p_data->ph[n].p_w = (SCALAR *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(SCALAR));
 	  assert(p_data->ph[n].p_supp_sym != NULL && p_data->ph[n].p_w != NULL);
@@ -126,7 +128,9 @@ int d2_read(const char* filename, mph *p_data) {
       // read weights      
       p_w_sph = p_w[n]; w_sum = 0.;
       for (j=0; j<str; ++j) {
-	fscanf(fp, SCALAR_STDIO_TYPE, &p_w_sph[j]); 
+	fscanf(fp, SCALAR_STDIO_TYPE, &p_w_sph[j]);
+	/* Unless the input is of format D2_HISTOGRAM,
+	   we require all support points should have non-zero weights */
 	if (p_data->ph[n].metric_type != D2_HISTOGRAM) assert(p_w_sph[j] > 1E-9);
 	w_sum += p_w_sph[j];
       }
@@ -142,11 +146,13 @@ int d2_read(const char* filename, mph *p_data) {
 	for (j=0; j<strxdim; ++j)
 	  fscanf(fp, SCALAR_STDIO_TYPE, &p_supp_sph[j]); 
 	p_supp[n] = p_supp[n] + strxdim;
-      } else if (p_data->ph[n].metric_type == D2_WORD_EMBED) {	
+      } else if (p_data->ph[n].metric_type == D2_WORD_EMBED ||
+		 p_data->ph[n].metric_type == D2_SPARSE_HISTOGRAM) {	
 	p_supp_sym_sph = p_supp_sym[n]; 
 	for (j=0; j<str; ++j) {
-	  fscanf(fp, "%d", &p_supp_sym_sph[j]); p_supp_sym_sph[j] --; // index started at one
-	  if (p_supp_sym_sph[j] < 0) p_supp_sym_sph[j] = p_data->ph[n].vocab_size - 1;
+	  fscanf(fp, "%d", &p_supp_sym_sph[j]); p_supp_sym_sph[j] --; // index read started at one
+	  if (p_supp_sym_sph[j] < 0)
+	    p_supp_sym_sph[j] = p_data->ph[n].vocab_size - 1; // handle boundary case
 	}
 	p_supp_sym[n] = p_supp_sym[n] + str;
       }
@@ -202,9 +208,18 @@ int d2_write(const char* filename, mph *p_data) {
 	for (k=0; k<str; ++k) fprintf(fp, "%lf ", p_data->ph[j].p_w[pos + k]);
 	fprintf(fp, "\n");
 	if (p_data->ph[j].metric_type == D2_HISTOGRAM) continue;
-	for (k=0; k<str; ++k) {
-	  for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
-	  fprintf(fp, "\n"); 
+	if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2) {
+	  for (k=0; k<str; ++k) {
+	    for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
+	    fprintf(fp, "\n"); 
+	  }
+	}
+	if (p_data->ph[j].metric_type == D2_WORD_EMBED ||
+	    p_data->ph[j].metric_type == D2_SPARSE_HISTOGRAM) {
+	  for (k=0; k<str; ++k) {
+	    fprintf(fp, "%d ", p_data->ph[j].p_supp_sym[pos + k] + 1);	    
+	  }
+	  fprintf(fp, "\n");
 	}
       } else {
 	fprintf(fp, "%d\n", p_data->ph[j].dim);
@@ -345,65 +360,100 @@ int d2_write_split(const char* filename, mph *p_data, int splits, char is_pre_pr
 	    } else {
 	      fprintf(fp, "%d\n%d\n", dim, str);
 	    }
-	  for (k=0; k<str; ++k) fprintf(fp, "%lf ", p_data->ph[j].p_w[pos + k]);
-	  fprintf(fp, "\n");
-	  if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2) {
-	    for (k=0; k<str; ++k) {
-	      for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
-	      fprintf(fp, "\n"); 
-	    }
-	  }
-	  else if (p_data->ph[j].metric_type == D2_WORD_EMBED) {
-	    for (k=0; k<str; ++k) {
-	      fprintf(fp, "%d ", p_data->ph[j].p_supp_sym[pos + k]);
-	    }
+	    for (k=0; k<str; ++k) fprintf(fp, "%lf ", p_data->ph[j].p_w[pos + k]);
 	    fprintf(fp, "\n");
-	  }
+	    if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2) {
+	      for (k=0; k<str; ++k) {
+		for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_data->ph[j].p_supp[(pos+k)*dim + d]);
+		fprintf(fp, "\n"); 
+	      }
+	    }
+	    else if (p_data->ph[j].metric_type == D2_WORD_EMBED ||
+		     p_data->ph[j].metric_type == D2_SPARSE_HISTOGRAM) {
+	      for (k=0; k<str; ++k) {
+		fprintf(fp, "%d ", p_data->ph[j].p_supp_sym[pos + k] + 1); // fix an important index bug
+	      }
+	      fprintf(fp, "\n");
+	    }
 	  } else {
 	    /** Pre-processed
 	     */
-	    SCALAR *supp=NULL, *c_supp=NULL;
-	    SCALAR *w=NULL, *c_w = NULL;
-	    char renew=0;
+	    SCALAR *supp=NULL, *w=NULL;
+	    int *supp_sym=NULL;
+	    SCALAR *p_supp=NULL, *p_w;
+	    int *p_supp_sym=NULL;
+
+
+	    w=p_data->ph[j].p_w + pos;
 	    if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2) {
 	      supp=p_data->ph[j].p_supp + pos*dim;
-	      w=p_data->ph[j].p_w + pos;
-	    }
-	    else if (p_data->ph[j].metric_type == D2_WORD_EMBED) {
-	      renew = 1;
-	      supp = (SCALAR*) _D2_MALLOC_SCALAR(str*dim);	 
-	      w = (SCALAR*) _D2_MALLOC_SCALAR(str);
+	      p_supp = supp;
+	      p_w = w;
+	    }	    
+
+	    if (p_data->ph[j].metric_type == D2_WORD_EMBED) {
+	      supp_sym = p_data->ph[j].p_supp_sym + pos;
+	      p_supp = (SCALAR*) _D2_MALLOC_SCALAR(str*dim);	 
+	      p_w = (SCALAR*) _D2_MALLOC_SCALAR(str);
 	      for (k=0; k<str; ++k) {
 		for (d=0; d<dim; ++d) 
-		  supp[k*dim + d] = p_data->ph[j].vocab_vec[p_data->ph[j].p_supp_sym[pos + k]*dim + d];
-		w[k] = p_data->ph[j].p_w[pos + k];
+		  p_supp[k*dim + d] = p_data->ph[j].vocab_vec[supp_sym[k]*dim + d];
+		p_w[k] = w[pos + k];
 	      }
+
 	    }
 
-	    if (str > p_data->ph[j].str) {	      
-	      c_supp = (SCALAR*) _D2_MALLOC_SCALAR(p_data->ph[j].str*dim);
-	      c_w = (SCALAR*) _D2_MALLOC_SCALAR(p_data->ph[j].str);
-	      merge(dim, supp, w, str, c_supp, c_w, p_data->ph[j].str);
+	    if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2 ||
+		p_data->ph[j].metric_type == D2_WORD_EMBED) {
+	    if (str > p_data->ph[j].str) {
+	      // This preprocessing makes a D2 into one with support points less than p_data->ph[j].str;
+	      SCALAR *c_supp = (SCALAR*) _D2_MALLOC_SCALAR(p_data->ph[j].str*dim);
+	      SCALAR *c_w = (SCALAR*) _D2_MALLOC_SCALAR(p_data->ph[j].str);
+	      merge(dim, p_supp, p_w, str, c_supp, c_w, p_data->ph[j].str);
 	      str=p_data->ph[j].str;
-	    } else {
-	      c_supp = supp;
-	      c_w = w;
+	      if (p_supp!=supp) _D2_FREE(p_supp);
+	      if (p_w!=w) _D2_FREE(p_w);
+	      p_supp = c_supp;
+	      p_w = c_w;
 	    }
+	    }
+
+	    if (p_data->ph[j].metric_type == D2_HISTOGRAM) {
+	      // This preprocessing makes a dense histogram into a sparse one
+	      int nnz = 0, ind = 0;
+	      for (k=0; k<str; ++k) nnz += (w[k] > 0);
+	      p_supp_sym = (int*) _D2_MALLOC_INT(nnz);
+	      p_w = (SCALAR*) _D2_MALLOC_SCALAR(nnz);
+	      for (k=0; k<str; ++k)
+		if (w[k] > 0) {		  
+		  p_supp_sym[ind] = k;
+		  p_w[ind] = w[k];
+		  ++ind;
+		}
+	      str = nnz; // change str to sparse counts
+	    }
+
 
 	    fprintf(fp, "%d\n", dim);
 	    fprintf(fp, "%d\n", str);
-	    for (k=0; k<str; ++k) fprintf(fp, "%lf ", c_w[k]);
-	    fprintf(fp, "\n");	  
-	    for (k=0; k<str; ++k) {
-	      for (d=0; d<dim; ++d) fprintf(fp, "%lf ", c_supp[k*dim + d]);
-	      fprintf(fp, "\n"); 
+	    for (k=0; k<str; ++k) fprintf(fp, "%lf ", p_w[k]);
+	    fprintf(fp, "\n");
+	    if (p_data->ph[j].metric_type == D2_EUCLIDEAN_L2 ||
+		p_data->ph[j].metric_type == D2_WORD_EMBED) {
+	      for (k=0; k<str; ++k) {
+		for (d=0; d<dim; ++d) fprintf(fp, "%lf ", p_supp[k*dim + d]);
+		fprintf(fp, "\n"); 
+	      }
+	    } else if (p_data->ph[j].metric_type == D2_HISTOGRAM) {
+	      for (k=0; k<str; ++k) {
+		fprintf(fp, "%d ", p_supp_sym[k] + 1);
+	      }
+	      fprintf(fp, "\n");
 	    }
-
 	    
-	    if (renew) _D2_FREE(supp); 
-	    if (renew) _D2_FREE(w); 
-	    if (c_supp!=supp) _D2_FREE(c_supp);
-	    if (c_w!=w) _D2_FREE(c_w);
+	    if (p_supp!=supp && p_supp) _D2_FREE(p_supp);
+	    if (p_w!=w && p_w) _D2_FREE(p_w);
+	    if (p_supp_sym != supp_sym && p_supp_sym) _D2_FREE(p_supp_sym);
 	  }
 	}
     }
@@ -413,3 +463,4 @@ int d2_write_split(const char* filename, mph *p_data, int splits, char is_pre_pr
   }
   return 0;
 }
+

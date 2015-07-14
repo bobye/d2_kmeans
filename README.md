@@ -21,7 +21,8 @@ in this project (See [data format](data) for their specifications):
  - normalized dense histograms with bin-to-bin distance
  - normalized sparse histograms with bin-to-bin distance
  - [**experimental] d2 over [n-gram](http://en.wikipedia.org/wiki/N-gram) provided
-   with item-to-item similarity/distance (sparse histograms are represented as 1-gram)
+   with item-to-item similarity/distance 
+   (sparse histograms as the centroids are represented as 1-gram)
 
 An object/instance can be represented as the joint of multiple discrete
 distributions (in combinations of any aforementioned types), called phases. 
