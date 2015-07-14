@@ -282,7 +282,7 @@ int d2_write_labels_serial(const char* filename_ind, const char* filename, mph *
     fp = fopen(filename_ind, "r"); 
     if (fp) { // if ind file exists => has data partition 
       for (i=0; i<global_size; ++i) {
-	fscanf(fp, "%zd\n", &indice[i]);
+	fscanf(fp, "%zu\n", &indice[i]);
       }
       fclose(fp);
 
@@ -380,7 +380,7 @@ int d2_write_split(const char* filename, mph *p_data, int splits, char is_pre_pr
 	     */
 	    SCALAR *supp=NULL, *w=NULL;
 	    int *supp_sym=NULL;
-	    SCALAR *p_supp=NULL, *p_w;
+	    SCALAR *p_supp=NULL, *p_w=NULL;
 	    int *p_supp_sym=NULL;
 
 
@@ -463,4 +463,7 @@ int d2_write_split(const char* filename, mph *p_data, int splits, char is_pre_pr
   }
   return 0;
 }
+
+
+
 
