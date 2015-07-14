@@ -213,7 +213,8 @@ void _dpdist2_sym(int d, size_t n, size_t m, double *A, int *Bi, double *C, cons
   for (i=0; i<m; ++i)
     for (j=0; j<n; ++j) {
       double diff;
-      for (k=0; k<d; ++k) 
+      for (k=0; k<d; ++k) {
+	// this part can be optimized with -O3
 	if (Bi[i] < 0) {
 	  C[i*n +j] += A[j*d+k]*A[j*d+k];
 	}	  
@@ -221,6 +222,19 @@ void _dpdist2_sym(int d, size_t n, size_t m, double *A, int *Bi, double *C, cons
 	  diff = A[j*d + k] - vocab[Bi[i]*d + k];
 	  C[i*n+j] += diff * diff;
 	}
+      }
+    }
+}
+
+void _dpdist2_submat(size_t m, int *Bi, double *C,
+		     const int vocab_size, const double *dist_mat) {
+  size_t i; int j;
+  assert(m>0);
+
+  for (i=0; i<m; ++i)
+    for (j=0; j<vocab_size; ++j) {
+      // this part can be optimized with -O3
+      C[i*vocab_size + j] = dist_mat[Bi[i]*vocab_size + j];
     }
 }
 
@@ -233,6 +247,7 @@ void _dpdist_symbolic(int d, size_t n, size_t m, int * A, int * B, double *C,
   for (i=0; i<m; ++i)
     for (j=0; j<n; ++j) 
       for (k=0; k<d; ++k) {
+	// this part can be optimized with -O3
 	C[i*n+j] += dist_mat[A[j*d + k]*vocab_size + B[i*d + k]];
       }
 }

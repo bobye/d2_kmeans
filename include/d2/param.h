@@ -25,5 +25,6 @@ typedef struct {
 #define D2_HISTOGRAM         (5)
 #define D2_N_GRAM            (6)
 #define D2_WORD_EMBED        (7)
+#define D2_SPARSE_HISTOGRAM  (12)
 
 #endif /* _D2_PARAM_H_ */

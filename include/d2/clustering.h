@@ -23,6 +23,7 @@ extern "C" {
      * D2_CITYBLOCK_L1 : same above
      * D2_HISTOGRAM    : @param(dim=0)
      * D2_N_GRAM       : @param(dim) is the size of grams.
+     * D2_SPARSE_HISTOGRAM : @param(dim=0)
      */
     int dim, str, max_str;
     size_t col, max_col;
@@ -45,6 +46,8 @@ extern "C" {
      * D2_HISTOGRAM    : Histogram space at @param(p_w,dist_mat)
      * D2_N_GRAM       : N-gram space at @param(p_supp_sym,dist_mat,vocab_size) 
      *                   and dist_mat is the pairwise distance matrix of vocab
+     * D2_SPARSE_HISTOGRAM: Histogram data with sparse non-zero bins 
+     *                      @param(p_w,p_sUpp_sym,dist_mat)
      */
     int metric_type;     
     
@@ -68,15 +71,18 @@ extern "C" {
        
        Comments 2015-02-17
        @param(p_supp_sym) has been used for D2_WORD_EMBED
+       
+       Comments 2015-07-13
+       @param(p_supp_sym) has been used for D2_SPARSE_HISTOGRAM
     */
     int *p_supp_sym; 
 
     /**
-     * Optional: for data of histograms or D2 with symbolic supports */
+     * Optional: for data in D2_HISTOGRAM, D2_SPARSE_HISTOGRAM and D2_N_GRAM */
     SCALAR *dist_mat; 
 
     /**
-     * Optional: for data with symbolic supports */
+     * Optional: for data in D2_WORD_EMBED */
     int vocab_size;
     SCALAR *vocab_vec;
   } sph; 
@@ -85,6 +91,10 @@ extern "C" {
   /**
     data structure for relabeling using triangle inequality:    
     Using the Triangle Inequality to Accelerate k-means, Charles Elkan, ICML03
+    
+    Comments 2015-07-13
+    @param(l,u,s) the meaning for each symbol has been consistent with what has
+    been described in Elkan's original paper. 
    */
   typedef struct {
     SCALAR *l; /* lower bound of distance pair */

@@ -43,6 +43,9 @@ extern "C" {
    */
   void _dpdist2(int d, size_t n, size_t m, double * A, double * B, double *C);
   void _dpdist2_sym(int d, size_t n, size_t m, double *A, int *B, double *C, const double *vocab);
+  void _dpdist2_submat(size_t m, int *Bi, double *C,
+		       const int vocab_size, const double *dist_mat);
+  
   void _dpdist_symbolic(int d, size_t n, size_t m, int * A, int * B, double *C, 
 			const int vocab_size, const double* dist_mat);
 
@@ -82,6 +85,8 @@ extern "C" {
    */
   void _spdist2(int d, size_t n, size_t m, float * A, float * B, float *C);
   void _spdist2_sym(int d, size_t n, size_t m, float *A, int *B, float *C, const float *vocab);
+  void _spdist2_submat(size_t m, int *Bi, float *C,
+		       const int vocab_size, const float *dist_mat);
   void _spdist_symbolic(int d, size_t n, size_t m, int * A, int * B, float *C, 
 			const int vocab_size, const float* dist_mat);
   

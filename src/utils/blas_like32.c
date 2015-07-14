@@ -224,6 +224,19 @@ void _spdist2_sym(int d, size_t n, size_t m, float *A, int *Bi, float *C, const 
     }
 }
 
+void _spdist2_submat(size_t m, int *Bi, float *C,
+		     const int vocab_size, const float *dist_mat) {
+  size_t i; int j;
+  assert(m>0);
+
+  for (i=0; i<m; ++i)
+    for (j=0; j<vocab_size; ++j) {
+      // this part can be optimized with -O3
+      C[i*vocab_size + j] = dist_mat[Bi[i]*vocab_size + j];
+    }
+}
+
+
 void _spdist_symbolic(int d, size_t n, size_t m, int * A, int * B, float *C, 
 		      const int vocab_size, const float* dist_mat) {
   size_t i,j; int k;
@@ -244,3 +257,16 @@ void _sexp(size_t n, float *a) {
 }
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+

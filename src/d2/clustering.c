@@ -84,7 +84,9 @@ double d2_compute_distance(mph *a, size_t i,
 				  NULL, NULL,
 				  index);
 	d += val;
-	break;	
+	break;
+      case D2_SPARSE_HISTOGRAM :
+	break;
       case D2_N_GRAM : 
 	_D2_FUNC(pdist_symbolic)(dim, 
 				 b_sph->p_str[j], 
