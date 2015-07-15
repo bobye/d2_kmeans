@@ -196,32 +196,25 @@ void _svmul(size_t n, float *a, float *b, float *c) {
 }
 
 void _spdist2(int d, size_t n, size_t m, float * A, float * B, float *C) {
-  size_t i, j; int k;
+  size_t i, j, ki, kj; int k;
   assert(d>0 && n>0 && m>0);
-  cblas_sgemm(CblasColMajor, CblasTrans, CblasNoTrans, n, m, d, -2, 
-	      A, d, B, d, 0, C, n);
 
   for (i=0; i<m; ++i)
     for (j=0; j<n; ++j)
-      for (k=0; k<d; ++k)
-	C[i*n + j] += A[j*d + k] * A[j*d + k] + B[i*d + k] * B[i*d + k];
+      for (k=0, kj=j*d, ki=i*d; k<d; ++k, ++kj, ++ki) 
+	C[i*n + j] += (A[kj] -  B[ki]) * (A[kj] -  B[ki]);
 }
 
 void _spdist2_sym(int d, size_t n, size_t m, float *A, int *Bi, float *C, const float *vocab) {
-  size_t i, j; int k;
+  size_t i, j, ki, kj; int k;
   for (i=0; i<m*n; ++i) C[i] = 0;
   for (i=0; i<m; ++i)
-    for (j=0; j<n; ++j) {
-      float diff;
-      for (k=0; k<d; ++k) 
-	if (Bi[i] < 0) {
-	  C[i*n +j] += A[j*d+k]*A[j*d+k];
-	}	  
-	else {
-	  diff = A[j*d + k] - vocab[Bi[i]*d + k];
-	  C[i*n+j] += diff * diff;
-	}
-    }
+    for (j=0; j<n; ++j)
+      for (k=0, kj=j*d, ki=Bi[i]*d; k<d; ++k, ++kj, ++ki)
+	if (Bi[i] < 0)
+	  C[i*n + j] += A[kj]*A[kj];
+	else
+	  C[i*n + j] += (A[kj] - vocab[ki]) * (A[kj] - vocab[ki]);
 }
 
 void _spdist2_submat(size_t m, int *Bi, float *C,
@@ -230,12 +223,9 @@ void _spdist2_submat(size_t m, int *Bi, float *C,
   assert(m>0);
 
   for (i=0; i<m; ++i)
-    for (j=0; j<vocab_size; ++j) {
-      // this part can be optimized with -O3
+    for (j=0; j<vocab_size; ++j)
       C[i*vocab_size + j] = dist_mat[Bi[i]*vocab_size + j];
-    }
 }
-
 
 void _spdist_symbolic(int d, size_t n, size_t m, int * A, int * B, float *C, 
 		      const int vocab_size, const float* dist_mat) {
@@ -245,9 +235,8 @@ void _spdist_symbolic(int d, size_t n, size_t m, int * A, int * B, float *C,
   for (i=0; i<m*n; ++i) C[i] = 0;
   for (i=0; i<m; ++i)
     for (j=0; j<n; ++j) 
-      for (k=0; k<d; ++k) {
+      for (k=0; k<d; ++k)
 	C[i*n+j] += dist_mat[A[j*d + k]*vocab_size + B[i*d + k]];
-      }
 }
 
 // inplace a -> exp(a)
