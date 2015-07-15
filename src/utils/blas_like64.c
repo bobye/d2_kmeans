@@ -196,34 +196,25 @@ void _dvmul(size_t n, double *a, double *b, double *c) {
 }
 
 void _dpdist2(int d, size_t n, size_t m, double * A, double * B, double *C) {
-  size_t i, j; int k;
+  size_t i, j, ki, kj; int k;
   assert(d>0 && n>0 && m>0);
-  cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, n, m, d, -2, 
-	      A, d, B, d, 0, C, n);
 
   for (i=0; i<m; ++i)
     for (j=0; j<n; ++j)
-      for (k=0; k<d; ++k)
-	C[i*n + j] += A[j*d + k] * A[j*d + k] + B[i*d + k] * B[i*d + k];
+      for (k=0, kj=j*d, ki=i*d; k<d; ++k, ++kj, ++ki) 
+	C[i*n + j] += (A[kj] -  B[ki]) * (A[kj] -  B[ki]);
 }
 
 void _dpdist2_sym(int d, size_t n, size_t m, double *A, int *Bi, double *C, const double *vocab) {
-  size_t i, j; int k;
+  size_t i, j, ki, kj; int k;
   for (i=0; i<m*n; ++i) C[i] = 0;
   for (i=0; i<m; ++i)
-    for (j=0; j<n; ++j) {
-      double diff;
-      for (k=0; k<d; ++k) {
-	// this part can be optimized with -O3
-	if (Bi[i] < 0) {
-	  C[i*n +j] += A[j*d+k]*A[j*d+k];
-	}	  
-	else {
-	  diff = A[j*d + k] - vocab[Bi[i]*d + k];
-	  C[i*n+j] += diff * diff;
-	}
-      }
-    }
+    for (j=0; j<n; ++j)
+      for (k=0, kj=j*d, ki=Bi[i]*d; k<d; ++k, ++kj, ++ki)
+	if (Bi[i] < 0)
+	  C[i*n + j] += A[kj]*A[kj];
+	else
+	  C[i*n + j] += (A[kj] - vocab[ki]) * (A[kj] - vocab[ki]);
 }
 
 void _dpdist2_submat(size_t m, int *Bi, double *C,
@@ -232,10 +223,8 @@ void _dpdist2_submat(size_t m, int *Bi, double *C,
   assert(m>0);
 
   for (i=0; i<m; ++i)
-    for (j=0; j<vocab_size; ++j) {
-      // this part can be optimized with -O3
+    for (j=0; j<vocab_size; ++j)
       C[i*vocab_size + j] = dist_mat[Bi[i]*vocab_size + j];
-    }
 }
 
 void _dpdist_symbolic(int d, size_t n, size_t m, int * A, int * B, double *C, 
@@ -246,10 +235,8 @@ void _dpdist_symbolic(int d, size_t n, size_t m, int * A, int * B, double *C,
   for (i=0; i<m*n; ++i) C[i] = 0;
   for (i=0; i<m; ++i)
     for (j=0; j<n; ++j) 
-      for (k=0; k<d; ++k) {
-	// this part can be optimized with -O3
+      for (k=0; k<d; ++k)
 	C[i*n+j] += dist_mat[A[j*d + k]*vocab_size + B[i*d + k]];
-      }
 }
 
 // inplace a -> exp(a)
