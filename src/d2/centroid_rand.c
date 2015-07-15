@@ -159,12 +159,12 @@ void merge         (const int dim,
 
 /* initialize with random samples */
 int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
-  size_t i, j, k, *array;
+  size_t i, j, *array; int k;
   sph *data_ph = p_data->ph + idx_ph;
   size_t num_of_labels = p_data->num_of_labels;
   int dim = data_ph->dim;
   int str = data_ph->str;
-  int vocab_size = data_ph->vocab_size;
+  size_t vocab_size = data_ph->vocab_size;
   size_t size = p_data->size;
   int strxdim = str*dim;
 

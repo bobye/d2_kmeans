@@ -78,13 +78,20 @@ extern "C" {
     int *p_supp_sym; 
 
     /**
-     * Optional: for data in D2_HISTOGRAM, D2_SPARSE_HISTOGRAM and D2_N_GRAM */
+     * Optional @param(dist_mat): 
+     * for data in D2_HISTOGRAM, D2_SPARSE_HISTOGRAM and D2_N_GRAM */
     SCALAR *dist_mat; 
 
     /**
-     * Optional: for data in D2_WORD_EMBED */
+     * Optional @param(vocab_vec): 
+     * for data in D2_WORD_EMBED */
     int vocab_size;
     SCALAR *vocab_vec;
+
+    /**
+     * Optional @param(is_meta_allocated): 
+     * tag to indicate whether vocab_vec or dist_mat is newly allocated */
+    char is_meta_allocated;
   } sph; 
 
 

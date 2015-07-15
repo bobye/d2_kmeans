@@ -54,7 +54,7 @@ int d2_allocate_sph(sph *p_data_sph,
     p_data_sph->p_supp = NULL;
   }
 
-
+  p_data_sph->is_meta_allocated = false;
   return 0;
 }
 
@@ -72,16 +72,16 @@ int d2_free_sph(sph *p_data_sph) {
     _D2_FREE(p_data_sph->p_supp);
   }
   else if (p_data_sph->metric_type == D2_HISTOGRAM) {
-    //_D2_FREE(p_data_sph->dist_mat);
+    if (p_data_sph->is_meta_allocated) _D2_FREE(p_data_sph->dist_mat);
   }
   else if (p_data_sph->metric_type == D2_SPARSE_HISTOGRAM ||
 	   p_data_sph->metric_type == D2_N_GRAM) {
     _D2_FREE(p_data_sph->p_supp_sym);
-    //_D2_FREE(p_data_sph->dist_mat);
+    if (p_data_sph->is_meta_allocated) _D2_FREE(p_data_sph->dist_mat);
   }
   else if (p_data_sph->metric_type == D2_WORD_EMBED) {
     _D2_FREE(p_data_sph->p_supp_sym);
-    _D2_FREE(p_data_sph->vocab_vec);
+    if (p_data_sph->is_meta_allocated) _D2_FREE(p_data_sph->vocab_vec);
   }
   return 0;
 }

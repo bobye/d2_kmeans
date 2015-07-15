@@ -244,7 +244,7 @@ size_t d2_labeling_prep(__IN_OUT__ mph *p_data,
  */
 int d2_copy(mph* a, mph *b) {
   int n;
-  bool new_init_tag = false;
+  char new_init_tag = false;
   b->s_ph = a->s_ph;
   b->size = a->size;
   if (!b->ph) {
@@ -271,12 +271,10 @@ int d2_copy(mph* a, mph *b) {
       case D2_HISTOGRAM:
       case D2_SPARSE_HISTOGRAM:
 	b->ph[n].dist_mat = a->ph[n].dist_mat;
-	//	if (new_init_tag) memcpy(b->ph[n].dist_mat, a->ph[n].dist_mat, a->ph[n].vocab_size*a->ph[n].vocab_size);
 	break;
       case D2_N_GRAM:
 	memcpy(b->ph[n].p_supp_sym, a->ph[n].p_supp_sym, a->ph[n].col * a->ph[n].dim * sizeof(int));
 	b->ph[n].dist_mat = a->ph[n].dist_mat;
-	//if (new_init_tag) memcpy(b->ph[n].dist_mat, a->ph[n].dist_mat, a->ph[n].vocab_size*a->ph[n].vocab_size);
 	break;
       }
     } else {

@@ -59,10 +59,10 @@ int d2_allocate_sph_protein(sph *p_data_sph,
   p_data_sph->p_supp_sym = _D2_MALLOC_INT(n);
 
   p_data_sph->vocab_size = PROTEIN_VOCAB_SIZE; // 20 types of amino acids
-  p_data_sph->dist_mat = _D2_MALLOC_SCALAR(PROTEIN_VOCAB_SIZE*PROTEIN_VOCAB_SIZE); assert(p_data_sph->dist_mat);
 
   p_data_sph->metric_type = D2_N_GRAM;
 
+  p_data_sph->is_meta_allocated = false;
   return 0;
 }
 
@@ -83,6 +83,8 @@ int d2_read_sph_protein(const char* filename, sph *p_data_sph, mph *p_data) {
 
   
   /* Begin: load keymap and their distances */
+  p_data_sph->dist_mat = _D2_MALLOC_SCALAR(PROTEIN_VOCAB_SIZE*PROTEIN_VOCAB_SIZE); assert(p_data_sph->dist_mat);
+  p_data_sph->is_meta_allocated = true;
   fp_new = fopen("PAM250_distmat.dat", "r+"); assert(fp_new);
   
   n = 0; while ((c=fscanf(fp_new, "%c", &symbol)) > 0 && symbol !='\n') { 

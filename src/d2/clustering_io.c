@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdbool.h>
 #include "d2/clustering.h"
 #include "d2/math.h"
 #include "d2/centroid_util.h"
@@ -59,6 +60,7 @@ int d2_read(const char* filename, mph *p_data) {
       fp_new = fopen(filename_extra, "r"); assert(fp_new);
       c=fscanf(fp_new, "%d", &str); //assert(c>0 && str == p_data->ph[n].str);
       p_data->ph[n].dist_mat = _D2_MALLOC_SCALAR(str * str);
+      p_data->ph[n].is_meta_allocated = true;
       for (i=0; i< str*str; ++i) 
 	fscanf(fp_new, SCALAR_STDIO_TYPE, &(p_data->ph[n].dist_mat[i]));
       p_data->ph[n].vocab_size = str;
@@ -73,6 +75,7 @@ int d2_read(const char* filename, mph *p_data) {
       c=fscanf(fp_new, "%d", &dim); assert(c>0 && dim == p_data->ph[n].dim);
       c=fscanf(fp_new, "%d", &p_data->ph[n].vocab_size);
       p_data->ph[n].vocab_vec = _D2_MALLOC_SCALAR(dim * p_data->ph[n].vocab_size);
+      p_data->ph[n].is_meta_allocated = true;
       for (i=0; i<p_data->ph[n].vocab_size * dim; ++i) 
 	fscanf(fp_new, SCALAR_STDIO_TYPE, &(p_data->ph[n].vocab_vec[i]));
       fclose(fp_new);
