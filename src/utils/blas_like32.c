@@ -199,6 +199,7 @@ void _spdist2(int d, size_t n, size_t m, float * A, float * B, float *C) {
   size_t i, j, ki, kj; int k;
   assert(d>0 && n>0 && m>0);
 
+  for (i=0; i<m*n; ++i) C[i] = 0;
   for (i=0; i<m; ++i)
     for (j=0; j<n; ++j)
       for (k=0, kj=j*d, ki=i*d; k<d; ++k, ++kj, ++ki) 

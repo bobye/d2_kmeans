@@ -195,10 +195,12 @@ void _dvmul(size_t n, double *a, double *b, double *c) {
     *c = (*a) * (*b);
 }
 
+
 void _dpdist2(int d, size_t n, size_t m, double * A, double * B, double *C) {
   size_t i, j, ki, kj; int k;
   assert(d>0 && n>0 && m>0);
 
+  for (i=0; i<m*n; ++i) C[i] = 0;
   for (i=0; i<m; ++i)
     for (j=0; j<n; ++j)
       for (k=0, kj=j*d, ki=i*d; k<d; ++k, ++kj, ++ki) 
