@@ -36,7 +36,8 @@ The co-clustering is then performed jointly over multiple phases.
 ## How to compile and run tests
 Though one can build a serial version to solve small-to-moderate scale problems with speed,
 the strength of AD2-clustering is its scalability to large dataset with parallelization at 
-high scaling efficiency (over 80% on hundreds of cores). 
+high scaling efficiency (over 80% on hundreds of cores). You can find [quickstart tips on 
+the Google cloud compute engine](wiki) for references.
 
 Build dependencies:
  - MPI
