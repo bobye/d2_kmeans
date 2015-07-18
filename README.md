@@ -60,9 +60,9 @@ Run unit tests (it takes several minutes):
 ```
 
 By default, 64bit floating numbers are used. Optionally, you can switch to use 32bit to save
-memory and get some marginal speedups by changing the line in `include/utils/common.h`
-```c
-#define _D2_DOUBLE // to _D2_SINGLE
+memory in computation and get some marginal speedups by edit the line in `make.inc`
+```makefile
+D2_DEFINES=-D _D2_DOUBLE # change to _D2_SINGLE if the size of RAM is limited
 ```
 
 ## Usage
