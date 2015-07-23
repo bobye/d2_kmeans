@@ -26,7 +26,7 @@ bunzip2 20newsgroups.d2s.vocab0.bz2
 
 cd $main_dir
 num_of_nodes=16
-s=16 # 2 4 8 16 32 64
+s=64 # 32 64 100
 data_files=data/20news-bydate/20newsgroups_clean/20newsgroups.d2s
 
 # make sure split data only once
