@@ -14,8 +14,8 @@
 
 /* choose options */
 
-static BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = 2.f, .updatePerLoops = 10};
-static BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .updatePerLoops = 10};
+BADMM_options badmm_clu_options = {.maxIters = 100, .rhoCoeff = 2.f, .updatePerLoops = 10};
+BADMM_options badmm_cen_options = {.maxIters = 2000, .rhoCoeff = 1.f, .updatePerLoops = 10};
 
 #define ROUNDOFF (1E-9)
 

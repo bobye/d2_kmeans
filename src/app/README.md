@@ -11,7 +11,7 @@ Input options
  - `--types <integer>, -E <integer>` : the type of D2 data (default: 0, see `include/d2_param.h` for details).
  
 Algorithm options
- - `--clusters <integer>, -c <integer>` : number of clusters intended (default: 3, mostly required).
+ - `--clusters <integer>, -k <integer>` : number of clusters intended (default: 3, mostly required). If it is set to 1, the centroid of data is computed instead, which takes more ADMM steps (2000 steps) than that of clustering setting (100 steps). 
  - `--max_iters <integer>, -m <integer>` : the maximal number of iterations (default: 100).
  - `--non_triangle, -T` : disable the triangle inequality based acceleration (default: enabled).
  - `--eval <centroids_filename>, -e <centroids_filename>` : no clustering, but assigning instances to the pre-computed centroids (default: disabled).

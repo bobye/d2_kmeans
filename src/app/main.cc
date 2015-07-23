@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     {"phase", 1, 0, 'p'},
     {"ifile", 1, 0, 'i'},
     {"phase_only", 1, 0, 't'},
-    {"clusters", 1, 0, 'c'},
+    {"clusters", 1, 0, 'k'},
     {"max_iters", 1, 0, 'm'},
     {"centroid_method", 1, 0, 'M'},
     {"non_triangle", 0, 0, 'T'},
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 
   /* [BEGIN] Parsing program arguments */
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:t:c:m:M:TQP:E:e:L:", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:t:k:m:M:TQP:E:e:L:", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
     case 't':
       selected_phase = atoi(optarg); assert(selected_phase >= 0);
       break;
-    case 'c': 
+    case 'k': 
       number_of_clusters = atoi(optarg); assert(number_of_clusters > 0);
       break;
     case 'm':
@@ -216,6 +216,18 @@ int main(int argc, char *argv[])
       data.num_of_labels = number_of_clusters;
       d2_init_centroid(&data, &c, selected_phase, true);
       d2_read(centroid_filename, &c);        
+    }
+
+    if (number_of_clusters == 1) {
+      if (d2_alg_type == D2_CENTROID_BADMM) {
+	extern BADMM_options *p_badmm_options;
+	extern BADMM_options badmm_cen_options;
+	p_badmm_options = &badmm_cen_options;
+      }	else if (d2_alg_type == D2_CENTROID_GRADDEC) {
+	// TBA
+      } else if (d2_alg_type == D2_CENTROID_ADMM) {
+	// TBA
+      }
     }
 
     d2_clustering(number_of_clusters, 
