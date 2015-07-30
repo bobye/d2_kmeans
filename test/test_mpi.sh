@@ -30,6 +30,7 @@ echo "[$num_of_nodes processes] Clustering images: n=2000 and k=10 with both pha
 time mpirun -n $num_of_nodes ./d2 -i data/icip14_data/total.d2 -p 2 -n $batch_size -d 3,3 -s 8,8 --clusters 10 --max_iter 20 > /dev/null
 
 cd data/protein_seq
+make clean & make MPI=1 &> /dev/null
 
 ./protein protein -1 -$num_of_nodes 0 > /dev/null
 

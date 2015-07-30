@@ -26,6 +26,7 @@ echo 'Clustering images: n=2000 and k=10 with both phases'
 time ./d2 -i data/mountaindat.d2 -p 2 -n 2000 -d 3,3 -s 6,8 --clusters 10  > /dev/null
 
 cd data/protein_seq
+make clean && make MPI=0 &> /dev/null
 
 echo 'Profile protein centroids: test 3-gram with one cluster'
 time ./protein protein 2 1 0 > /dev/null

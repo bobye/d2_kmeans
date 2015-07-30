@@ -71,7 +71,7 @@ LIB=\
 endif
 
 
-all: d2 protein
+all: d2
 
 lib: $(LIB)
 
@@ -88,9 +88,6 @@ lib: $(LIB)
 	$(TCXX) $(CFLAGS) $(DEFINES) $(INCLUDES) -c -o $@ $<
 
 d2: src/app/util.cc src/app/main.cc $(LIB)
-	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
-
-data/protein_seq/protein: data/protein_seq/d2_protein_ngram.cc $(LIB)
 	$(CXX) $(LDFLAGS) $(DEFINES) $(INCLUDES) -o $@ $^ $(LIBRARIES)
 
 
@@ -118,8 +115,6 @@ endif
 
 -include $(DEPENDENCY_FILES)
 
-
-protein: data/protein_seq/protein
 
 .PHONY: clean test
 clean:
