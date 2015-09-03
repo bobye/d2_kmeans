@@ -10,7 +10,7 @@
 #endif
 
 /** Load Data Set: see specification of format at README.md */
-int d2_read(const char* filename, mph *p_data) {
+int d2_read(const char* filename, const char* meta_filename, mph *p_data) {
   char filename_main[255];
   FILE *fp =NULL;
   double io_startTime;
@@ -56,7 +56,10 @@ int d2_read(const char* filename, mph *p_data) {
       char filename_extra[255];
       FILE *fp_new; // local variable
       int str, c, i;
-      sprintf(filename_extra, "%s.hist%d", filename, n);
+      if (meta_filename && s_ph == 1) 
+	strcpy(filename_extra, meta_filename);
+      else
+	sprintf(filename_extra, "%s.hist%d", filename, n);
       fp_new = fopen(filename_extra, "r"); assert(fp_new);
       c=fscanf(fp_new, "%d", &str); //assert(c>0 && str == p_data->ph[n].str);
       p_data->ph[n].dist_mat = _D2_MALLOC_SCALAR(str * str);
@@ -70,7 +73,10 @@ int d2_read(const char* filename, mph *p_data) {
       char filename_extra[255];
       FILE *fp_new; // local variable
       int dim, c, i;
-      sprintf(filename_extra, "%s.vocab%d", filename, n);
+      if (meta_filename && s_ph == 1) 
+	strcpy(filename_extra, meta_filename);
+      else
+	sprintf(filename_extra, "%s.vocab%d", filename, n);
       fp_new = fopen(filename_extra, "r"); assert(fp_new);
       c=fscanf(fp_new, "%d", &dim); assert(c>0 && dim == p_data->ph[n].dim);
       c=fscanf(fp_new, "%d", &p_data->ph[n].vocab_size);

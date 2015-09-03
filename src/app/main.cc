@@ -37,6 +37,8 @@ int main(int argc, char *argv[])
   long size_of_samples;
   char *ss1_c_str = 0, *ss2_c_str = 0, *ss3_c_str = 0,
     *filename = 0, *centroid_filename = 0, 
+    *meta_filename = 0,
+    *output_filename = 0,
     is_eval=0, is_load=0,
     is_pre_processed=0;
   char use_triangle = true;
@@ -52,6 +54,8 @@ int main(int argc, char *argv[])
     {"strides", 1, 0, 's'},
     {"phase", 1, 0, 'p'},
     {"ifile", 1, 0, 'i'},
+    {"ofile", 1, 0, 'o'},
+    {"metafile", 1, 0, 'D'},
     {"phase_only", 1, 0, 't'},
     {"clusters", 1, 0, 'k'},
     {"max_iters", 1, 0, 'm'},
@@ -67,10 +71,16 @@ int main(int argc, char *argv[])
 
   /* [BEGIN] Parsing program arguments */
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "p:n:d:s:i:t:k:m:M:TQP:E:e:L:", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:s:i:o:d:t:k:m:M:TQP:E:e:L:", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
+      break;
+    case 'D':
+      meta_filename = optarg;
+      break;
+    case 'o':
+      output_filename = optarg;
       break;
     case 'e': 
       centroid_filename = optarg;
@@ -136,6 +146,7 @@ int main(int argc, char *argv[])
 	 && size_of_phases == (int) ss2.size()
 	 && size_of_phases == (int) ss3.size()
 	 && ss2_c_str);
+  assert((size_of_phases == 1 || !meta_filename));
 
   if (world_rank == 0) {cout << "Task: " << endl;}  
   for (int i=0; i<size_of_phases; ++i) {
@@ -172,9 +183,9 @@ int main(int argc, char *argv[])
   if (num_of_batches == 0 && is_pre_processed) num_of_batches = 1;
 
   if (err == 0 && num_of_batches == 0) {  
-    d2_read(filename, &data);  
+    d2_read(filename, meta_filename, &data);  
   } else if (num_of_batches > 0 && world_rank == 0) {
-    d2_read(filename, &data);      
+    d2_read(filename, meta_filename, &data);      
     d2_write_split(filename, &data, num_of_batches, is_pre_processed);    
     d2_free(&data);
     if (world_rank == 0) {  cout << "[Finish!]" <<endl; }
@@ -215,7 +226,7 @@ int main(int argc, char *argv[])
       assert(centroid_filename);
       data.num_of_labels = number_of_clusters;
       d2_init_centroid(&data, &c, selected_phase, true);
-      d2_read(centroid_filename, &c);        
+      d2_read(centroid_filename, meta_filename, &c);        
     }
 
     if (number_of_clusters == 1) {
@@ -239,6 +250,7 @@ int main(int argc, char *argv[])
 		  name_hashValue.c_str());
 
     if (world_rank == 0) {
+      if (output_filename) name_hashValue = std::string(output_filename);
       d2_write((name_hashValue + "_c.d2").c_str(), &c);
     }
   } 
@@ -250,12 +262,14 @@ int main(int argc, char *argv[])
 		  &data, 
 		  &c, 
 		  selected_phase, 
-		  centroid_filename);
+		  centroid_filename,
+		  meta_filename);
     cf=cf.substr(0, cf.rfind("_c"));
     cf=cf.substr(cf.rfind("_"));
     name_hashValue = std::string(filename) + cf;
   }
 
+  if (output_filename) name_hashValue = std::string(output_filename);
   d2_write_labels((name_hashValue + ".label").c_str(), &data);
   d2_write_labels_serial((std::string(filename) + ".ind").c_str(), 
 			 name_hashValue.c_str(), &data);

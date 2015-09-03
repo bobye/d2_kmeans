@@ -141,7 +141,7 @@ extern "C" {
 		  const int *dimension_of_phases,
 		  const int *type_of_phases);
 
-  int d2_read(const char* filename, __OUT__ mph *p_data);
+  int d2_read(const char* filename, const char* meta_filename, __OUT__ mph *p_data);
   int d2_write(const char* filename, mph *p_data);
   int d2_write_labels(const char* filename, mph *p_data);
   int d2_write_labels_serial(const char* filename_ind, const char* filename, mph *p_data);
@@ -167,7 +167,8 @@ extern "C" {
 		    mph *p_data, 
 		    mph *centroids, 
 		    int selected_phase,
-		    const char* centroid_filename);
+		    const char* centroid_filename,
+		    const char* meta_filename);
 
   /**
    * working variables that are visible in all algorithms

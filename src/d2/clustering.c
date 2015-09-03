@@ -524,12 +524,13 @@ int d2_assignment(int num_of_clusters,
 		  mph *p_data, 
 		  mph *centroids, 
 		  int selected_phase,
-		  const char* centroid_filename) {
+		  const char* centroid_filename,
+		  const char* meta_filename) {
 
   var_mph var_work = {.tr = {NULL, NULL, NULL, NULL, NULL}};
   p_data->num_of_labels = num_of_clusters;
   d2_init_centroid(p_data, centroids, selected_phase, true);
-  d2_read(centroid_filename, centroids);  
+  d2_read(centroid_filename, meta_filename, centroids);  
   d2_allocate_work(p_data, &var_work, false, selected_phase);
   d2_solver_setup();
   global_startTime = getRealTime();

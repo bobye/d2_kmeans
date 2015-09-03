@@ -3,6 +3,8 @@
 ### Arguments
 Input options
  - `--ifile <input_filename>, -i <input_filename>` : the main name of input file (required).
+ - `--ofile <output_filename>, -o <output_filename>` : the main name of output file (optional), when it is default, the output_filename will be generated based on input filename and a random number.
+ - `--metafile <meta_filename>, -D <meta_filename>` : you can optionally specify the meta filename (the .hist or .vacab file), when there is only one phase of interest. 
  - `-n <integer>` : number of instances read in per processor (required)
  - `--phase <integer>, -p <integer>` : the number of phases per instance in `<input_filename>` (default: 1).
  - `--phase_only <integer>, -t <integer>` : the phase to cluster upon (default: use all phases)
