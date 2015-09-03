@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
   /* [BEGIN] Parsing program arguments */
   int option_index = 0;
-  while ( (ch = getopt_long(argc, argv, "p:n:s:i:o:d:t:k:m:M:TQP:E:e:L:", long_options, &option_index)) != -1) {
+  while ( (ch = getopt_long(argc, argv, "p:n:s:i:o:D:d:t:k:m:M:TQP:E:e:L:", long_options, &option_index)) != -1) {
     switch (ch) {
     case 'i': /* input filename */
       filename = optarg;
