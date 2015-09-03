@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <string.h>
 #include "d2/clustering.h"
 #include "d2/math.h"
 #include "d2/centroid_util.h"
