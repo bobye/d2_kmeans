@@ -9,7 +9,7 @@ and it is still in the very early stage of development. Contributions are welcom
 
 Please see our paper for technical details: 
 
-[Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and Jia Li, "Fast Discrete Distribution Clustering under Wasserstein Distance" in submission to NIPS 2015.
+[Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and Jia Li, "Accelerated Discrete Distribution Clustering under Wasserstein Distance" in submission to IEEE Trans. Signal Processing.
 
 
 ## Discrete Distributions
