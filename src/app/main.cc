@@ -264,9 +264,16 @@ int main(int argc, char *argv[])
 		  selected_phase, 
 		  centroid_filename,
 		  meta_filename);
-    cf=cf.substr(0, cf.rfind("_c"));
-    cf=cf.substr(cf.rfind("_"));
-    name_hashValue = std::string(filename) + cf;
+    cf=cf.substr(0, cf.rfind("_c")); // centroid filename should be in match with *_c.d2?
+    size_t rpos = cf.rfind("_");
+    if (rpos == std::string::npos) {
+      // if self provided centroid file is used
+      name_hashValue = std::string(filename);
+    } else {
+      // retrieve the randomized running ID
+      cf=cf.substr(rpos);
+      name_hashValue = std::string(filename)+ cf;
+    }
   }
 
   if (output_filename) name_hashValue = std::string(output_filename);
