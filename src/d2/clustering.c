@@ -12,6 +12,9 @@
 #ifdef __USE_MPI__
 #include <mpi.h>
 #endif
+
+const char intro[]="-------------------------------------------------------------------------\n  Accelerated Discrete Distribution Clustering under Wasserstein Distance\n\tversion preview, build #1, timestamp 2015/9/16 15:40:24\n\twritten by Jianbo Ye, 2014 - 2015\thttp://libad2c.org\n-------------------------------------------------------------------------\n\n";
+
 extern int d2_alg_type;
 
 const double time_budget_ratio = 2000.0;
@@ -423,6 +426,8 @@ int d2_clustering(int num_of_clusters,
   size_t label_change_count, *label_count;
   var_mph var_work = {.tr = {NULL, NULL, NULL, NULL, NULL}};
   mph the_centroids_copy = {0, 0, 0, NULL, 0, NULL};
+
+  VPRINTF(intro);
 
   assert(num_of_clusters>0 && max_iter > 0 && selected_phase < s_ph);
 
