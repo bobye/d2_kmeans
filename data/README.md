@@ -43,10 +43,10 @@ but examples of protein n-gram can be found at directory protein_seq/ .
 
    ```emacs-lisp
    ;; file ext: .d2s.vocab0
-   m n
-   <n x m matrix> ;; n is the size of vocabulary, m is the dimension of embeddings
+   d m
+   <m x d matrix> ;; m is the size of vocabulary, d is the dimension of embeddings
    ;; file ext: .d2s
-   m
+   d
    n
    w{1} w{2} ... w{n}
    id{1} id{2} ... id{n}
