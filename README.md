@@ -1,7 +1,7 @@
-Accelerated Discrete Distributions Clustering under Wasserstein Distance
+Fast Discrete Distribution Clustering Using Wasserstein Barycenter with Sparse Support
 =============
 
-AD2-clustering is an accelerated clustering algorithm for **D**iscrete **D**istributions (D2)
+AD2-clustering is a fast clustering algorithm for **D**iscrete **D**istributions (D2)
 under the *exact* [Wasserstein metric](http://en.wikipedia.org/wiki/Wasserstein_metric).
 It can scale to large-scale D2 data with parallel computing. 
 This project is the __first__ efficient implementation publicly available for D2-clustering,
@@ -9,7 +9,7 @@ and it is still in the very early stage of development. Contributions are welcom
 
 Please see our paper for technical details: 
 
-[Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and Jia Li, "Accelerated Discrete Distribution Clustering under Wasserstein Distance" in submission to IEEE Trans. Signal Processing.
+[Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and Jia Li, "Fast Discrete Distribution Clustering Using Wasserstein Barycenter with Sparse Support". [ArXiv](http://arxiv.org/abs/1510.00012)
 
 
 ## Discrete Distributions
