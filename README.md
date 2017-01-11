@@ -9,7 +9,9 @@ and it is still in the very early stage of development. Contributions are welcom
 
 Please see our paper for technical details: 
 
-[Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and Jia Li, "Fast Discrete Distribution Clustering Using Wasserstein Barycenter with Sparse Support". [ArXiv](http://arxiv.org/abs/1510.00012)
+[Jianbo Ye](http://www.personal.psu.edu/jxy198), [Panruo Wu](http://www.cs.ucr.edu/~pwu011/), James Z. Wang and Jia Li,
+Fast Discrete Distribution Clustering Using Wasserstein Barycenter with Sparse Support,
+IEEE Transactions on Signal Processing, 2017 ([arXiv:1510.00012](http://arxiv.org/abs/1510.00012) [stat.CO], September 2015)
 
 
 ## Discrete Distributions
