@@ -42,7 +42,7 @@ the Google cloud compute engine](https://github.com/bobye/d2_kmeans/wiki) for re
 Build dependencies:
  - MPI
  - CBLAS
- - [Mosek](https://mosek.com) 7.0+: free individual academic license available.
+ - [Mosek](https://mosek.com) 7.x: free individual academic license available.
 
 
 Create `make.inc` file to resolve the dependencies, see `make.inc.Linux` for an example.
