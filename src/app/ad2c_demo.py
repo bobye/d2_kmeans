@@ -1,16 +1,17 @@
 from ConfigParser import ConfigParser
+import sys
 
 config = ConfigParser(allow_no_value=True)
-config.readfp(open('ad2c_demo.config'))
+config.readfp(open(sys.argv[1]))
 
 
 
-data_types_map={'EuclideanDist':'0',
+data_types_map={'EuclideanDist':'0', #default
                 'Word2Vec':'7',
                 'DenseHistogram':'5',
                 'SparseHistogram':'12'}
 
-options=' '
+options=''
 
 
 options+=config.get('AD2c', 'executable')
@@ -41,12 +42,14 @@ if config.get('AD2c', 'output') != '':
     options+=' -o ' + config.get('AD2c', 'output')
         
 if config.get('AD2c', 'cpus') == '1':
-    comm= options
+    comm=options
 else:
-    comm= options + ' -n ' + config.get('AD2c', 'size')
-    comm+=' --prepare_batches ' + config.get('AD2c', 'cpus') + '\n'
-    comm+='mpirun -n ' + config.get('AD2c', 'cpus') + options
-    comm+=' -n ' + str(int(config.get('AD2c', 'size')) / int(config.get('AD2c', 'cpus')) + 1)
+    comm=options + ' -n ' + config.get('AD2c', 'size')
+    comm+=' --prepare_batches ' + config.get('AD2c', 'cpus')
+    comm+=' # split data cpu-wise\n'
+    comm+='mpirun -n ' + config.get('AD2c', 'cpus') + ' ' + options
+    comm+=' -n ' + str((int(config.get('AD2c', 'size'))-1) / int(config.get('AD2c', 'cpus')) + 1)
+    comm+=' # run mpi job\n'
 
     
 if config.get('AD2c', 'is_test_data') == 'Yes':
