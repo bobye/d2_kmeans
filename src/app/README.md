@@ -1,5 +1,8 @@
 ## Usage
 
+### Helper Python Code
+Edit `ad2c_demo.cong` and run `python ad2c_demo.py ad2c_demo.config` to generate command lines to run the program.
+
 ### Arguments
 Input options
  - `--ifile <input_filename>, -i <input_filename>` : the main name of input file (required).
