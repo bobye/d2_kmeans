@@ -7,3 +7,6 @@
 [submodule "data/icip14_data"]
 	path = data/icip14_data
 	url = https://github.com/bobye/icip14-data.git
+[submodule "data/usps"]
+	path = data/usps
+	url = https://github.com/bobye/tsp17-usps.git
