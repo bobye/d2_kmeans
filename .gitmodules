@@ -1,7 +1,6 @@
 [submodule "matlab"]
 	path = matlab
 	url = https://github.com/bobye/WBC_Matlab.git
-
-[submodule "20newsgroups"]
+[submodule "data/20news-bydate"]
 	path = data/20news-bydate
 	url = https://github.com/bobye/20newsgroups.git
