@@ -4,7 +4,7 @@ Fast Discrete Distribution Clustering Using Wasserstein Barycenter with Sparse S
 AD2-clustering is a fast clustering algorithm for **D**iscrete **D**istributions (D2)
 under the *exact* [Wasserstein metric](http://en.wikipedia.org/wiki/Wasserstein_metric).
 It can scale to large-scale D2 data with parallel computing. 
-This project is the __first__ efficient implementation publicly available for D2-clustering,
+This project is an efficient and scalable implementation publicly available for D2-clustering,
 and it is still in the very early stage of development. Contributions are welcomed. 
 
 Please see our paper for technical details: 
@@ -44,7 +44,7 @@ the Google cloud compute engine](https://github.com/bobye/d2_kmeans/wiki) for re
 Build dependencies:
  - MPI
  - CBLAS
- - [Mosek](https://mosek.com) 7.x: free individual academic license available.
+ - [Mosek](https://www.mosek.com/resources/downloads/legacy/version-7-1) 7.x: free individual academic license available.
 
 
 Create `make.inc` file to resolve the dependencies, see `make.inc.Linux` for an example.
@@ -58,7 +58,8 @@ Compile
 
 Run unit tests (it takes several minutes):
 ```
- $ make test 
+ $ make MPI=0 test # test sequential version, or
+ $ make MPI=1 test # test MPI version (default)
 ```
 
 By default, 64bit floating numbers are used. Optionally, you can switch to use 32bit to save
@@ -78,9 +79,5 @@ see [here](src/app) for detailed instructions on possible arguments and modes of
  - [USPS handwritten digit dataset](experiment/pbs_run_server_usps.sh)
 
 See [here](test) for more examples.
-
-
-## Misc
- - Related projects: [d2suite](https://github.com/colourbrain/d2suite)
 
 
