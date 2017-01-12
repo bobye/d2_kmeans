@@ -4,3 +4,6 @@
 [submodule "data/20news-bydate"]
 	path = data/20news-bydate
 	url = https://github.com/bobye/20newsgroups.git
+[submodule "data/icip14_data"]
+	path = data/icip14_data
+	url = https://github.com/bobye/icip14-data.git
