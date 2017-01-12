@@ -26,17 +26,18 @@ void d2_solver_setup() {
   MSKrescodee r;
   /* Create the mosek environment. */
   r = MSK_makeenv(&env, NULL);
-
+  r = MSK_checkoutlicense(env, MSK_FEATURE_PTS);
   if ( r != MSK_RES_OK ) {
       /* In case of an error print error code and description. */      
       char symname[MSK_MAX_STR_LEN];
       char desc[MSK_MAX_STR_LEN];
       
-      printf("An error occurred while optimizing.\n");     
+      printf("An error occurred during setup.\n");     
       MSK_getcodedesc (r,
                        symname,
                        desc);
       printf("Error %s - '%s'\n",symname,desc);
+      exit(-1);
   }
   /*
   task_seq = (MSKtask_t*) malloc (num * sizeof(MSKtask_t));
