@@ -10,3 +10,6 @@
 [submodule "data/usps"]
 	path = data/usps
 	url = https://github.com/bobye/tsp17-usps.git
+[submodule "data/mnist"]
+	path = data/mnist
+	url = https://github.com/bobye/mnist-d2-data.git
