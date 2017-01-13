@@ -43,6 +43,7 @@ if config.get('AD2c', 'output') != '':
         
 if config.get('AD2c', 'cpus') == '1':
     comm=options
+    comm=options + ' -n ' + config.get('AD2c', 'size')
 else:
     comm=options + ' -n ' + config.get('AD2c', 'size')
     comm+=' --prepare_batches ' + config.get('AD2c', 'cpus')
