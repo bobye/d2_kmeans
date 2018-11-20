@@ -284,8 +284,13 @@ int d2_centroid_rands(mph *p_data, int idx_ph, sph *c) {
     }
     ++i; j+= nprocs;
   }
-  assert(j>=num_of_labels);
 
   free(array);
+
+  if (j < num_of_labels) {
+    fprintf(stderr, "rank %d error: couldn't find enough samples with stride >= %d for initializating %d centroids\n",
+	    world_rank, str, num_of_labels);
+    exit(1);
+  }  
   return 0;
 }

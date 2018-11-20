@@ -13,7 +13,7 @@
 #include <mpi.h>
 #endif
 
-const char intro[]="-------------------------------------------------------------------------\n  Accelerated Discrete Distribution Clustering under Wasserstein Distance\n\tversion preview, build #1, timestamp 2015/9/16 15:40:24\n\twritten by Jianbo Ye, 2014 - 2015\thttp://libad2c.org\n-------------------------------------------------------------------------\n\n";
+const char intro[]="-------------------------------------------------------------------------\n  Accelerated Discrete Distribution Clustering under Wasserstein Distance\n\tversion preview, build #1, timestamp 2015/9/16 15:40:24\n\twritten by Jianbo Ye, 2014 - 2015\n-------------------------------------------------------------------------\n\n";
 
 extern int d2_alg_type;
 

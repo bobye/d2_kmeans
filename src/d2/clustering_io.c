@@ -98,7 +98,7 @@ int d2_read(const char* filename, const char* meta_filename, mph *p_data) {
       // read dimension and stride    
       c=fscanf(fp, "%d", &dim); 
       if (c!=1) {
-	printf("rank %d warning: only read %zd d2!\n", world_rank, i);
+	fprintf(stderr, "rank %d warning: only read %zd d2!\n", world_rank, i);
 	p_data->size = i;
 	size = i; break;
       }
@@ -111,7 +111,7 @@ int d2_read(const char* filename, const char* meta_filename, mph *p_data) {
 
       // check if needed to reallocate
       if (p_data->ph[n].col + str > p_data->ph[n].max_col) {
-	printf("rank %d warning: preallocated memory for phase %d is insufficient! Reallocated.\n", world_rank, n);
+	fprintf(stderr, "rank %d warning: preallocated memory for phase %d is insufficient! Reallocated.\n", world_rank, n);
 	if (p_data->ph[n].metric_type == D2_EUCLIDEAN_L2) {
 	  p_data->ph[n].p_supp = (SCALAR *) realloc(p_data->ph[n].p_supp, 2 * dim * p_data->ph[n].max_col * sizeof(SCALAR));
 	  p_data->ph[n].p_w = (SCALAR *) realloc(p_data->ph[n].p_w, 2* p_data->ph[n].max_col * sizeof(SCALAR));
