@@ -8,7 +8,6 @@
 #include <stdlib.h>
 
 /* initialize with multivariate normal */
-/*
 int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   int i;
   sph *data_ph = p_data->ph + idx_ph;
@@ -39,17 +38,20 @@ int d2_centroid_randn(mph *p_data, int idx_ph, sph *c) {
   // compute mean and cov
   means = (SCALAR *) calloc(dim * num_of_labels, sizeof(SCALAR));
   covs  = (SCALAR *) calloc(dim * dim * num_of_labels, sizeof(SCALAR));
+  assert(means);
+  assert(covs);
   d2_mean(data_ph, p_data->label, p_data->size, num_of_labels, means, covs);   
   
   // generate multivariate normal
   for (i=0; i<num_of_labels; ++i) {      
-    d2_mvnrnd(means+i*dim, covs+i*dim*dim, dim, str, c->p_supp + i*str*dim);
+    d2_mvnrnd(means, covs, dim, str, c->p_supp + i*str*dim);
   }
+
   free(means);
   free(covs);
   return 0;
 }
-*/
+
 void merge_symbolic(const int dim,
 		    const int * m_supp, const SCALAR * m_w, const int m,
 		    int * c_supp, SCALAR * c_w, const int n,

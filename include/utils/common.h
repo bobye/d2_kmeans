@@ -62,12 +62,12 @@ extern "C" {
 #define _D2_SCALAR          double
 #define _D2_FUNC(x)         _d ## x
 #define _D2_CBLAS_FUNC(x)   cblas_d ## x
-  //#define _D2_LAPACKE_FUNC(x) d ## x
+#define _D2_LAPACKE_FUNC(x) d ## x
 #elif defined  _D2_SINGLE
 #define _D2_SCALAR          float
 #define _D2_FUNC(x)         _s ## x
 #define _D2_CBLAS_FUNC(x)   cblas_s ## x
-  //#define _D2_LAPACKE_FUNC(x) s ## x
+#define _D2_LAPACKE_FUNC(x) s ## x
 #endif
 
 #define BILLION  1000000000L

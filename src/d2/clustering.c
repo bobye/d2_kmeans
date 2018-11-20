@@ -390,7 +390,8 @@ int d2_init_centroid(mph *p_data, __OUT__ mph *centroids, int selected_phase, in
       d2_allocate_sph(&centroids->ph[i],  p_data->ph[i].dim, p_data->ph[i].str, p_data->num_of_labels, 0., p_data->ph[i].metric_type % D2_GROUP_SIZE); // yet a trick here
       /* initialize centroids from random samples */
       if (!allocate_only) {
-	d2_centroid_rands(p_data, i, &centroids->ph[i]);
+	//d2_centroid_rands(p_data, i, &centroids->ph[i]);
+	d2_centroid_randn(p_data, i, &centroids->ph[i]);
 	broadcast_centroids(centroids, i);
       }
     } else {

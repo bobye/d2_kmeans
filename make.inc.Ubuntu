@@ -8,7 +8,7 @@ MOSEK=$(HOME)/mosek/7/tools/platform/linux64x86
 MOSEK_VERSION=7.1
 MOSEK_BIN=-lmosek64 -pthread
 OTHER_LIB=-lrt -Wl,-unresolved-symbols=ignore-in-shared-libs # clock_gettime() 
-BLAS_LIB=-lopenblas -lm # sudo apt install libopenblas-dev
+BLAS_LIB=-llapack -llapacke -lopenblas -lm # sudo apt install libopenblas-dev
 
 ARCH_FLAGS=-m64
 D2_DEFINES=-D _D2_DOUBLE # change to _D2_SINGLE if the size of RAM is limited
